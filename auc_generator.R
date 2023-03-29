@@ -1,3 +1,5 @@
+# Kommentar øverst i fila
+
 library(pROC) # I use this below
 
 # This function converts a mean and variance for a beta distribution to its 
