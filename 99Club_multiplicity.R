@@ -1,6 +1,6 @@
 # Multiple classifiers and biased state-of-the-art estimation
 # https://www.overleaf.com/project/63c8012bf045548a94e2d140
-# by Kajsa Møllersen (kajsa.mollersen@uit.no) February 2023
+# by Kajsa Møllersen (kajsa.mollersen@uit.no) February 2023 updated March 2023
 
 # P     - probability, specified when used
 # n     - number of trials, size of a test set
@@ -19,7 +19,7 @@
 
 library(binom)      # confidence interval for binomial distribution
 library(tictoc)     # for timing
-library(latex2exp)  # mathematical notation, didn't work
+library(latex2exp)  # mathematical notation
 
 ###############################################################################
 ############################ Coin flipping example #############################
@@ -27,7 +27,7 @@ library(latex2exp)  # mathematical notation, didn't work
 
 # a) Consider $n$ flips of a fair coin, and the outcome is the number of heads, 
 # referred to as the number of successes in a binomial distribution. 
-# b) Consider $nl$ flips of a fair coin, and the number of successes is the 
+# b) Consider $n$ flips of a fair coin, and the number of successes is the 
 # number of times a classifier correctly predicts the outcome. 
 
 n = 20      # number of trials
@@ -144,6 +144,14 @@ P = pbinom(0,n_c,Palpha2, lower.tail = F) # P[C>0] = 0.025
 # is Palpha2. What is k when p = 0.9?
 
 k_alpha2 = qbinom(Palpha2, n, p, lower.tail = F)
+
+# # # # # # # # # # # # # # # # # Check-up # # # # # # # # # # # # # # # # # # # # # # # 
+Palpha2_discr = pbinom(k_alpha2,n,p,lower.tail = F) # < Palpha2
+P_discr = pbinom(0,n_c,Palpha2_discr, lower.tail = F) # = 0.02475 < P
+
+# k_alpha2_cont < k_alpha2
+# # # # # # # # # # # # # # # # # ok # # # # # # # # # # # # # # # # # # # # # # # 
+
 p_hat = k_alpha2/n # this is \hat{p}
 
 sprintf("In summary, if there are %s teams, each with %s accuracy, and a test set of size %s, there is a      
@@ -157,12 +165,13 @@ rep = 10000 # one million repetitions takes about 80 seconds
 
 n_success = numeric(rep)
 tic()
-for (i in 0: rep){
+for (i in 1: rep){
   sim_success = rbinom(n_c, n, p) # the number of successes for each team
   n_success[i] = length(which(sim_success>k_alpha2)) # how many are above k_alpha2?
 }
 
-sum(n_success)/rep # fraction of successes, should be alpha/2 = 0.025
+sum(n_success)/rep # fraction of successes, should around alpha/2 = 0.025
+# there is no continuity correction, so I thought I would get < 0.025
 toc()
 # # # # # # # # # # # # # # # # # ok # # # # # # # # # # # # # # # # # # # # # # # 
 
@@ -180,7 +189,7 @@ P_beat_sota = pbinom(k_alpha2, n, ci_binom[5,"upper"], lower.tail = F) # P[X>x]
 sprintf("The probability of achieving an estimated accuracy better than SOTA, %.4f, for a classifier with         
         significantly better accuracy, p=%.4f, is just %.4f.",
         p_hat, ci_binom[5,"upper"], P_beat_sota)
-        
+
 # # # # # # # # # # # # # # # # # Figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 x = (mu-60):(mu+90) # this is the plot range, adjust to your liking
@@ -198,8 +207,8 @@ polygon(c(k_alpha2, x[x>=k_alpha2], max(x)), c(0,y[x>=k_alpha2], 0), col="red")
 
 axis(1 , las = 2, at=c(x[1], ci_binom[5,"lower"]*n, n*p, 
                        ci_binom[5,"upper"]*n, k_alpha2, tail(x,1)), 
-     labels=c(as.character(x[1]/n), "lower", as.character(p), "upper", 
-              "0.9213", as.character(tail(x,1)/n)))
+     labels=c(as.character(x[1]/n), TeX('$\\p_{alpha/2}$'), as.character(p), TeX('$\\p_{1-alpha/2}$'), 
+              TeX('$\\p^m_{1-alpha/2}$'), as.character(tail(x,1)/n)))
 
 # # # # # # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -213,14 +222,15 @@ Psota = numeric(n+1)
 
 for (k in 0: n){
   Pk = dbinom(k,n,p)
-  Psota[k+1] = pbinom(0,n_c,Pk,lower.tail = F) # P[C>0]
+  i = k+1
+  Psota[i] = pbinom(0,n_c,Pk,lower.tail = F) # P[C>0]
 }
 
 # # # # # # # # # # # # # # # # # Figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 x = (mu-70):(mu+70) # this is the plot range, adjust to your liking
 
-plot(x,Psota[x], type = 'h', axes=F, 
+plot(x,Psota[x+1], type = 'h', axes=F, 
      xlab = 'estimated accuracy/number of successes', 
      ylab = 'prob of at least one classifier > hat{p}')
 xax = seq(2650,2750, 10)
@@ -243,15 +253,17 @@ Psota = numeric(n+1)
 
 for (k in 0: n){
   Pk = dbinom(k,n,p)
-  Psota[k+1] = dbinom(1,n_c,Pk) 
+  i = k+1
+  Psota[i] = dbinom(1,n_c,Pk) 
 }
-# sum(Psota) # is 12.45, so not a pmf
+# This is also not a pmf, because we can simultaneously have exactly one classifier with k successes and
+# exactly one classifier with k' \neq k successes, out of n_c classifiers. 
 
 # # # # # # # # # # # # # # # # # Figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 x = (mu-80):(mu+80) # this is the plot range, adjust to your liking
 
-plot(x,Psota[x], type = 'h', axes=F, 
+plot(x,Psota[x+1], type = 'h', axes=F, 
      xlab = 'estimated accuracy/number of successes', 
      ylab = 'prob of at least one classifier > hat{p}')
 xax = seq(x[1],tail(x,1), 10)
@@ -273,17 +285,20 @@ axis(3, las = 2, at=xax, labels = as.character(klab))
 
 Fx = numeric(n+1)
 
-# k is the number of successes, then ell = n-k is the number of failures
+# use i for counting, since x = 0, ..., n
+
+# k is the number of successes, then x = n-k is the number of failures
 # probability of failure = 1-p
 
-for (ell in 0:n){
-  Gxf = pbinom(ell,n,(1-p)) #  P[X \leq \ell]
-  Fx[ell+1] = pbinom(0,n_c,Gxf,lower.tail = F) #  P[C>0]
+for (x in 0:n){
+  Gxf = pbinom(x,n,(1-p)) #  P[X \leq x]
+  i = x+1
+  Fx[i] = pbinom(0,n_c,Gxf,lower.tail = F) #  P[C>0]
 }
 
 # # # # # # # # # # # # # # # # # check-up # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # should be same as n-k_alpha2 = 236
-k_sota_est = which(Fx>0.025)[1]
+k_sota_est = which(Fx>0.025)[1]-1
 # # # # # # # # # # # # # # # # # ok # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 # # # # # # # # # # # # # # # # # Figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -294,8 +309,8 @@ plot(0:n,Fx, type = 'l', xlab = 'number of failures',
 
 # zooming in, and it gets more interesting, discreet curve 
 x = 200:300
-plot(x,Fx[x], type = 's', xlab = 'number of failures/estimated accuracy', 
-     ylab = 'probability of at least one classifier', axes = F)
+plot(x,Fx[x+1], type = 's', xlab = 'number of failures/estimated accuracy', 
+     ylab = 'F(z)', axes = F)
 
 xax = seq(x[1],tail(x,1), 10)
 klab = xax 
@@ -321,7 +336,7 @@ sprintf("The width of a 95 CI is %.2f, which is approx same range as Fx=1 - Fx=0
 ################# probability mass function ##########################
 
 fx = numeric(n)
-fx[1:n] = Fx[2:(n+1)]-Fx[1:n] # this is how pmf is defined
+fx[1:n] = Fx[2:(n+1)]-Fx[1:n] # this is how pmf is defined: f(x) = F(x)-F(x-1)
 
 # # # # # # # # # # # # # # # # # Figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -329,8 +344,8 @@ plot(1:n,fx, type = 's')
 
 # need to zoom in
 x = 200:300
-plot(x,fx[x], type = 'h', xlab = '', 
-     ylab = 'probability mass', axes = F)
+plot(x,fx[x], type = 'h', xlab = 'number of failures/estimated accuracy', 
+     ylab = 'f(z)', axes = F)
 xax = seq(x[1],tail(x,1), 10)
 klab = xax 
 plab = round(1000*(n-xax)/n)/1000
@@ -354,7 +369,7 @@ for (x in 0:n){
 fx = Fx[2:(n+1)]-Fx[1:n]
 
 x = 200:300
-plot(x,Fx[x], type = 's')
+plot(x,Fx[x+1], type = 's')
 plot(x,fx[x], type = 'h', xlab = '', ylab = 'probability mass', axes = F)
 # # # # # # # # # # # # # # # # # ok # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -363,8 +378,9 @@ plot(x,fx[x], type = 'h', xlab = '', ylab = 'probability mass', axes = F)
 
 # expected value
 Eterm = numeric(n+1)
-for (ell in 0:n){
-  Eterm[ell] = ell*fx[ell]
+for (x in 1:n){
+  i = x
+  Eterm[i] = x*fx[i]
 }
 
 Esota = sum(Eterm)
@@ -372,8 +388,9 @@ Esota_p = 1-Esota/n
 
 # variance
 vterm = numeric(n+1)
-for (ell in 0:n){
-  vterm[ell] = ell^2*fx[ell]
+for (x in 1:n){
+  i = x
+  vterm[i] = x^2*fx[i]
 }
 esquare = sum(vterm)
 
@@ -390,4 +407,92 @@ sprintf("The probability of achieving an estimated accuracy better than E(SOTA)=
         significantly better accuracy, %.4f, is %.4f.",
         Esota_p, ci_binom[5,"upper"], beat_esota)
 
+# # # # # # # # # # # # # # # # # Figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+x = (mu-60):(mu+90) # this is the plot range, adjust to your liking
+
+y = dbinom(x, n, p) # probability of x successes in n trials
+plot(x, y, type='h', xlab = '', ylab = '', axes=F) # histogram
+
+par(new=TRUE) # new plot in same window
+
+y = dbinom(x, n, ci_binom[5,"upper"]) # significantly better classifier
+plot(x, y, type = 'l', col = "red", xlab = '', ylab = '', axes=F)
+
+# area under curve for expected SOTA performance
+
+polygon(c(n-Esota, x[x>=n-Esota], max(x)), c(0,y[x>=n-Esota], 0), col="blue")
+
+# area under curve for SOTA performance
+polygon(c(k_alpha2, x[x>=k_alpha2], max(x)), c(0,y[x>=k_alpha2], 0), col="red")
+
+
+axis(1 , las = 2, at=c(ci_binom[5,"lower"]*n, n*p, 
+                       ci_binom[5,"upper"]*n, n-Esota, k_alpha2), 
+     labels=c(TeX('$\\p_{alpha/2}$'), 'p', TeX('$\\p_{1-alpha/2}$'), 
+              TeX('$\\Ep_{SOTA}$'), TeX('$\\p^m_{1-alpha/2}$')))
+
+######################### varying m, n, p ####################################
+
+m = 1000
+n = 10000
+p = 0.9
+
+
+Fx = numeric(n+1)
+
+# use i for counting, since x = 0, ..., n
+
+# k is the number of successes, then x = n-k is the number of failures
+# probability of failure = 1-p
+
+for (x in 0:n){
+  Gxf = pbinom(x,n,(1-p)) #  P[X \leq x]
+  i = x+1
+  Fx[i] = pbinom(0,m,Gxf,lower.tail = F) #  P[C>0]
+}
+
+fx = numeric(n)
+fx[1:n] = Fx[2:(n+1)]-Fx[1:n] # this is how pmf is defined: f(x) = F(x)-F(x-1)
+
+####################### Expected value and variance ###################################
+
+# expected value
+Eterm = numeric(n+1)
+for (x in 1:n){
+  i = x
+  Eterm[i] = x*fx[i]
+}
+
+Esota = sum(Eterm)
+Esota_p = 1-Esota/n
+
+# variance
+vterm = numeric(n+1)
+for (x in 1:n){
+  i = x
+  vterm[i] = x^2*fx[i]
+}
+esquare = sum(vterm)
+
+Vsota = esquare - Esota^2
+
+sprintf("The expected p_sota is %.4f, with a standard deviation of %.6f, for m=%s, n=%s, p=%s.",
+        (n-Esota)/n, sqrt(Vsota)/n, m, n, p)
+
+
+
+
+# need to zoom in
+x = 50:700
+plot(x,fx[x], type = 'l', col = 'blue', xlab = 'number of failures/estimated accuracy', 
+     ylab = 'f(z)', axes = F)
+xax = seq(x[1],tail(x,1), 10)
+klab = xax 
+plab = round(1000*(n-xax)/n)/1000
+axis(1, las = 2, at=xax, labels = as.character(plab))
+yax = seq(0,max(fx)+0.01,0.02)
+axis(2, las = 1, at=yax, labels = as.character(yax))
+axis(3, las = 2, at=xax, labels = as.character(klab))
+par(new=TRUE) # new plot in same window
 
