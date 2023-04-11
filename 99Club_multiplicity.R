@@ -10,7 +10,7 @@ library(latex2exp)  # mathematical notation
 ############################ 3.1 Nomenclature #############################
 ###############################################################################
 
-# n     - number of trials/size of a test set
+# n     - number of trials/size of test set
 # m     - number of experiments/number of classifiers
 # p     - prob of success/prob of correct prediction
 # k     - number of successes
@@ -109,7 +109,6 @@ alpha = 0.05
 Cx = 1 # one team
 
 P = numeric(n+1)
-
 for (x in 0: n){
   px = dbinom(x,n,1-p)
   i = x+1
@@ -280,7 +279,7 @@ P_up = pbinom(k_up,n,p, lower.tail = F) # P[X>x]
 # the probability of at least one team achieving at least $ci_binom["upper"]$ 
 # correct predictions?
 # Following the logic of the coin-flip multiple experiments, we have a binomial 
-# distribution with $n_c$ trials and probability of success (exceeding 95% CI) 
+# distribution with $m$ trials and probability of success (exceeding 95% CI) 
 # is by definition $alpha/2$. 
 
 Cx = 1 # number of teams
@@ -442,45 +441,55 @@ sprintf("The probability of achieving an estimated accuracy better than E(SOTA)=
 
 ######################### varying m, n, p ####################################
 
+# Expectation and standard deviation for p_SOTA
+
+ESp_SOTA <- function(m,n,p){
+  
+  # Cumulative density function
+  Fz = numeric(n+1)
+  # z is the number of failures
+  # use i for counting, since z = 0, ..., n
+  for (z in 0:n){
+    Pz = pbinom(z,n,(1-p)) 
+    i = z+1
+    Fz[i] = pbinom(0,m,Pz,lower.tail = F) #  P[C>0]
+  }
+  
+  # Probability mass function
+  fz = numeric(n)
+  fz[1:n] = Fz[2:(n+1)]-Fz[1:n] # this is how pmf is defined: f(x) = F(x)-F(x-1)
+  
+  # Expectation
+  
+  # Calculate each term z*f(z)
+  Eterm = numeric(n)
+  for (z in 1:n){
+    Eterm[z] = z*fz[z]
+  }
+  
+  Esota = sum(Eterm) # the sum, makes the expected number of failures
+  Ep_SOTA = (n-Esota)/n # translated to accuracy p_SOTA = (n-z)/n
+  
+  # Variance
+  vterm = numeric(n+1)
+  for (z in 1:n){
+    vterm[z] = z^2*fz[z]
+  }
+  esquare = sum(vterm)
+  
+  Vp_SOTA = esquare - Esota^2
+  Sp_SOTA = sqrt(Vp_SOTA)/n
+  
+  return(c(Ep_SOTA, Sp_SOTA))
+   
+}
+
 m = 1000
-n = 10000
+n = 3000
 p = 0.9
-
-# MAKE THIS INTO A FUNCTION
-
-Fz = numeric(n+1)
-# use i for counting, since z = 0, ..., n
-for (z in 0:n){
-  Pz = pbinom(z,n,(1-p)) 
-  i = z+1
-  Fz[i] = pbinom(0,m,Pz,lower.tail = F) #  P[C>0]
-}
-
-fz = numeric(n)
-fz[1:n] = Fz[2:(n+1)]-Fz[1:n] # this is how pmf is defined: f(x) = F(x)-F(x-1)
-
-Eterm = numeric(n+1)
-for (z in 1:n){
-  i = z
-  Eterm[z] = z*fz[i]
-}
-
-Esota = sum(Eterm)
-Esota_p = 1-Esota/n
-
-# Variance
-vterm = numeric(n+1)
-for (z in 1:n){
-  i = z
-  vterm[i] = z^2*fz[i]
-}
-esquare = sum(vterm)
-
-Vsota = esquare - Esota^2
-
-
+estd =  ESp_SOTA(m, n, p)
 sprintf("The expected p_sota is %.4f, with a standard deviation of %.6f, for m=%s, n=%s, p=%s.",
-        (n-Esota)/n, sqrt(Vsota)/n, m, n, p)
+        estd[1], estd[2], m, n, p)
 
 
 
