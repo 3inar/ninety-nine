@@ -2,20 +2,40 @@
 # https://www.overleaf.com/project/63c8012bf045548a94e2d140
 # by Kajsa Møllersen (kajsa.mollersen@uit.no) February 2023 updated March 2023
 
-# P     - probability, specified when used
-# n     - number of trials, size of a test set
-# p     - for prob of success in a binomial distr when this is a constant param
-# k     - number of successes, n-k is the number of failures
-# gk    - for P(Z=k|n,p) binomal distribution: probability of k successes
-# gf    - for P(Z=f|n,1-p) binomal distribution: probability of f failures
-# Gxk   - for P(X \leq x) binomial cum distr: prob of at most x successes
-# Gxf   - for P(X \leq x) binomial cum distr: prob of at most x failures
-# n_c   - number of experiments, number of classifiers
-# p_hat - estimated accuracy of a classifier: p_hat = k/n
-# Cx    - r.v., cx = 0,1,...,n_c. number of classifiers w p_hat>(n-x)/n
-# Fx    - for P(C > 0|n_c,n,p) prob of at least one classifier having at most 
-#         x failures (identical to at least n-x successes)
-# sota  - state-of-the-art
+###############################################################################
+############################ 3.1 Nomenclature #############################
+###############################################################################
+
+# n     - number of trials/size of test set
+# m     - number of experiments/number of classifiers
+# p     - prob of success/prob of correct prediction
+
+# Y     - r.v., indicates if prediction is correct
+
+# k     - number of successes
+# X     - r.v., number of failures; n-k
+
+# P_    - probability, specified when used
+
+# px    - probability of x failures in one experiment
+# Px    - probability of at most x failures in one experiment
+
+# Cx    - r.v., number of experiments with at most x failures
+
+# p_hat - accuracy of a classifier: p_hat = (n-x)/n
+
+# p_SOTA - max_j p_hat_j
+
+# Z     - r.v., number of failures on at least one classifier
+
+# Fz    - cdf of Z: P(C_z > 0|m,n,p) prob of at least one classifier having at most 
+#         z failures (identical to at least n-z successes)
+# fz    - pmf of Z
+
+# alpha - significance level
+
+# SOTA - state-of-the-art
+
 
 library(binom)      # confidence interval for binomial distribution
 library(tictoc)     # for timing
@@ -23,73 +43,74 @@ library(latex2exp)  # mathematical notation
 
 
 ###############################################################################
-############################ Competition example - dependency #############################
+############################ 4.1 Dependency #############################
 ###############################################################################
 
 # Consider a classification problem with a test set of size $3,000$, and a 
-# classifier with probability of correct classification is $P(\hat{y}=y)$, where
-# $y$ is the true label, and $\hat{y}$ is the label predicted by the classifier.
-# We will refer to this as the classifier's accuracy and denote it by $p$. 
+# classifier with probability of correct classification is $p$.
 # The estimated accuracy, that is, the classifier's performance on the test set, 
-# is $\hat{P}(\hat{y}=y)$, denoted by $p_hat$.
+# is denoted by $p_hat$.
+
+alpha = 0.05
 
 m = 1000
 n = 3000
 p = 0.9
 mu = n*p # the expected number of correct predictions
 
+rho = 0.6 # correlation coefficient
+
 # Simulate dependency
 
-q0 = numeric(n)
-q0[1:mu] = 1
+# Set-up from Boland et al (1989) 'Modelling dependence in simple and indirect majority systems',
+# where we have a leading classifier with classifications Y_0, and then the m classifiers with 
+# correlation rho = corr(Y_0, Y_j). The m classifiers are independent of each other given Y_0.
 
-rho = 0.6
-
-p_dep = p + rho*(1-p)
-
-p1 = 1-p_dep
-p0 = (mu/(n-mu))*(1-p_dep)
+# For simplicity, let hat{p}_0 = p
+y0 = numeric(n) # vector of zeros of length n
+y0[1:mu] = 1 # exactly \mu of them are correct classifications
 
 
+# In the first arXiv version, I had not yet discovered the Boland paper, so I had my own definitions.
+# p_dep is the probability of a correct prediction if the leading prediction is correct. The next line
+# just shows that Boland and me were doing the same thing, but theirs was much better articulated.
+p_dep = p + rho*(1-p) # P(Y_j = 1|Y_0 = 1)
 
-rep = 100000          # 60 sec for a thousand, 9,000 sec for 100,000
+# the probabilities of Y_j being the opposite of Y_0
+p_flip1 = 1-p - rho*(1-p) # P(Y_j = 0|Y_0 = 1), same as 1-p_dep
+p_flip0 =  p - rho*p# P(Y_j = 1|Y_0 = 0), same as (mu/(n-mu))*(1-p_dep)
 
-min_dep = numeric(rep)
-min_indep = numeric(rep)
+rep = 1000          # 60 sec for a thousand, 9,000 sec for 100,000
+
+min_dep = numeric(rep) # min number of failures with dependency
+min_indep = numeric(rep) # for independent, as a check
+
 tic()
 for (ell in 1:rep){
-  diff = numeric(m)
-  x_dep = numeric(m)  # number of failures
+  
+  x_dep = numeric(m)  # number of failures for m experiments
 
-  for (k in 1:m){
-    flip1 = rbinom(mu,1,p1)
-    flip0 = rbinom(n-mu,1,p0)
+  for (j in 1:m){
+    # vectors of 0s and 1s indicating a flip relative to y0
+    flip1 = rbinom(mu,1,p_flip1) # flipping correct predictions
+    flip0 = rbinom(n-mu,1,p_flip0) # flipping incorrect predictions
+    flip = c(flip1,flip0)
+    
+    y = abs(y0-flip) # correct predictions
+    
+    x_dep[j] = n-sum(y)
   
-    x_dep[k] = n-sum(abs(q0-c(flip1,flip0)))
-  
-  #  diff[k] = sum(flip1)-sum(flip0)
   }
 
   min_dep[ell] = min(x_dep)
   
-
-  #plot(1:m,sort(x_dep), col = 'red', type = 's', axes = F, xlab = '', ylab ='')
-  
-
   x_indep = rbinom(m,n,1-p)
   min_indep[ell] = min(x_indep)
   
-  
-  #par(new=TRUE) # new plot in same window
-
-  #plot(1:m,sort(x_indep), type = 's', xlab = '', ylab ='number of failures')
-  
 }
-
 toc()
 
-# print(min(x_dep))
-# print(min(x_indep))
+# Histograms of the minimum number of failures for m classifiers, in rep repetitions.
 
 histbreaks = seq(min(c(x_dep,x_indep)), max(c(x_dep,x_indep))+8,10)
 
@@ -98,21 +119,17 @@ hist(x_dep, xlab = 'number of failures', ylab = 'number of classifiers',
 hist(x_indep, xlab = 'number of failures', ylab = 'number of classifiers', 
      breaks = histbreaks, ylim = c(0,300))
 
-sort_min_dep = sort(min_dep)
-x_dep_fails = sort_min_dep[0.025*rep]
+# The upper bound of the 95% confidence interval
+sort_min_dep = sort(min_dep) # sort the minimum number of failures
+min_dep_alpha2 = sort_min_dep[(alpha/2)*rep] # find the alpha/2 bound
 
-(n-x_dep_fails)/n
-
+sprintf("The simulated dependent upper bound of the %s confidence interval is %.5f, with %s repetitions.",  
+        1-alpha, (n-min_dep_alpha2)/n, rep)
 
 sort_min_indep = sort(min_indep)
-x_indep_fails = sort_min_indep[0.025*rep]
-(n-x_indep_fails)/n
+min_indep_alpha2 = sort_min_indep[(alpha/2)*rep]
 
-histbreaks = seq(210,273,3)
+sprintf("The simulated independent upper bound of the %s confidence interval is %.5f, with %s repetitions.",  
+        1-alpha, (n-min_indep_alpha2)/n, rep)
 
-hist(min_dep, xlab = 'minimum number of failures', ylab = 'number of classifiers', 
-     breaks = histbreaks, ylim = c(0,30000))
-
-hist(min_indep, xlab = 'minimum number of failures', ylab = 'number of classifiers', 
-     breaks = histbreaks, ylim = c(0,30000))
 
