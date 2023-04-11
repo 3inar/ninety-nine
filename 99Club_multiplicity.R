@@ -103,68 +103,6 @@ m = 1000
 mu = n*p # the expected number of correct predictions
 alpha = 0.05
 
-# First, let's have a look at probabilities for at least one team having exactly 
-# x failures out of n.
-
-Cx = 1 # one team
-
-P = numeric(n+1)
-for (x in 0: n){
-  px = dbinom(x,n,1-p)
-  i = x+1
-  P[i] = pbinom(Cx-1,m,px,lower.tail = F) # P[C>0]
-}
-
-# # # # # # # # # # # # # # # # # Figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-x = (n-mu-70):(n-mu+70) # this is the plot range, adjust to your liking
-
-plot(x,P[x+1], type = 'h', axes=F, 
-     xlab = 'estimated accuracy/number of successes', 
-     ylab = 'prob of at least one classifier > hat{p}')
-xax = seq(2650,2750, 10)
-klab = xax 
-plab = round(1000*xax/n)/1000
-axis(1, las = 2, at=xax, labels = as.character(plab))
-axis(2, las = 2)
-axis(3, las = 2, at=xax, labels = as.character(klab))
-
-# # # # # # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-# What does this figure illustrate, and why isn't it a pmf?
-# Looking at a single classifier, the events x = k and x = k', k \neq k' are mutually exclusive.
-# Looking at all classifiers, the events P(C>0|k) and P(C>0|k') are not, because we can simultaneously have at
-# least one classifier with k successes and another one with k' successes
-
-# What about exactly one classifier with exactly x failures?
-
-P = numeric(n+1)
-
-for (x in 0: n){
-  px = dbinom(x,n,1-p)
-  i = x+1
-  P[i] = dbinom(1,m,px) 
-}
-# This is also not a pmf, because we can simultaneously have exactly one classifier with x failures and
-# exactly one classifier with x' \neq x failures, out of m classifiers. 
-
-# # # # # # # # # # # # # # # # # Figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-x = (n-mu-80):(n-mu+80) # this is the plot range, adjust to your liking
-
-plot(x,P[x+1], type = 'h', axes=F, 
-     xlab = 'estimated accuracy/number of successes', 
-     ylab = 'prob of at least one classifier > hat{p}')
-xax = seq(x[1],tail(x,1), 10)
-klab = xax 
-plab = round(1000*xax/n)/1000
-axis(1, las = 2, at=xax, labels = as.character(plab))
-axis(2, las = 2)
-axis(3, las = 2, at=xax, labels = as.character(klab))
-# # # # # # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# Fun figure. Interestingly, the left part has the same shape as the pmf. I have to think about that a bit. 
-
-
 ################################# Cumulative distribution function SOTA ############################################
 
 # Z is the number of failures in at least one classifier.
