@@ -26,7 +26,7 @@ library(latex2exp)  # mathematical notation
 
 # P_    - probability, specified when used
 
-# Fz    - cdf of Z: P(C_z > 0|m,n,p) prob of at least one classifier having at most 
+# Fz    - cdf of Z: P(C_z > 0|m,n,theta) prob of at least one classifier having at most 
 #         z failures (identical to at least n-z successes)
 # fz    - pmf of Z
 
