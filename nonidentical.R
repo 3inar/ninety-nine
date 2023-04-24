@@ -43,7 +43,7 @@ library(latex2exp)  # mathematical notation
 
 
 ###############################################################################
-############################ 4.4 Non-identical aka Poisson Binomial #############################
+############################ 4.2 Non-identical aka Poisson Binomial #############################
 ###############################################################################
 
 # Consider a classification problem with a test set of size $n =3,000$, and 
