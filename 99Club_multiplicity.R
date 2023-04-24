@@ -10,24 +10,21 @@ library(latex2exp)  # mathematical notation
 ############################ 3.1 Nomenclature #############################
 ###############################################################################
 
-# n     - number of trials/size of test set
-# m     - number of experiments/number of classifiers
-# p     - prob of success/prob of correct prediction
-# k     - number of successes
-# X     - r.v., number of failures; n-k
-
-# P_    - probability, specified when used
-
+# n         - number of trials/size of test set
+# theta     - prob of success/prob of correct prediction
+# k         - number of successes
+# X         - r.v., number of failures; n-k
+# theta_hat = (n-X)/n - estimator of theta
 # px    - probability of x failures in one experiment
 # Px    - probability of at most x failures in one experiment
 
+# m     - number of experiments/number of classifiers
 # Cx    - r.v., number of experiments with at most x failures
-
-# p_hat - accuracy of a classifier: p_hat = (n-x)/n
-
-# p_SOTA - max_j p_hat_j
-
 # Z     - r.v., number of failures on at least one classifier
+
+# theta_SOTA_hat - estimator of theta_SOTA 
+
+# P_    - probability, specified when used
 
 # Fz    - cdf of Z: P(C_z > 0|m,n,p) prob of at least one classifier having at most 
 #         z failures (identical to at least n-z successes)
@@ -42,7 +39,7 @@ library(latex2exp)  # mathematical notation
 ###############################################################################
 
 n = 20      # number of trials
-p = 0.5     # probability of success
+theta = 0.5     # probability of success
 m = 1000    # number of experiments
 
 # a) Consider $n$ flips of a fair coin, and the outcome is the number of heads, 
@@ -51,12 +48,13 @@ m = 1000    # number of experiments
 k = 15      # number of heads (successes)
 x = n-k     # number of failures
 
-# The probability of observing at most $n-x$ successes in one series 
-Px = pbinom(x,n,1-p) 
+# The probability of observing at least $n-x$ successes in one series, equivalent
+# to observing at most $x$ failures P(X \leq x)
+Px = pbinom(x,n,1-theta) 
 sprintf("The probability of observing %s heads or more in %s trials is %.5f.",  
         k, n, Px)
 
-# The probability of observing at most $n-k$ successes at least once
+# The probability of observing at most $x$ successes at least once
 Cx = 1
 P_Cx = pbinom(Cx-1,m,Px, lower.tail = F) # P[X>x]
 
@@ -71,7 +69,7 @@ k = 18      # number of correct predictions
 x = n-k     # number of failures
 
 # The probability of observing at most $x$ failures in one series 
-Px = pbinom(x,n,1-p) 
+Px = pbinom(x,n,1-theta) 
 
 sprintf("The probability of at most %s failures in %s trials is %.5f.",  
         x, n, Px)
@@ -84,13 +82,13 @@ sprintf("The probability of at most %s failures in %s trials is %.5f.",
 Cx = 1
 P_Cx = pbinom(Cx-1,m,Px, lower.tail = F) # P[X>x]
 
-p_hat = (n-x)/n 
+theta_hat = (n-x)/n 
 
 sprintf("The probability of at least %s out of %s experiments having at most %s out of %s failures is %.5f.",  
         Cx, m, x, n, P_Cx)
 # In other words
 sprintf("The top-ranked accuracy is at least %.4f with a probability of %.4f. The true accuracy is %s.",  
-        p_hat, P_Cx, p)
+        theta_hat, P_Cx, theta)
 
 
 ###############################################################################
@@ -98,9 +96,9 @@ sprintf("The top-ranked accuracy is at least %.4f with a probability of %.4f. Th
 ###############################################################################
 
 n = 3000
-p = 0.9
+theta = 0.9
 m = 1000
-mu = n*p # the expected number of correct predictions
+mu = n*theta # the expected number of correct predictions
 alpha = 0.05
 
 ################################# Cumulative distribution function SOTA ############################################
@@ -114,13 +112,13 @@ Fz = numeric(n+1)
 # use i for counting, since z = 0, ..., n
 
 for (z in 0:n){
-  Pz = pbinom(z,n,(1-p)) 
+  Pz = pbinom(z,n,(1-theta)) 
   i = z+1
   Fz[i] = pbinom(0,m,Pz,lower.tail = F) #  P[C>0]
 }
 
 # # # # # # # # # # # # # # # # # check-up # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-x_sota_est = which(Fz>0.025)[1]-1 # should be same as x_alpha2 = 236
+x_sota_hat = which(Fz>0.025)[1]-1 # should be same as x_alpha2 = 236
 # # # # # # # # # # # # # # # # # ok # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 # # # # # # # # # # # # # # # # # Figure 2 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -131,7 +129,7 @@ plot(0:n,Fz, type = 'l', xlab = 'number of failures',
 
 # zooming in, and it gets more interesting, discreet curve 
 z = 200:300
-plot(z,Fz[z+1], type = 's', xlab = 'number of failures/estimated accuracy', 
+plot(z,Fz[z+1], type = 's', xlab = 'number of failures/accuracy', 
      ylab = 'F(z)', axes = F)
 
 xax = seq(z[1],tail(z,1), 10)
@@ -154,7 +152,7 @@ plot(1:n,fz, type = 's')
 
 # need to zoom in
 z = 200:300
-plot(z,fz[z], type = 'h', xlab = 'number of failures/estimated accuracy', 
+plot(z,fz[z], type = 'h', xlab = 'number of failures/accuracy', 
      ylab = 'f(z)', axes = F)
 xax = seq(z[1],tail(z,1), 10)
 klab = xax 
@@ -195,25 +193,25 @@ axis(3, las = 2, at=xax, labels = as.character(klab))
 # for classifier $j$.
 
 n = 3000
-p = 0.9
-mu = n*p # the expected number of correct predictions
+theta = 0.9
+mu = n*theta # the expected number of correct predictions
 
 # 95\% confidence interval
 alpha = 0.05
 ci_binom = binom.confint(mu,n,conf.level=1-alpha, methods = "exact") # CI for binomial
 
 sprintf("The %s confidence interval for an estimated accuracy of %s is (%.4f,%.4f).",  
-        (1-alpha)*100, p, ci_binom["lower"], ci_binom["upper"])
+        (1-alpha)*100, theta, ci_binom["lower"], ci_binom["upper"])
 
 # # # # # # # # # # # # # # # # # Check-up # # # # # # # # # # # # # # # # # # # # # # # 
 # The probability of exceeding CI_{up} should be close to alpha/2 = 0.025 # # # 
 
 k_up = floor(ci_binom[["upper"]]*n) # number of successes exceeding the CI
-P_up = pbinom(k_up,n,p, lower.tail = F) # P[X>x]
-
+# flooring the CI bound, so P_up > alpha/2
+P_up = pbinom(k_up,n,theta, lower.tail = F) # P[X>x]
 # # # # # # # # # # # # # # # # # ok # # # # # # # # # # # # # # # # # # # # # # # 
 
-# If there are $m$ teams, each with a classifier with $p$, what is
+# If there are $m$ teams, each with a classifier with $\theta$, what is
 # the probability of at least one team achieving at least $ci_binom["upper"]$ 
 # correct predictions?
 # Following the logic of the coin-flip multiple experiments, we have a binomial 
@@ -224,7 +222,7 @@ Cx = 1 # number of teams
 Palpha2 = pbinom(Cx-1,m,alpha/2, lower.tail = F) # P[X>x].
 sprintf("The probability of at least %s out of %s teams exceeding the upper limit of the CI is %s.",  
         Cx, m, Palpha2)
-sprintf("Notice that the accuracy, p, is not part of the equation.")
+sprintf("Notice that the accuracy, theta, is not part of the equation.")
 
 # # # # # # # # # # # # # # # # # Simulations # # # # # # # # # # # # # # # # # # # # # # # 
 
@@ -236,14 +234,13 @@ k_up = floor(ci_binom[["upper"]]*n) # number of successes exceeding the CI
 n_success = numeric(rep) # pre-allocate
 tic()
 for (i in 0: rep){
-  sim_success = rbinom(m, n, p) # the number of successes for each team
+  sim_success = rbinom(m, n, theta) # the number of successes for each team
   n_success[i] = length(which(sim_success>k_up)) # how many are above CI_{up}?
 }
 
 which(n_success == 0) # any repetitions with all below CI_{up}?
 toc()
 # # # # # # # # # # # # # # # # # ok # # # # # # # # # # # # # # # # # # # # # # # 
-
 
 # If there are $m$ classifiers, what must be the prob, $Palpha2$, of each 
 # classifier having at most $x$ failures, for the probability of at least Cx = 1
@@ -267,22 +264,21 @@ P = pbinom(Cx-1,m,Palpha2, lower.tail = F) # should be 0.025
 # # # # # # # # # # # # # # # # # ok # # # # # # # # # # # # # # # # # # # # # # # 
 
 # If the probability of wrongly predicting at most x out of n data points 
-# is Palpha2. What is x when p = 0.9?
+# is Palpha2. What is x when theta = 0.9?
 
-k_alpha2 = qbinom(Palpha2, n, p, lower.tail = F)
+k_alpha2 = qbinom(Palpha2, n, theta, lower.tail = F)
 x_alpha2 = n-k_alpha2
-p_hat = (n-x_alpha2)/n
+theta_alpha2 = (n-x_alpha2)/n
 sprintf("With a probablitiy of alpha/2 = %s, at least %s team will achieve an accuracy of at least %.4f.",
-        alpha/2, Cx, p_hat)
+        alpha/2, Cx, theta_alpha2)
 
 # # # # # # # # # # # # # # # # # Check-up # # # # # # # # # # # # # # # # # # # # # # # 
-Palpha2_discr = pbinom(k_alpha2,n,p,lower.tail = F) # < Palpha2
+Palpha2_discr = pbinom(k_alpha2,n,theta,lower.tail = F) # < Palpha2
 P_discr = pbinom(Cx-1,m,Palpha2_discr, lower.tail = F) # = 0.02475 < P
-
 # # # # # # # # # # # # # # # # # ok # # # # # # # # # # # # # # # # # # # # # # # 
 
-sprintf("In summary, if there are %s teams, each with %s accuracy, and a test set of size %s, there is a probability of %s that at least %s team will have at most %s incorrect predictions, corresponding to an estimated accuracy of %.4f.",  
-        m, p, n, alpha/2, Cx, x_alpha2, p_hat)
+sprintf("In summary, if there are %s teams, each with %s probability of correct prediction, and a test set of size %s, there is a probability of %s that at least %s team will have at most %s incorrect predictions, corresponding to an estimated accuracy of %.4f.",  
+        m, theta, n, alpha/2, Cx, x_alpha2, theta_alpha2)
 
 # # # # # # # # # # # # # # # # # Simulations # # # # # # # # # # # # # # # # # # # # # # # 
 # I hope to recreate alpha/2
@@ -291,7 +287,7 @@ rep = 1000000 # one million repetitions takes about 80 seconds
 n_success = numeric(rep)
 tic()
 for (i in 1: rep){
-  sim_success = rbinom(m, n, p) # the number of successes for each team
+  sim_success = rbinom(m, n, theta) # the number of successes for each team
   n_success[i] = length(which(sim_success>k_alpha2)) # how many are above k_alpha2?
 }
 
@@ -326,27 +322,27 @@ Vsota = esquare - Esota^2
 
 sprintf("The expected number of failures is %.4f, with a variance of %.4f.",
         Esota, Vsota)
-sprintf("The expected p_SOTA is %.4f, with standard deviation of %.4f.",
+sprintf("The expected theta_hat_SOTA is %.4f, with standard deviation of %.4f.",
         (n-Esota)/n, sqrt(Vsota)/n)
 
-# When the true accuracy is $0.9$, there is a non-negligible (at least in the 
-# common statistical significance sense) probability that the top-ranked team
-# will have an estimated accuracy of at least 0.9213, which is often referred to 
-# as state-of-the-art (SOTA) performance. 
+# When the probability of correct prediction is $0.9$, there is a non-negligible 
+# (at least in the common statistical significance sense) probability that the 
+# top-ranked team will have an estimated accuracy of at least 0.9213, which is 
+# often referred to as state-of-the-art (SOTA) performance. 
 
 # What is the probability of beating the SOTA for a method with significantly better
 # accuracy?
 
 P_beat_sota = pbinom(k_alpha2, n, ci_binom[["upper"]], lower.tail = F) # P[X>x]
 
-sprintf("The probability of achieving an estimated accuracy better than SOTA, %.4f, for a classifier with significantly better accuracy, p=%.4f, is just %.4f.",
-        p_hat, ci_binom[["upper"]], P_beat_sota)
+sprintf("The probability of achieving an estimated accuracy better than the upper bound of the CI for theta_hat_SOTA, %.4f, for a classifier with significantly better probability of correct prediction, p=%.4f, is just %.4f.",
+        theta_alpha2, ci_binom[["upper"]], P_beat_sota)
 
 # # # # # # # # # # # # # # # # # Figure 1 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 x = (mu-60):(mu+90) # this is the plot range, adjust to your liking
 
-y = dbinom(x, n, p) # probability of x successes in n trials
+y = dbinom(x, n, theta) # probability of x successes in n trials
 plot(x, y, type='h', xlab = '', ylab = '', axes=F) # histogram
 
 par(new=TRUE) # new plot in same window
@@ -362,10 +358,10 @@ polygon(c(n-Esota, x[x>=n-Esota], max(x)), c(0,y[x>=n-Esota], 0), col="blue")
 polygon(c(k_alpha2, x[x>=k_alpha2], max(x)), c(0,y[x>=k_alpha2], 0), col="red")
 
 
-axis(1 , las = 2, at=c(ci_binom[["lower"]]*n, n*p, 
+axis(1 , las = 2, at=c(ci_binom[["lower"]]*n, n*theta, 
                        ci_binom[["upper"]]*n, n-Esota, k_alpha2), 
-     labels=c(TeX('$\\p_{alpha/2}$'), 'p', TeX('$\\p_{1-alpha/2}$'), 
-              TeX('$\\Ep_{SOTA}$'), TeX('$\\p^m_{1-alpha/2}$')))
+     labels=c(TeX('$\\theta_{alpha/2}$'), TeX('$\\theta$'), TeX('$\\theta_{1-alpha/2}$'), 
+              TeX(r'($E \hat{theta}_{SOTA}$)'), TeX('$\\theta^m_{1-alpha/2}$')))
 
 # # # # # # # # # # # # # # # # # # end figure # # # # # # # # # 
 
@@ -373,7 +369,7 @@ axis(1 , las = 2, at=c(ci_binom[["lower"]]*n, n*p,
 
 beat_esota = pbinom(n-Esota, n, ci_binom[["upper"]], lower.tail = F) 
 
-sprintf("The probability of achieving an estimated accuracy better than E(SOTA)=%.4f, for a classifier with significantly better accuracy, %.4f, is %.4f.",
+sprintf("The probability of achieving an accuracy better than E(SOTA)=%.4f, for a classifier with significantly better proability of correct prediction, %.4f, is %.4f.",
         Esota_p, ci_binom[["upper"]], beat_esota)
 
 
@@ -424,10 +420,10 @@ ESp_SOTA <- function(m,n,p){
 
 m = 1000
 n = 3000
-p = 0.9
-estd =  ESp_SOTA(m, n, p)
-sprintf("The expected p_sota is %.4f, with a standard deviation of %.6f, for m=%s, n=%s, p=%s.",
-        estd[1], estd[2], m, n, p)
+theta = 0.9
+estd =  ESp_SOTA(m, n, theta)
+sprintf("The expected theta_sota is %.4f, with a standard deviation of %.6f, for m=%s, n=%s, theta=%s.",
+        estd[1], estd[2], m, n, theta)
 
 
 
