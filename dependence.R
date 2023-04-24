@@ -47,9 +47,9 @@ library(latex2exp)  # mathematical notation
 ###############################################################################
 
 # Consider a classification problem with a test set of size $3,000$, and a 
-# classifier with probability of correct classification is $p$.
+# classifier with probability of correct classification is $theta$.
 # The estimated accuracy, that is, the classifier's performance on the test set, 
-# is denoted by $p_hat$.
+# is denoted by $theta_hat$.
 
 alpha = 0.05
 
@@ -90,7 +90,7 @@ for (ell in 1:rep){
   
   x_dep = numeric(m)  # number of failures for m experiments
 
-  for (j in 1:m){
+  for (j in 1:m){ # I believe this inner loop is unnecessary
     # vectors of 0s and 1s indicating a flip relative to y0
     flip1 = rbinom(mu,1,p_flip1) # flipping correct predictions
     flip0 = rbinom(n-mu,1,p_flip0) # flipping incorrect predictions
