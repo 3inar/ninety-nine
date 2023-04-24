@@ -8,7 +8,7 @@
 
 # n     - number of trials/size of test set
 # m     - number of experiments/number of classifiers
-# p     - prob of success/prob of correct prediction
+# theta     - prob of success/prob of correct prediction
 
 # Y     - r.v., indicates if prediction is correct
 
@@ -22,13 +22,13 @@
 
 # Cx    - r.v., number of experiments with at most x failures
 
-# p_hat - accuracy of a classifier: p_hat = (n-x)/n
+# theta_hat - accuracy of a classifier: p_hat = (n-x)/n
 
-# p_SOTA - max_j p_hat_j
+# theta_hat_SOTA - max_j p_hat_j
 
 # Z     - r.v., number of failures on at least one classifier
 
-# Fz    - cdf of Z: P(C_z > 0|m,n,p) prob of at least one classifier having at most 
+# Fz    - cdf of Z: P(C_z > 0|m,n,theta) prob of at least one classifier having at most 
 #         z failures (identical to at least n-z successes)
 # fz    - pmf of Z
 
@@ -55,8 +55,8 @@ alpha = 0.05
 
 m = 1000
 n = 3000
-p = 0.9
-mu = n*p # the expected number of correct predictions
+theta = 0.9
+mu = n*theta # the expected number of correct predictions
 
 rho = 0.6 # correlation coefficient
 
@@ -66,7 +66,7 @@ rho = 0.6 # correlation coefficient
 # where we have a leading classifier with classifications Y_0, and then the m classifiers with 
 # correlation rho = corr(Y_0, Y_j). The m classifiers are independent of each other given Y_0.
 
-# For simplicity, let hat{p}_0 = p
+# For simplicity, let hat{\theta}_0 = \theta
 y0 = numeric(n) # vector of zeros of length n
 y0[1:mu] = 1 # exactly \mu of them are correct classifications
 
@@ -74,11 +74,11 @@ y0[1:mu] = 1 # exactly \mu of them are correct classifications
 # In the first arXiv version, I had not yet discovered the Boland paper, so I had my own definitions.
 # p_dep is the probability of a correct prediction if the leading prediction is correct. The next line
 # just shows that Boland and me were doing the same thing, but theirs was much better articulated.
-p_dep = p + rho*(1-p) # P(Y_j = 1|Y_0 = 1)
+p_dep = theta + rho*(1-theta) # P(Y_j = 1|Y_0 = 1)
 
 # the probabilities of Y_j being the opposite of Y_0
-p_flip1 = 1-p - rho*(1-p) # P(Y_j = 0|Y_0 = 1), same as 1-p_dep
-p_flip0 =  p - rho*p# P(Y_j = 1|Y_0 = 0), same as (mu/(n-mu))*(1-p_dep)
+p_flip1 = 1-theta - rho*(1-theta) # P(Y_j = 0|Y_0 = 1), same as 1-p_dep
+p_flip0 = theta - rho*theta# P(Y_j = 1|Y_0 = 0), same as (mu/(n-mu))*(1-p_dep)
 
 rep = 1000          # 60 sec for a thousand, 9,000 sec for 100,000
 
@@ -104,7 +104,7 @@ for (ell in 1:rep){
 
   min_dep[ell] = min(x_dep)
   
-  x_indep = rbinom(m,n,1-p)
+  x_indep = rbinom(m,n,1-theta)
   min_indep[ell] = min(x_indep)
   
 }
