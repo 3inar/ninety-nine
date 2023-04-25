@@ -79,7 +79,7 @@ y0[1:mu] = 1 # exactly \mu of them are correct classifications
 
 
 
-rep = 1000         # 60 sec for a thousand, 9,000 sec for 100,000
+rep = 1000         # 60 sec for a thousand, 10,000 sec for 100,000
 
 min_dep = numeric(rep) # min number of failures with dependency
 min_indep = numeric(rep) # for independent, as a check
@@ -118,12 +118,12 @@ toc()
 
 # Histograms of the minimum number of failures for m classifiers, in rep repetitions.
 
-histbreaks = seq(min(c(x_dep,x_indep)), max(c(x_dep,x_indep))+8,10)
+histbreaks = seq(min(c(x_dep,x_indep)), max(c(x_dep,x_indep))+9,10)
 
 hist(x_dep, xlab = 'number of failures', ylab = 'number of classifiers', 
-     breaks = histbreaks, ylim = c(0,300))
+     breaks = histbreaks, ylim = c(0,250))
 hist(x_indep, xlab = 'number of failures', ylab = 'number of classifiers', 
-     breaks = histbreaks, ylim = c(0,300))
+     breaks = histbreaks, ylim = c(0,250))
 
 # The upper bound of the 95% confidence interval
 sort_min_dep = sort(min_dep) # sort the minimum number of failures
