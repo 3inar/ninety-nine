@@ -55,12 +55,13 @@ m = 1000
 n = 3000
 theta_min = 0.875
 theta_max = 0.9
+theta_mean = (theta_max+theta_min)/2
 step = (theta_max-theta_min)/m
 theta_vec = seq(theta_min, theta_max, step)
 
 # Simulate non-identical
 
-rep = 1000000          # 6 sec for 100,000, 3 min for 1,000,000
+rep = 100000          # 6 sec for 100,000, 3 min for 1,000,000
 
 min_nonid = numeric(rep) # min number of failures 
 min_id = numeric(rep)
@@ -70,7 +71,7 @@ tic()
 for (ell in 1:rep){
   
   x_nonid = rbinom(m,n,1-theta_vec) # number of failures for classifier j=1, .., m
-  x_id = rbinom(m,n,1-theta_max)
+  x_id = rbinom(m,n,1-theta_mean)
     
   min_nonid[ell] = min(x_nonid)
   min_id[ell] = min(x_id)
@@ -90,15 +91,47 @@ hist(min_nonid, xlab = 'number of failures', ylab = 'number of classifiers', bre
 sort_min_nonid = sort(min_nonid) # sort the minimum number of failures
 min_nonid_alpha2 = sort_min_nonid[(alpha/2)*rep] # find the alpha/2 bound
 
-sprintf("The simulated non-identical upper bound of the %s confidence interval is %.5f, with %s repetitions.",  
-        1-alpha, (n-min_nonid_alpha2)/n, rep)
+sprintf("The simulated non-identical upper bound of the %s confidence interval is %.5f, with %s repetitions. Bias: %s.",  
+        1-alpha, (n-min_nonid_alpha2)/n, rep, (n-min_nonid_alpha2)/n-theta_max)
 
 # The upper bound of the 95% confidence interval
 sort_min_id = sort(min_id) # sort the minimum number of failures
 min_id_alpha2 = sort_min_id[(alpha/2)*rep] # find the alpha/2 bound
 
-sprintf("The simulated iid upper bound of the %s confidence interval is %.5f, with %s repetitions.",  
-        1-alpha, (n-min_id_alpha2)/n, rep)
+sprintf("The simulated iid upper bound of the %s confidence interval is %.5f, with %s repetitions.True SOTA: %s",  
+        1-alpha, (n-min_id_alpha2)/n, rep, (n-min_id_alpha2)/n-theta_mean)
+
+# If there are $m$ classifiers, what must be the prob, $Palpha2$, of each 
+# classifier having at most $x$ failures, for the probability of at least Cx = 1
+# classifier having at most $x$ failures to be P(Cx > 0) = alpha/2?
+# We can calculate $x$ from $Palpha2$.
+
+Cx = 1
+
+# This is easily calculated:
+# P(Cx > 0) = 1 - P(Cx = 0) = alpha/2
+# binom coeff is 1 since cx = 0, Palpha2^0 = 1
+# and we are left with (1-Palpha2)^m = 1 - alpha\2
+
+Palpha2 = 1 - (1-alpha/2)^(1/m)
+
+sprintf("For the probability of at least %s classifier to achieve at most $x$ failures to be alpha/2=%s, the prob for each classifier achieving at most $x$ failures must be %.8f.",  
+        Cx, alpha/2, Palpha2)
+
+# # # # # # # # # # # # # # # # # Check-up # # # # # # # # # # # # # # # # # # # # # # # 
+P = pbinom(Cx-1,m,Palpha2, lower.tail = F) # should be 0.025
+# # # # # # # # # # # # # # # # # ok # # # # # # # # # # # # # # # # # # # # # # # 
+
+# If the probability of wrongly predicting at most x out of n data points 
+# is Palpha2. What is x when theta = 0.9?
+
+k_alpha2 = qbinom(Palpha2, n, theta_mean, lower.tail = F)
+x_alpha2 = n-k_alpha2
+theta_alpha2 = (n-x_alpha2)/n
+sprintf("With a probablitiy of alpha/2 = %s, at least %s team will achieve an accuracy of at least %.4f.",
+        alpha/2, Cx, theta_alpha2)
+
+
 
 # Analytical result
 
