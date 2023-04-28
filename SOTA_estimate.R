@@ -13,6 +13,8 @@ library(ggplot2)
 library(plotly)
 
 library(binom)      # confidence interval for binomial distribution
+library(tictoc)     # for timing
+
 
 # https://www.kaggle.com/c/siim-isic-melanoma-classification/leaderboard
 
@@ -38,7 +40,7 @@ C2 <- data.frame(AUC = comb_data$prv_score[comb_data$prv_score > 0.8], dataset =
 # have a look
 hist(C2$AUC, breaks=200)
 
-hist(comb_data$prv_score[comb_data$prv_score > 0.9], breaks = 30, xlim=c(0.9,0.95), ylim = c(0,50))
+hist(comb_data$prv_score[comb_data$prv_score > 0.9], breaks = 30, xlim=c(0.9,0.95), ylim = c(0,500))
 
 ###############################################################################
 ############################ 4.3 Dependent non-identical #############################
@@ -68,26 +70,13 @@ n_ben = n_test-n_mal # estimated number of benign cases
 sprintf("Estimated test set size: %s.",
         n_test)
 
-theta_ref = 0.905
+theta_min = 0.9
+theta_max = 0.925
+theta_mean = (theta_max+theta_min)/2
+step = (theta_max-theta_min)/m
+theta_vec = seq(theta_min, theta_max, step)
 
-
-rate = 2
-shape = 2
-xgamma = rgamma(m/2, shape, scale = 1/rate)
-xgam = max(xgamma)-xgamma
-#hist(xgam, breaks = 200)
-width = 0.025
-xgam = width*xgam/max(xgam)
-#hist(xgam, breaks = 200)
-
-xunif = runif(m/2, 0.9, 0.93)
-
-theta_vec = c(theta_ref+xgam,xunif)
-hist(theta_vec,breaks = 30, xlim=c(0.9,0.95), ylim = c(0,500))
-
-mu_theta = mean(theta_vec)
-theta_max = max(theta_vec)
-theta_min = min(theta_vec)
+mu_theta = (theta_max+theta_min)/2
 
 m = length(comb_data$prv_score > theta_min)
 sprintf("Number of classifiers above %s, m = %s.",
@@ -121,9 +110,6 @@ rho = 0.6 # correlation coefficient
 # correlation rho = corr(Y_0, Y_j). The m classifiers are independent of each other given Y_0.
 
 # For simplicity, let hat{\theta}_0 = mu_theta
-y0 = numeric(n) # vector of zeros of length n
-mu0 = round(n*0.93)
-y0[1:mu0] = 1 # exactly \mu of them are correct classifications
 
 
 
@@ -139,6 +125,10 @@ for (ell in 1:rep){
   x_dep = numeric(m)  # number of failures for m experiments
   
   for (j in 1:m){ 
+    
+    y0 = numeric(n) # vector of zeros of length n
+    mu0 = round(n*theta_vec[j])
+    y0[1:mu0] = 1 # exactly \mu of them are correct classifications
     
     # the probabilities of Y_j being the opposite of Y_0
     p_flip1 = 1-theta_vec[j] - rho*(1-theta_vec[j]) # P(Y_j = 0|Y_0 = 1)
@@ -167,7 +157,7 @@ toc()
 
 hat_theta = (n-x_dep)/n
 
-hist(hat_theta, breaks = 30, xlim=c(0.9,0.95), ylim = c(0,500))
+hist(hat_theta, breaks = 30, xlim=c(0.89,0.95), ylim = c(0,500))
 
 
 # Histograms of the minimum number of failures for m classifiers, in rep repetitions.
