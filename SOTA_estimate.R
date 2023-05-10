@@ -53,8 +53,6 @@ hist(comb_data$prv_score[comb_data$prv_score > 0.9], breaks = 30, xlim=c(0.9,0.9
 
 alpha = 0.05
 
-
-
 n_val_test = 10982 # size of test and validation set
 test_prop = 0.7 # 30/70 split
 n_test = round(test_prop*n_val_test) # test set size
@@ -71,10 +69,14 @@ sprintf("Estimated test set size: %s.",
         n_test)
 
 theta_min = 0.9
-theta_max = 0.925
-theta_mean = (theta_max+theta_min)/2
-step = (theta_max-theta_min)/m
-theta_vec = seq(theta_min, theta_max, step)
+theta_max = 0.93
+theta_mid = theta_min + 2*(theta_max-theta_min)/3
+theta_mean = theta_min+ (theta_max-theta_min)/2
+step0 = (theta_max-theta_min)/(m/2)
+step1 = (theta_max-theta_min)/(m*2)
+theta_vec0 = seq(theta_min, theta_mid-step0, step0)
+theta_vec1 = seq(theta_mid, theta_max, step1)
+theta_vec = c(theta_vec0, theta_vec1)
 
 mu_theta = (theta_max+theta_min)/2
 
@@ -114,7 +116,7 @@ rho = 0.6 # correlation coefficient
 
 
 
-rep = 1000         # 60 sec for a thousand, 10,000 sec for 100,000
+rep = 2000       # 60 sec for a thousand, 10,000 sec for 100,000
 
 min_dep = numeric(rep) # min number of failures with dependency
 min_indep = numeric(rep) # for independent, as a check
@@ -159,15 +161,18 @@ hat_theta = (n-x_dep)/n
 
 hist(hat_theta, breaks = 30, xlim=c(0.89,0.95), ylim = c(0,500))
 
+hist(comb_data$prv_score[comb_data$prv_score > 0.89], breaks = 30, xlim=c(0.89,0.95), ylim = c(0,500))
+
+
 
 # Histograms of the minimum number of failures for m classifiers, in rep repetitions.
 
 histbreaks = seq(min(c(x_dep,x_indep)), max(c(x_dep,x_indep))+9,10)
 
 hist(x_dep, xlab = 'number of failures', ylab = 'number of classifiers', 
-     breaks = histbreaks, ylim = c(0,250))
+     breaks = histbreaks, ylim = c(0,500))
 hist(x_indep, xlab = 'number of failures', ylab = 'number of classifiers', 
-     breaks = histbreaks, ylim = c(0,250))
+     breaks = histbreaks, ylim = c(0,500))
 
 # The upper bound of the 95% confidence interval
 sort_min_dep = sort(min_dep) # sort the minimum number of failures
