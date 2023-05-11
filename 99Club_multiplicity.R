@@ -1,6 +1,6 @@
 # Multiple classifiers and biased state-of-the-art estimation
 # https://www.overleaf.com/project/63c8012bf045548a94e2d140
-# by Kajsa Møllersen (kajsa.mollersen@uit.no) February 2023 updated March 2023
+# by Kajsa Møllersen (kajsa.mollersen@uit.no) 
 
 library(binom)      # confidence interval for binomial distribution
 library(tictoc)     # for timing
@@ -38,58 +38,7 @@ library(latex2exp)  # mathematical notation
 ############################ 3.2 Coin flipping example #############################
 ###############################################################################
 
-n = 20      # number of trials
-theta = 0.5     # probability of success
-m = 1000    # number of experiments
-
-# a) Consider $n$ flips of a fair coin, and the outcome is the number of heads, 
-# referred to as the number of successes in a binomial distribution. 
-
-k = 15      # number of heads (successes)
-x = n-k     # number of failures
-
-# The probability of observing at least $n-x$ successes in one series, equivalent
-# to observing at most $x$ failures P(X \leq x)
-Px = pbinom(x,n,1-theta) 
-sprintf("The probability of observing %s heads or more in %s trials is %.5f.",  
-        k, n, Px)
-
-# The probability of observing at most $x$ successes at least once
-Cx = 1
-P_Cx = pbinom(Cx-1,m,Px, lower.tail = F) # P[X>x]
-
-sprintf("The probability of at least %s out of %s experiments having at most %s out of %s failures is %.5f.",  
-        Cx, m, x, n, P_Cx)
-
-
-# b) Consider $n$ flips of a fair coin, and the number of successes is the 
-# number of times a classifier correctly predicts the outcome. 
-
-k = 18      # number of correct predictions
-x = n-k     # number of failures
-
-# The probability of observing at most $x$ failures in one series 
-Px = pbinom(x,n,1-theta) 
-
-sprintf("The probability of at most %s failures in %s trials is %.5f.",  
-        x, n, Px)
-
-# If the experiment is performed $m$ times, we can calculate the 
-# probability of at least one classifier achieving at most $x$ failures as 
-# follows: The probability of at least one success in a binomial distribution
-# with $m$ trials, and a probability of success, $Px$ is calculated 
-# as a single experiment's probability of at most $x$ failures in $n$ trials.
-Cx = 1
-P_Cx = pbinom(Cx-1,m,Px, lower.tail = F) # P[X>x]
-
-theta_hat = (n-x)/n 
-
-sprintf("The probability of at least %s out of %s experiments having at most %s out of %s failures is %.5f.",  
-        Cx, m, x, n, P_Cx)
-# In other words
-sprintf("The top-ranked accuracy is at least %.4f with a probability of %.4f. The true accuracy is %s.",  
-        theta_hat, P_Cx, theta)
-
+# see CoinFlip.R
 
 ###############################################################################
 ########### 3.3 The probability distribution of p_SOTA ########################
