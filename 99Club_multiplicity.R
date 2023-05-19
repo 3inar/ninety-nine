@@ -44,92 +44,7 @@ library(latex2exp)  # mathematical notation
 ########### 3.3 The probability distribution of p_SOTA ########################
 ###############################################################################
 
-n = 3000
-theta = 0.9
-m = 1000
-mu = n*theta # the expected number of correct predictions
-alpha = 0.05
-
-################################# Cumulative distribution function SOTA ############################################
-
-# Z is the number of failures in at least one classifier.
-# Let's have a look at probabilities for at least one classifier having at most 
-# z failures. This gives the cumulative distribution function
-
-Fz = numeric(n+1)
-
-# use i for counting, since z = 0, ..., n
-
-for (z in 0:n){
-  Pz = pbinom(z,n,(1-theta)) 
-  i = z+1
-  Fz[i] = pbinom(0,m,Pz,lower.tail = F) #  P[C>0]
-}
-
-# # # # # # # # # # # # # # # # # check-up # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-x_sota_hat = which(Fz>0.025)[1]-1 # should be same as x_alpha2 = 236
-# # # # # # # # # # # # # # # # # ok # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-# # # # # # # # # # # # # # # # # Figure 2 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-# the whole range, not very much information
-plot(0:n,Fz, type = 'l', xlab = 'number of failures', 
-     ylab = 'probability of at least one team')
-
-# zooming in, and it gets more interesting, discreet curve 
-z = 200:300
-plot(z,Fz[z+1], type = 's', xlab = 'number of failures/accuracy', 
-     ylab = 'F(z)', axes = F)
-
-xax = seq(z[1],tail(z,1), 10)
-klab = xax 
-plab = round(1000*(n-xax)/n)/1000
-axis(1, las = 2, at=xax, labels = as.character(plab))
-axis(2, las = 2)
-axis(3, las = 2, at=xax, labels = as.character(klab))
-
-# # # # # # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-################# probability mass function ##########################
-
-fz = numeric(n)
-fz[1:n] = Fz[2:(n+1)]-Fz[1:n] # this is how pmf is defined: f(x) = F(x)-F(x-1)
-
-# # # # # # # # # # # # # # # # # Figure 3 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-plot(1:n,fz, type = 's')
-
-# need to zoom in
-z = 200:300
-plot(z,fz[z], type = 'h', xlab = 'number of failures/accuracy', 
-     ylab = 'f(z)', axes = F)
-xax = seq(z[1],tail(z,1), 10)
-klab = xax 
-plab = round(1000*(n-xax)/n)/1000
-axis(1, las = 2, at=xax, labels = as.character(plab))
-yax = seq(0,max(fz)+0.01,0.02)
-axis(2, las = 1, at=yax, labels = as.character(yax))
-axis(3, las = 2, at=xax, labels = as.character(klab))
-# # # # # # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-# # # # # # # # # # # # # # # # # check-up # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# sum(fz)
-# # # # # # # # # # # # # # # # # ok # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-# # # # # # # # # # # # # # # # # check-up # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# Fz = numeric(n+1)
-
-# for (z in 0:n){
-#   pz = pbinom(z,n,1-p)
-#   Fz[z+1] = 1 - (1 - pz)^m
-# }
-# fz = Fz[2:(n+1)]-Fz[1:n]
-
-# z = 200:300
-# plot(z,Fz[z+1], type = 's')
-# plot(z,fz[z], type = 'h', xlab = '', ylab = 'probability mass', axes = F)
-# # # # # # # # # # # # # # # # # ok # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
+# see ProbDistr_thetaSOTA.R
 
 ###############################################################################
 ################# 3.4 A simulated public competition example ##################
@@ -324,48 +239,6 @@ sprintf("The probability of achieving an accuracy better than E(SOTA)=%.4f, for 
 
 ######################### varying m, n, p ####################################
 
-# Expectation and standard deviation for p_SOTA
-
-ESp_SOTA <- function(m,n,p){
-  
-  # Cumulative density function
-  Fz = numeric(n+1)
-  # z is the number of failures
-  # use i for counting, since z = 0, ..., n
-  for (z in 0:n){
-    Pz = pbinom(z,n,(1-p)) 
-    i = z+1
-    Fz[i] = pbinom(0,m,Pz,lower.tail = F) #  P[C>0]
-  }
-  
-  # Probability mass function
-  fz = numeric(n)
-  fz[1:n] = Fz[2:(n+1)]-Fz[1:n] # this is how pmf is defined: f(x) = F(x)-F(x-1)
-  
-  # Expectation
-  
-  # Calculate each term z*f(z)
-  Eterm = numeric(n)
-  for (z in 1:n){
-    Eterm[z] = z*fz[z]
-  }
-  
-  Esota = sum(Eterm) # the sum, makes the expected number of failures
-  Ep_SOTA = (n-Esota)/n # translated to accuracy p_SOTA = (n-z)/n
-  
-  # Variance
-  vterm = numeric(n+1)
-  for (z in 1:n){
-    vterm[z] = z^2*fz[z]
-  }
-  esquare = sum(vterm)
-  
-  Vp_SOTA = esquare - Esota^2
-  Sp_SOTA = sqrt(Vp_SOTA)/n
-  
-  return(c(Ep_SOTA, Sp_SOTA))
-   
-}
 
 m = 1000
 n = 3000
