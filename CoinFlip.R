@@ -64,7 +64,9 @@ sprintf("The probability of hat{\theta} = %s in %s trials is %.5f.",
 
 # The probability of observing at most $x$ failures at least once, in other words, more than 0
 Cx = 1
-P_Cx = pbinom(Cx-1,m,Px, lower.tail = F) # P[X>x]
+P_Cx = pbinom(Cx-1,m,Px, lower.tail = F) # P[X>x] 
+# equivalent to
+P_Cx = 1 - dbinom(Cx-1,m,Px)
 
 sprintf("The probability of at least %s out of %s experiments having at most %s out of %s failures is %.5f.",  
         Cx, m, x, n, P_Cx)
@@ -103,6 +105,7 @@ sprintf("The probability of at most %s failures in %s trials is %.5f.",
 Cx = 1
 P_Cx = pbinom(Cx-1,m,Px, lower.tail = F) # P[X>x]
 
+
 theta_hat = (n-x)/n 
 
 sprintf("The probability of at least %s out of %s experiments having at most %s out of %s failures is %.4f.",  
@@ -113,7 +116,7 @@ sprintf("The top-ranked accuracy is at least %.4f with a probability of %.4f. Th
 
 ################################################### Simulations ###########################################
 
-rep = 10000000 # We recommend 10 million repetitions, because of the small Px = 0.00020 in b). It takes about 900 seconds
+rep = 10000 # We recommend 10 million repetitions, because of the small Px = 0.00020 in b). It takes about 900 seconds
 
 # a) Consider $n$ flips of a fair coin, and the outcome is the number of heads, 
 # referred to as the number of successes in a binomial distribution. 
@@ -209,7 +212,36 @@ sprintf("The theoretical probability of at least %s out of %s trials resulting i
 sprintf("The simulated result for %s simulations of at least %s out of %s trials resulting in at most %s failures is %.5f.",  
         rep, Cx, m, x, sim_P_Cx)
 
+############################# Probability functions #########################
 
+
+# comes with the functions 'cdf', 'pmf', 'expect' and 'variance'
+source("ProbDistr_thetaSOTA.R") 
+
+# Parameters from coin-flip experiment a)
+n = 20
+theta = 0.5
+m = 100
+
+# In coin-flip experiment a), we investigated for z = 5, and got P = 0.87646
+z = 5
+Fz = cdf(n, theta, m) # the cdf of the coin-flip experiment a)
+sprintf("The probability of at most %s out of %s failures in at least one out of %s classifiers is %.5f.",  
+        z, n, m, Fz[z+1])
+
+
+# Parameters from coin-flip experiment b)
+n = 20
+theta = 0.5
+m = 1000
+
+Fz = cdf(n, theta, m) # the cdf of the coin-flip experiment b)
+
+# From coin-flip experiment b), we have that P(\hat{theta}_SOTA > 0.9) = 0.1823. 
+z = n*(1-0.9) # r gets all confused, and as.integer(z) becomes 1. wtf?
+z = 2
+sprintf("The probability of at most %s out of %s failures in at least one out of %s classifiers is %.5f.",  
+        z, n, m, Fz[z+1])
 
 
 
