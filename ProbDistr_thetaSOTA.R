@@ -9,7 +9,6 @@
 # expect    - expectation
 # variance  - variance
 
-
 ###############################################################################
 ############################ 3.1 Notation #############################
 ###############################################################################
@@ -74,7 +73,7 @@ pmf <- function(n, theta, m, f0 = F){
   
   Fz = cdf(n, theta, m) # the cumulative distribution function
   
-  fz = numeric(n) # pre-allocate
+  fz = numeric(n+1) # pre-allocate
   fz[2:(n+1)] = Fz[2:(n+1)]-Fz[1:n] # this is how pmf is defined: f(x) = F(x)-F(x-1)
   
   # We are missing out on f(z=0), and is therefore calculated "by hand", but only if m < 1000, because of
@@ -97,7 +96,7 @@ pmf <- function(n, theta, m, f0 = F){
 
 # Expectation of Z
 
-expect <- function(m,n,theta){
+expect <- function(n,theta,m){
   
   # Probability mass function
   fz = pmf(n, theta, m, f0 = F)
@@ -105,7 +104,7 @@ expect <- function(m,n,theta){
   # Expectation
   
   # Calculate each term z*f(z)
-  Eterm = numeric(n)
+  Eterm = numeric(n+1)
   for (z in 0:n){
     Eterm[z] = z*fz[z]
   }
@@ -118,7 +117,7 @@ expect <- function(m,n,theta){
 
 # Variance for Z
 
-variance <- function(m,n,theta){
+variance <- function(n,theta,m){
   
   # Probability mass function
   fz = pmf(n, theta, m, f0 = F)
@@ -127,13 +126,13 @@ variance <- function(m,n,theta){
   
   # Calculate the expectation of Z^2
   vterm = numeric(n+1)
-  for (z in 1:n){
+  for (z in 0:n){
     vterm[z] = z^2*fz[z]
   }
   esquare = sum(vterm)
   
   # Get the expectation of Z
-  EZ = expect(m,n,theta)
+  EZ = expect(n,theta,m)
   
   VarZ = esquare - EZ^2
   
@@ -174,69 +173,8 @@ plot(z,Fz[z+1], type = 's')
 #par(new=TRUE) # new plot in same window
 plot(z,fz[z+1], type = 'h', xlab = '', ylab = 'probability mass') #, axes = F
 
-EZ = expect(m,n,theta)
-VarZ = variance(m,n,theta)
+EZ = expect(n,theta,m)
+VarZ = variance(n,theta,m)
 
 sprintf("The expected value is %.4f, and the variance is %.4f.",
         EZ, VarZ)
-
-
-
-
-
-
-
-
-
-
-n = 3000
-theta = 0.9
-m = 1000
-mu = n*theta # the expected number of correct predictions
-alpha = 0.05
-
-# # # # # # # # # # # # # # # # # check-up # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-x_sota_hat = which(Fz>0.025)[1]-1 # should be same as x_alpha2 = 236
-# # # # # # # # # # # # # # # # # ok # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-# # # # # # # # # # # # # # # # # Figure 2 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-# the whole range, not very much information
-plot(0:n,Fz, type = 'l', xlab = 'number of failures', 
-     ylab = 'probability of at least one team')
-
-# zooming in, and it gets more interesting, discreet curve 
-z = 200:300
-plot(z,Fz[z+1], type = 's', xlab = 'number of failures/accuracy', 
-     ylab = 'F(z)', axes = F)
-
-xax = seq(z[1],tail(z,1), 10)
-klab = xax 
-plab = round(1000*(n-xax)/n)/1000
-axis(1, las = 2, at=xax, labels = as.character(plab))
-axis(2, las = 2)
-axis(3, las = 2, at=xax, labels = as.character(klab))
-
-# # # # # # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-
-# # # # # # # # # # # # # # # # # Figure 3 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-plot(1:n,fz, type = 's')
-
-# need to zoom in
-z = 200:300
-plot(z,fz[z], type = 'h', xlab = 'number of failures/accuracy', 
-     ylab = 'f(z)', axes = F)
-xax = seq(z[1],tail(z,1), 10)
-klab = xax 
-plab = round(1000*(n-xax)/n)/1000
-axis(1, las = 2, at=xax, labels = as.character(plab))
-yax = seq(0,max(fz)+0.01,0.02)
-axis(2, las = 1, at=yax, labels = as.character(yax))
-axis(3, las = 2, at=xax, labels = as.character(klab))
-# # # # # # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-
-
-
