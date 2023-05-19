@@ -83,7 +83,6 @@ Palpha2 = 1 - dbinom(Cx-1,m,Px)
 
 sprintf("The probability of at least %s out of %s teams exceeding the upper limit of the CI is %s.",  
         Cx, m, Palpha2)
-sprintf("Notice that the accuracy, theta, is not part of the equation.")
 
 # If there are $m$ classifiers, what must be the prob, $Px$, of each 
 # classifier having at most $x$ failures, for the probability of at least Cx = 1
@@ -99,8 +98,8 @@ Cx = 1 # number of teams
 
 Px = 1 - (1-alpha/2)^(1/m)
 
-sprintf("For the probability of at least %s classifier to achieve at most $x$ failures to be alpha/2=%s, the prob for each classifier achieving at most $x$ failures must be %.8f.",  
-        Cx, alpha/2, Px)
+sprintf("For the probability of at least %s out of %s classifiers to achieve at most $x$ failures to be alpha/2=%s, the prob for each classifier achieving at most $x$ failures must be %.8f.",  
+        Cx, m, alpha/2, Px)
 
 # # # # # # # # # # # # # # # # # Check-up # # # # # # # # # # # # # # # # # # # # # # # 
 P = 1-pbinom(Cx-1,m,Px) # should be 0.025
@@ -117,13 +116,106 @@ sprintf("With a probablitiy of alpha/2 = %s, at least %s team will achieve an ac
         alpha/2, Cx, theta_alpha2, x_alpha2)
 
 # # # # # # # # # # # # # # # # # check-up # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-Fz = cdf(n,theta,m)
-
-x_sota_hat = which(Fz>0.025)[1]-1 # should be same as x_alpha2 = 236
-
+Fz = cdf(n,theta,m) # the cdf
+x = which(Fz>alpha/2)[1]-1 # should be same as x_alpha2 = 236
 # # # # # # # # # # # # # # # # # ok # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+# # # # # # # # # # # # # # # # # Check-up # # # # # # # # # # # # # # # # # # # # # # # 
+# Since x_alpha2 is discreet, but Px is not, we'll calculate for x_alpha2 and x_alpha2-1, 
+# and then the two results should be on each side of alpha/2
+
+Palpha2_discr = pbinom(x_alpha2-1,n,1-theta) # 
+P_low = 1-pbinom(Cx-1,m,Palpha2_discr) #
+
+Palpha2_discr = pbinom(x_alpha2,n,1-theta) # 
+P_up = 1-pbinom(Cx-1,m,Palpha2_discr) #
+# # # # # # # # # # # # # # # # # ok 0.02475 0.03243# # # # # # # # # # # # # # # # # # # # # # # 
+
+sprintf("In summary, if there are %s teams, each with %s probability of correct prediction, and a test set of size %s, there is a probability of %s that at least %s team will have at most %s incorrect predictions, corresponding to an estimated accuracy of %.4f.",  
+        m, theta, n, alpha/2, Cx, x_alpha2, theta_alpha2)
+
+# Expected value
+Esota = expect(n,theta,m)
+Esota_theta = 1-Esota/n
+sprintf("The expected value is %.4f",
+        Esota_theta)
+
+# When the probability of correct prediction is $0.9$, there is a non-negligible probability that the 
+# top-ranked team will have an estimated accuracy of at least theta^m_alpha2 = 0.9213. 
+
+# What is the probability of beating the SOTA for a method with significantly better
+# accuracy?
+
+P_beat_sota[1] = pbinom(x_alpha2, n, 1-ci_binom[["upper"]]) # 
+P_beat_sota[2] = pbinom(x_alpha2-1, n, 1-ci_binom[["upper"]]) # 
+P_beat_sota
+
+sprintf("The probability of achieving an estimated accuracy better than the upper bound of the CI for theta_hat_SOTA, %.4f, for a classifier with significantly better probability of correct prediction, p=%.4f, is just %.4f.",
+        theta_alpha2, ci_binom[["upper"]], P_beat_sota[1])
+
+# beat esota?
+
+beat_esota = pbinom(Esota, n, 1-ci_binom[["upper"]]) 
+
+sprintf("The probability of achieving an accuracy better than E(SOTA)=%.4f, for a classifier with significantly better proability of correct prediction, %.4f, is %.4f.",
+        Esota_theta, ci_binom[["upper"]], beat_esota)
+
+######################### varying m, n, p ####################################
+
+n = c(3000,1000,10000)
+m = c(1000,100,500)
+theta = c(0.85,0.9,0.95)
+
+for (i in 1:3){
+  for (j in 1:3){
+    for (k in 1:3){
+      Esota =  expect(n[i], theta[k], m[j])
+      Esota_theta = 1-Esota/n[i]
+      Vsota = variance(n[i], theta[k], m[j])
+      Std_sota_theta = sqrt(Vsota)/n[i]
+      sprintf("The expected theta_sota is %.4f, with a standard deviation of %.6f, for m=%s, n=%s, theta=%s.",
+              Esota_theta, Std_sota_theta, m[j], n[i], theta[k])
+    }
+  }
+}
+
+
+
+
+
+
+# # # # # # # # # # # # # # # # # Figure 1 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+# let k be the number of successes, = n-x
+
+k = (mu-60):(mu+90) # this is the plot range, adjust to your liking
+
+y = dbinom(k, n, theta) # probability of x successes in n trials
+plot(k, y, type='h', xlab = '', ylab = '', axes=F) # histogram
+
+par(new=TRUE) # new plot in same window
+
+y = dbinom(k, n, ci_binom[["upper"]]) # significantly better classifier
+plot(k, y, type = 'l', col = "red", xlab = '', ylab = '', axes=F)
+
+# area under curve for expected SOTA performance
+polygon(c(n-Esota, k[k>=n-Esota], max(k)), c(0,y[k>=n-Esota], 0), col="blue")
+
+# area under curve for SOTA performance
+k_alpha2 = n-x_alpha2
+polygon(c(k_alpha2, k[k>=k_alpha2], max(k)), c(0,y[k>=k_alpha2], 0), col="red")
+
+axis(1 , las = 2, at=c(ci_binom[["lower"]]*n, n*theta, 
+                       ci_binom[["upper"]]*n, n-Esota, k_alpha2), 
+     labels=c(TeX('$\\theta_{alpha/2}$'), TeX('$\\theta$'), TeX('$\\theta_{1-alpha/2}$'), 
+              TeX(r'($E \hat{theta}_{SOTA}$)'), TeX('$\\theta^m_{1-alpha/2}$')))
+
+# # # # # # # # # # # # # # # # # # end figure 1 # # # # # # # # # 
+
+
 # # # # # # # # # # # # # # # # # Figure 2 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+Fz = cdf(n,theta,m)
 
 # the whole range, not very much information
 plot(0:n,Fz, type = 'l', xlab = 'number of failures', 
@@ -141,11 +233,13 @@ axis(1, las = 2, at=xax, labels = as.character(plab))
 axis(2, las = 2)
 axis(3, las = 2, at=xax, labels = as.character(klab))
 
-# # # # # # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # end figure 2 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 # # # # # # # # # # # # # # # # # Figure 3 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-plot(1:n,fz, type = 's')
+fz = pmf(n,theta,m,f0 = T)
+
+plot(0:n,fz, type = 's')
 
 # need to zoom in
 z = 200:300
@@ -158,11 +252,8 @@ axis(1, las = 2, at=xax, labels = as.character(plab))
 yax = seq(0,max(fz)+0.01,0.02)
 axis(2, las = 1, at=yax, labels = as.character(yax))
 axis(3, las = 2, at=xax, labels = as.character(klab))
-# # # # # # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # end figure 3 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-# # # # # # # # # # # # # # # # # check-up # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# sum(fz)
-# # # # # # # # # # # # # # # # # ok # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 # # # # # # # # # # # # # # # # # check-up # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Fz = numeric(n+1)
@@ -208,13 +299,7 @@ toc()
 
 
 
-# # # # # # # # # # # # # # # # # Check-up # # # # # # # # # # # # # # # # # # # # # # # 
-Palpha2_discr = pbinom(k_alpha2,n,theta,lower.tail = F) # < Palpha2
-P_discr = pbinom(Cx-1,m,Palpha2_discr, lower.tail = F) # = 0.02475 < P
-# # # # # # # # # # # # # # # # # ok # # # # # # # # # # # # # # # # # # # # # # # 
 
-sprintf("In summary, if there are %s teams, each with %s probability of correct prediction, and a test set of size %s, there is a probability of %s that at least %s team will have at most %s incorrect predictions, corresponding to an estimated accuracy of %.4f.",  
-        m, theta, n, alpha/2, Cx, x_alpha2, theta_alpha2)
 
 # # # # # # # # # # # # # # # # # Simulations # # # # # # # # # # # # # # # # # # # # # # # 
 # I hope to recreate alpha/2
@@ -234,17 +319,6 @@ toc()
 
 ####################### Expected value and variance ###################################
 
-# Expected value
-# We do not have access to f(0), because f(0) = F(0)-F(-1), which does not exist. 
-# This will not influence the expectation, since 0*f(0) = 0
-Eterm = numeric(n+1)
-for (z in 1:n){
-  i = z
-  Eterm[z] = z*fz[i]
-}
-
-Esota = sum(Eterm)
-Esota_p = 1-Esota/n
 
 # Variance
 vterm = numeric(n+1)
@@ -261,63 +335,10 @@ sprintf("The expected number of failures is %.4f, with a variance of %.4f.",
 sprintf("The expected theta_hat_SOTA is %.4f, with standard deviation of %.4f.",
         (n-Esota)/n, sqrt(Vsota)/n)
 
-# When the probability of correct prediction is $0.9$, there is a non-negligible 
-# (at least in the common statistical significance sense) probability that the 
-# top-ranked team will have an estimated accuracy of at least 0.9213, which is 
-# often referred to as state-of-the-art (SOTA) performance. 
-
-# What is the probability of beating the SOTA for a method with significantly better
-# accuracy?
-
-P_beat_sota = pbinom(k_alpha2, n, ci_binom[["upper"]], lower.tail = F) # P[X>x]
-
-sprintf("The probability of achieving an estimated accuracy better than the upper bound of the CI for theta_hat_SOTA, %.4f, for a classifier with significantly better probability of correct prediction, p=%.4f, is just %.4f.",
-        theta_alpha2, ci_binom[["upper"]], P_beat_sota)
-
-# # # # # # # # # # # # # # # # # Figure 1 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-x = (mu-60):(mu+90) # this is the plot range, adjust to your liking
-
-y = dbinom(x, n, theta) # probability of x successes in n trials
-plot(x, y, type='h', xlab = '', ylab = '', axes=F) # histogram
-
-par(new=TRUE) # new plot in same window
-
-y = dbinom(x, n, ci_binom[["upper"]]) # significantly better classifier
-plot(x, y, type = 'l', col = "red", xlab = '', ylab = '', axes=F)
-
-# area under curve for expected SOTA performance
-
-polygon(c(n-Esota, x[x>=n-Esota], max(x)), c(0,y[x>=n-Esota], 0), col="blue")
-
-# area under curve for SOTA performance
-polygon(c(k_alpha2, x[x>=k_alpha2], max(x)), c(0,y[x>=k_alpha2], 0), col="red")
 
 
-axis(1 , las = 2, at=c(ci_binom[["lower"]]*n, n*theta, 
-                       ci_binom[["upper"]]*n, n-Esota, k_alpha2), 
-     labels=c(TeX('$\\theta_{alpha/2}$'), TeX('$\\theta$'), TeX('$\\theta_{1-alpha/2}$'), 
-              TeX(r'($E \hat{theta}_{SOTA}$)'), TeX('$\\theta^m_{1-alpha/2}$')))
-
-# # # # # # # # # # # # # # # # # # end figure # # # # # # # # # 
-
-# beat esota?
-
-beat_esota = pbinom(n-Esota, n, ci_binom[["upper"]], lower.tail = F) 
-
-sprintf("The probability of achieving an accuracy better than E(SOTA)=%.4f, for a classifier with significantly better proability of correct prediction, %.4f, is %.4f.",
-        Esota_p, ci_binom[["upper"]], beat_esota)
 
 
-######################### varying m, n, p ####################################
-
-
-m = 1000
-n = 3000
-theta = 0.9
-estd =  ESp_SOTA(m, n, theta)
-sprintf("The expected theta_sota is %.4f, with a standard deviation of %.6f, for m=%s, n=%s, theta=%s.",
-        estd[1], estd[2], m, n, theta)
 
 
 
