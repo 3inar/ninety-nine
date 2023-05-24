@@ -52,7 +52,7 @@ source("ProbDistr_thetaSOTA.R")
 
 n = 3000
 theta = 0.9
-mu = n*theta # the expected number of correct predictions
+mu = n*theta # the expected number of correct predictions for a single classifier
 m = 1000
 
 # 95% confidence interval for hat{theta} = mu, single classifier
@@ -145,7 +145,7 @@ sprintf("The expected value is %.4f",
 
 # What is the probability of beating the SOTA for a method with significantly better
 # accuracy?
-
+P_beat_sota = numeric(2)
 P_beat_sota[1] = pbinom(x_alpha2, n, 1-ci_binom[["upper"]]) # 
 P_beat_sota[2] = pbinom(x_alpha2-1, n, 1-ci_binom[["upper"]]) # 
 P_beat_sota
@@ -161,6 +161,7 @@ sprintf("The probability of achieving an accuracy better than E(SOTA)=%.4f, for 
         Esota_theta, ci_binom[["upper"]], beat_esota)
 
 ######################### varying m, n, p ####################################
+# I should write this in a more clever way
 
 n = c(3000,1000,10000)
 m = c(1000,100,500)
@@ -179,12 +180,25 @@ for (i in 1:3){
   }
 }
 
+i = 3; j = 1; k = 2
+Esota = expect(n[i], theta[k], m[j])
+Esota_theta = 1-Esota/n[i]
+Vsota = variance(n[i], theta[k], m[j])
+Std_sota_theta = sqrt(Vsota)/n[i]
+sprintf("The expected theta_sota is %.4f, with a standard deviation of %.6f, for m=%s, n=%s, theta=%s.",
+        Esota_theta, Std_sota_theta, m[j], n[i], theta[k])
 
 
-
-
+##############################################################################################
+################################### Figures ##################################################
+##############################################################################################
 
 # # # # # # # # # # # # # # # # # Figure 1 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+n = 3000
+theta = 0.9
+mu = n*theta # the expected number of correct predictions
+m = 1000
+Esota = expect(n, theta, m)
 
 # let k be the number of successes, = n-x
 
@@ -254,97 +268,153 @@ axis(2, las = 1, at=yax, labels = as.character(yax))
 axis(3, las = 2, at=xax, labels = as.character(klab))
 # # # # # # # # # # # # # # # # # end figure 3 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+##############################################################################################
+################################### Simulations ##############################################
+##############################################################################################
 
-# # # # # # # # # # # # # # # # # check-up # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# Fz = numeric(n+1)
+# I will here recreate the numbers from above. 
+rep = 100000 #  seconds on 100,000 reps, nice and smooth histogram
 
-# for (z in 0:n){
-#   pz = pbinom(z,n,1-p)
-#   Fz[z+1] = 1 - (1 - pz)^m
-# }
-# fz = Fz[2:(n+1)]-Fz[1:n]
+# the parameters
+n = 3000
+theta = 0.9
+mu = n*theta # the expected number of correct predictions for a single classifier
+m = 1000
+alpha = 0.05
 
-# z = 200:300
-# plot(z,Fz[z+1], type = 's')
-# plot(z,fz[z], type = 'h', xlab = '', ylab = 'probability mass', axes = F)
-# # # # # # # # # # # # # # # # # ok # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# I will not simulate the binomial distribution and its conf.int. 
+ci_binom = binom.confint(mu,n,conf.level=1-alpha, methods = "exact") # CI for binomial
+ci_up = ci_binom["upper"][[1]] 
 
-# # # # # # # # # # # # # # # # # Simulations # # # # # # # # # # # # # # # # # # # # # # # 
+sprintf('Simulate the multiplicity adjusted upper limit of the (1-alpha) confidence interval, %s',
+        x_alpha2)
 
-rep = 1000000 # one million repetitions takes about 80 seconds
-# I still don't expect any failures
+# Draw at random the number of failures in $m$ independent experiments, each having $n$ trials and probability $theta$
+x_vec = rbinom(m, n, 1-theta)
 
-k_up = floor(ci_binom[["upper"]]*n) # number of successes exceeding the CI
+# Have a quick look
+hist(x_vec, xlab = mean(x_vec))
 
-n_success = numeric(rep) # pre-allocate
+fz_ma = matrix(0,n+1,rep)
+fz_sim = numeric(n+1)
+
+#for (i in 0: n){
+ # j = i+1 # for counting
+#  veci = any(x_vec==i) # I: at least one with i failures
+ # vecfewi = any(x_vec<i) # II: at least one with fewer than i failures
+  #fz_ma[j,ell] = veci-vecfewi # 1 if I is true and II is false - definition of f(z)
+  # 0 if both true or both false
+  # -1 if I false and II true - set to 0
+#}
+
 tic()
-for (i in 0: rep){
-  sim_success = rbinom(m, n, theta) # the number of successes for each team
-  n_success[i] = length(which(sim_success>k_up)) # how many are above CI_{up}?
+for (ell in 1: rep){
+  x_vec = rbinom(m, n, 1-theta) # the number of failures in each of the m classifiers
+  
+  # Here, we want to find out for how many repetitions did at least one classifier have i failures, 
+  # but none had fewer than i failures
+  
+  for (i in 0: n){
+    j = i+1 # for counting
+    if(any(x_vec==i)){ # at least one with i failures
+      fz_ma[j,ell] = 1 # then the rest is not 'none had fewer'
+      break
+    } 
+  }
 }
 
-which(n_success == 0) # any repetitions with all below CI_{up}?
 toc()
-# # # # # # # # # # # # # # # # # ok # # # # # # # # # # # # # # # # # # # # # # # 
+fz_sim = rowSums(fz_ma)/rep
+
+plot(0:n,fz_sim, type = 's')
+
+# need to zoom in
+z = 200:300
+plot(z,fz_sim[z], type = 'h', xlab = 'number of failures/accuracy', 
+     ylab = 'f(z)')
+
+# Let's see if these add up
+Palpha2_discr = pbinom(x_alpha2-1,n,1-theta) # 
+P_low = 1-pbinom(Cx-1,m,Palpha2_discr) #
+
+Palpha2_discr = pbinom(x_alpha2,n,1-theta) # 
+P_up = 1-pbinom(Cx-1,m,Palpha2_discr) #
+print(c(P_low,P_up))
+
+# Note that x_alpha2 is shifted by 1 because P_up is 1 - P or something: need to verify that
+P_simlow = sum(fz_sim[1:x_alpha2])
+P_simup = sum(fz_sim[1:x_alpha2+1])
+print(c(P_simlow,P_simup))
 
 
+# Expectation
 
-
-
-
-
-
-
-
-
-
-
-
-
-# # # # # # # # # # # # # # # # # Simulations # # # # # # # # # # # # # # # # # # # # # # # 
-# I hope to recreate alpha/2
-rep = 1000000 # one million repetitions takes about 80 seconds
-
-n_success = numeric(rep)
-tic()
-for (i in 1: rep){
-  sim_success = rbinom(m, n, theta) # the number of successes for each team
-  n_success[i] = length(which(sim_success>k_alpha2)) # how many are above k_alpha2?
+Eterm = numeric(n+1)
+for (z in 0:n){
+  i = z+1
+  Eterm[z] = z*fz_sim[i]
 }
 
-sum(n_success)/rep # fraction of successes, should around alpha/2 = 0.025
-# there is no continuity correction, so I thought I would get < 0.025
-toc()
-# # # # # # # # # # # # # # # # # ok # # # # # # # # # # # # # # # # # # # # # # # 
+Esota_s = sum(Eterm)
+Esota_sim = 1-Esota_s/n
 
-####################### Expected value and variance ###################################
+Esota = expect(n, theta, m)
+Esota_theta = 1-Esota/n
 
+print(c(Esota_sim,Esota_theta))
 
 # Variance
+
 vterm = numeric(n+1)
-for (z in 1:n){
-  i = z
-  vterm[i] = z^2*fz[i]
+for (z in 0:n){
+  i = z+1
+  vterm[i] = z^2*fz_sim[i]
 }
 esquare = sum(vterm)
 
-Vsota = esquare - Esota^2
+Vsota_sim = esquare - Esota_s^2
 
-sprintf("The expected number of failures is %.4f, with a variance of %.4f.",
-        Esota, Vsota)
-sprintf("The expected theta_hat_SOTA is %.4f, with standard deviation of %.4f.",
-        (n-Esota)/n, sqrt(Vsota)/n)
+Vsota = variance(n, theta, m)
 
-
+print(c(Vsota_sim,Vsota))
+print(c(sqrt(Vsota_sim)/n, sqrt(Vsota)/n))
 
 
+# Cumulative distribution function:
+fz_cumsum = cumsum(fz_sim)
 
+plot(fz_cumsum, type = 's')
 
+# need to zoom in
+z = 200:300
+plot(z,fz_cumsum[z], type = 's', xlab = 'number of failures/accuracy', 
+     ylab = 'F(z)')
 
+Fz_ma = matrix(0,n+1,rep)
+Fz_sim = numeric(n+1)
 
+tic()
+for (ell in 1: rep){
+  x_vec = rbinom(m, n, 1-theta) # the number of failures in each of the m classifiers
+  
+  # Here, we want to find out for how many repetitions did at least one classifier have i or fewer failures, 
+  
+  for (i in 0: n){
+    j = i+1 # for counting
+    if(any(x_vec==i)){ # at least one with i failures
+      Fz_ma[j:n+1,ell] = 1 # then the rest has 'or fewer'
+      break
+    } 
+  }
+}
+toc()
+Fz_sim = rowSums(Fz_ma)/rep
 
+plot(Fz_sim, type = 's')
 
+# need to zoom in
+z = 200:300
+plot(z,Fz_sim[z], type = 's', xlab = 'number of failures/accuracy', 
+     ylab = 'F(z)')
 
-
-
-
+# # # # # # # # # # # # # # # # # ok # # # # # # # # # # # # # # # # # # # # # # # 
