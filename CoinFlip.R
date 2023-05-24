@@ -128,21 +128,17 @@ m = 100    # number of experiments
 k = 15      # number of heads (successes)
 x = n-k     # number of failures
 
-
 # Draw at random the number of failures in $m$ independent experiments, each having $n$ trials and probability $theta$
 x_vec = rbinom(m, n, 1-theta)
 
 # Have a quick look
 hist(x_vec)
 
-
 # 10 million repetitions takes 120 seconds 
 n_success = numeric(rep) # pre-allocate empty vector
 
-
 tic()
-
-for (i in 0: rep){
+for (i in 1: rep){
   x_vec = rbinom(m, n, 1-theta) # the number of failures in each of the m experiment
   
   # The definition of success in the multiple experiment is for a single trial to have
