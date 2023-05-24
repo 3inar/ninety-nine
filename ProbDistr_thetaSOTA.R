@@ -106,7 +106,8 @@ expect <- function(n,theta,m){
   # Calculate each term z*f(z)
   Eterm = numeric(n+1)
   for (z in 0:n){
-    Eterm[z] = z*fz[z]
+    i = z+1
+    Eterm[i] = z*fz[i]
   }
   
   EZ = sum(Eterm) # the sum
@@ -127,7 +128,8 @@ variance <- function(n,theta,m){
   # Calculate the expectation of Z^2
   vterm = numeric(n+1)
   for (z in 0:n){
-    vterm[z] = z^2*fz[z]
+    i = z+1
+    vterm[i] = z^2*fz[i]
   }
   esquare = sum(vterm)
   
