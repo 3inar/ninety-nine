@@ -66,7 +66,6 @@ rep = 100000          # 6 sec for 100,000, 3 min for 1,000,000
 min_nonid = numeric(rep) # min number of failures 
 min_id = numeric(rep)
 
-
 tic()
 for (ell in 1:rep){
   
@@ -82,8 +81,6 @@ toc()
 # Histograms of the minimum number of failures for m classifiers, in rep repetitions.
 
 histbreaks = seq(200,300,1)
-
-
 hist(min_nonid, xlab = 'number of failures', ylab = 'number of classifiers', breaks = 100, xlim = c(200,300)) 
 #  ylim = c(0,300), 
 
@@ -144,14 +141,14 @@ for (z in 0:n){
   for (j in 1:m){
     P[j] = pbinom(z,n,(1-theta_vec[j])) 
     term[j] = 1-P[j]
-    
   }
+  
   i = z+1
   Fz[i] = 1 - prod(term)
   
 }
 
-# # # # # # # # # # # # # # # # # Figure 2 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # Figure 6 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 # the whole range, not very much information
 plot(0:n,Fz, type = 'l', xlab = 'number of failures', 
@@ -169,15 +166,21 @@ axis(1, las = 2, at=xax, labels = as.character(plab))
 axis(2, las = 2)
 axis(3, las = 2, at=xax, labels = as.character(klab))
 
+# Does this align with the simulations?
+
+print(c(Fz[min_nonid_alpha2], Fz[min_nonid_alpha2+1])) # ok 
+print(c(which(Fz>alpha/2)[1]-1,min_nonid_alpha2)) # ok
+
 
 ################# probability mass function ##########################
 
-fz = numeric(n)
-fz[1:n] = Fz[2:(n+1)]-Fz[1:n] # this is how pmf is defined: f(x) = F(x)-F(x-1)
+fz = numeric(n+1)
+fz[1] = Fz[1]
+fz[2:(n+1)] = Fz[2:(n+1)]-Fz[1:n] # this is how pmf is defined: f(x) = F(x)-F(x-1)
 
 # # # # # # # # # # # # # # # # # Figure 3 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-plot(1:n,fz, type = 's')
+plot(0:n,fz, type = 's')
 
 # need to zoom in
 z = 200:300
@@ -195,21 +198,19 @@ axis(3, las = 2, at=xax, labels = as.character(klab))
 ####################### Expected value and variance ###################################
 
 # Expected value
-# We do not have access to f(0), because f(0) = F(0)-F(-1), which does not exist. 
-# This will not influence the expectation, since 0*f(0) = 0
 Eterm = numeric(n+1)
-for (z in 1:n){
-  i = z
-  Eterm[z] = z*fz[i]
+for (z in 0:n){
+  i = z+1
+  Eterm[i] = z*fz[i]
 }
 
 Esota = sum(Eterm)
-Esota_p = 1-Esota/n
+Esota_theta = 1-Esota/n
 
 # Variance
 vterm = numeric(n+1)
-for (z in 1:n){
-  i = z
+for (z in 0:n){
+  i = z+1
   vterm[i] = z^2*fz[i]
 }
 esquare = sum(vterm)
