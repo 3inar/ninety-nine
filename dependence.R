@@ -43,7 +43,7 @@ library(latex2exp)  # mathematical notation
 
 
 ###############################################################################
-############################ 4.1 Dependency #############################
+############################ 4.1 Dependent, identical classifiers #############################
 ###############################################################################
 
 # Consider a classification problem with a test set of size $3,000$, and a 
@@ -58,7 +58,7 @@ n = 3000
 theta = 0.9
 mu = n*theta # the expected number of correct predictions
 
-rho = 0.6 # correlation coefficient
+rho = 0.6 # correlation coefficient, the number is calculated from Mania (2019)
 
 # Simulate dependency
 
@@ -80,7 +80,9 @@ p_dep = theta + rho*(1-theta) # P(Y_j = 1|Y_0 = 1)
 p_flip1 = 1-theta - rho*(1-theta) # P(Y_j = 0|Y_0 = 1), same as 1-p_dep
 p_flip0 = theta - rho*theta# P(Y_j = 1|Y_0 = 0), same as (mu/(n-mu))*(1-p_dep)
 
-rep = 1000          # 60 sec for a thousand, 9,000 sec for 100,000
+# Simulations is the only way
+
+rep = 100000          #  9 sec for 100,000
 
 min_dep = numeric(rep) # min number of failures with dependency
 min_indep = numeric(rep) # for independent, as a check
@@ -90,27 +92,31 @@ for (ell in 1:rep){
   
   x_dep = numeric(m)  # number of failures for m experiments
 
-  for (j in 1:m){ # I believe this inner loop is unnecessary
-    # vectors of 0s and 1s indicating a flip relative to y0
-    flip1 = rbinom(mu,1,p_flip1) # flipping correct predictions
-    flip0 = rbinom(n-mu,1,p_flip0) # flipping incorrect predictions
-    flip = c(flip1,flip0)
+  # for (j in 1:m){ # I believe this inner loop is unnecessary
+  #  # vectors of 0s and 1s indicating a flip relative to y0
+  #  flip1 = rbinom(mu,1,p_flip1) # flipping correct predictions
+  #  flip0 = rbinom(n-mu,1,p_flip0) # flipping incorrect predictions
+  #  flip = c(flip1,flip0)
     
-    y = abs(y0-flip) # correct predictions
+  #  y = abs(y0-flip) # correct predictions
     
-    x_dep[j] = n-sum(y)
+  #  x_dep[j] = n-sum(y)
+  # }
   
-  }
+  flip1 = rbinom(m,mu,p_flip1) # flipping correct predictions
+  flip0 = rbinom(m,n-mu,p_flip0) # flipping incorrect predictions
 
-  min_dep[ell] = min(x_dep)
+  x_dep = n-(mu-flip1+flip0) # number of wrong predictions for each classifier
   
-  x_indep = rbinom(m,n,1-theta)
+  min_dep[ell] = min(x_dep) # minimum number of wrong predictions for each rep
+  
+  x_indep = rbinom(m,n,1-theta) # independent classifiers for reference
   min_indep[ell] = min(x_indep)
   
 }
 toc()
 
-# Histograms of the minimum number of failures for m classifiers, in rep repetitions.
+# Example histogram of the number of failures for m classifiers.
 
 histbreaks = seq(min(c(x_dep,x_indep)), max(c(x_dep,x_indep))+8,10)
 
@@ -118,6 +124,16 @@ hist(x_dep, xlab = 'number of failures', ylab = 'number of classifiers',
      breaks = histbreaks, ylim = c(0,300))
 hist(x_indep, xlab = 'number of failures', ylab = 'number of classifiers', 
      breaks = histbreaks, ylim = c(0,300))
+
+
+# Histograms of the minimum number of failures for m classifiers, in rep repetitions.
+
+histbreaks = seq(min(c(min_dep,min_indep)), max(c(min_dep,min_indep))+8,2)
+
+hist(min_dep, xlab = 'minimum number of failures', ylab = 'number of classifiers', 
+     breaks = histbreaks, ylim = c(0,30000))
+hist(min_indep, xlab = 'minimum number of failures', ylab = 'number of classifiers', 
+     breaks = histbreaks, ylim = c(0,30000))
 
 # The upper bound of the 95% confidence interval
 sort_min_dep = sort(min_dep) # sort the minimum number of failures
