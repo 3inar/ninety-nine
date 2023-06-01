@@ -40,7 +40,7 @@
 library(binom)      # confidence interval for binomial distribution
 library(tictoc)     # for timing
 library(latex2exp)  # mathematical notation
-
+library(e1071)      # skewness
 
 ###############################################################################
 ############################ 4.1 Dependent, identical classifiers #############################
@@ -67,8 +67,9 @@ rho = 0.6 # correlation coefficient, the number is calculated from Mania (2019)
 # correlation rho = corr(Y_0, Y_j). The m classifiers are independent of each other given Y_0.
 
 # For simplicity, let hat{\theta}_0 = \theta
-y0 = numeric(n) # vector of zeros of length n
-y0[1:mu] = 1 # exactly \mu of them are correct classifications
+# y0 = numeric(n) # vector of zeros of length n
+# y0[1:mu] = 1 # exactly \mu of them are correct classifications
+
 
 
 # In the first arXiv version, I had not yet discovered the Boland paper, so I had my own definitions.
@@ -82,10 +83,13 @@ p_flip0 = theta - rho*theta# P(Y_j = 1|Y_0 = 0), same as (mu/(n-mu))*(1-p_dep)
 
 # Simulations is the only way
 
-rep = 100000          #  9 sec for 100,000
+rep = 100000          #  9 sec for 100,000. Verifying with 1 million because of the randomness of Y
 
 min_dep = numeric(rep) # min number of failures with dependency
 min_indep = numeric(rep) # for independent, as a check
+
+theta_y0 = numeric(rep)
+x_dep_hist = numeric(rep)
 
 tic()
 for (ell in 1:rep){
@@ -103,10 +107,14 @@ for (ell in 1:rep){
   #  x_dep[j] = n-sum(y)
   # }
   
-  flip1 = rbinom(m,mu,p_flip1) # flipping correct predictions
-  flip0 = rbinom(m,n-mu,p_flip0) # flipping incorrect predictions
+  y0 = rbinom(n,1,theta)
+  theta_y0[ell] = sum(y0) # keeping this 
+  
+  flip1 = rbinom(m,theta_y0[ell],p_flip1) # flipping correct predictions
+  flip0 = rbinom(m,n-theta_y0[ell],p_flip0) # flipping incorrect predictions
 
-  x_dep = n-(mu-flip1+flip0) # number of wrong predictions for each classifier
+  x_dep = n-(theta_y0[ell]-flip1+flip0) # number of wrong predictions for each classifier
+  x_dep_hist[ell] = x_dep[1] # keeping this as an example
   
   min_dep[ell] = min(x_dep) # minimum number of wrong predictions for each rep
   
@@ -116,36 +124,41 @@ for (ell in 1:rep){
 }
 toc()
 
-# Example histogram of the number of failures for m classifiers.
-
-histbreaks = seq(min(c(x_dep,x_indep)), max(c(x_dep,x_indep))+8,10)
-
-hist(x_dep, xlab = 'number of failures', ylab = 'number of classifiers', 
-     breaks = histbreaks, ylim = c(0,300))
-hist(x_indep, xlab = 'number of failures', ylab = 'number of classifiers', 
-     breaks = histbreaks, ylim = c(0,300))
-
+hist(theta_y0, xlab = round(mean(theta_y0)))
+hist(x_dep_hist,xlab = round(mean(x_dep_hist)))
 
 # Histograms of the minimum number of failures for m classifiers, in rep repetitions.
 
-histbreaks = seq(min(c(min_dep,min_indep)), max(c(min_dep,min_indep))+8,2)
+histbreaks = seq(min(c(min_dep,min_indep)), max(c(min_dep,min_indep))+8,3)
 
 hist(min_dep, xlab = 'minimum number of failures', ylab = 'number of classifiers', 
-     breaks = histbreaks, ylim = c(0,30000))
+     breaks = histbreaks, ylim = c(0,rep/3))
+
 hist(min_indep, xlab = 'minimum number of failures', ylab = 'number of classifiers', 
-     breaks = histbreaks, ylim = c(0,30000))
+     breaks = histbreaks, ylim = c(0,rep/3))
+
+print(c(skewness(min_dep), skewness(min_indep)))
 
 # The upper bound of the 95% confidence interval
 sort_min_dep = sort(min_dep) # sort the minimum number of failures
 min_dep_alpha2 = sort_min_dep[(alpha/2)*rep] # find the alpha/2 bound
 
-sprintf("The simulated dependent upper bound of the %s confidence interval is %.5f, with %s repetitions.",  
+sprintf("The simulated dependent upper bound of the %s confidence interval is %.7f, with %s repetitions.",  
         1-alpha, (n-min_dep_alpha2)/n, rep)
 
 sort_min_indep = sort(min_indep)
 min_indep_alpha2 = sort_min_indep[(alpha/2)*rep]
 
-sprintf("The simulated independent upper bound of the %s confidence interval is %.5f, with %s repetitions.",  
+sprintf("The simulated independent upper bound of the %s confidence interval is %.7f, with %s repetitions.",  
         1-alpha, (n-min_indep_alpha2)/n, rep)
+
+# Example histogram of the number of failures for m classifiers.
+
+histbreaks = seq(min(c(x_dep,x_indep)), max(c(x_dep,x_indep))+8,10)
+
+hist(x_dep, xlab = 'number of failures', ylab = 'number of classifiers', 
+     breaks = histbreaks, ylim = c(0,m/3))
+hist(x_indep, xlab = 'number of failures', ylab = 'number of classifiers', 
+     breaks = histbreaks, ylim = c(0,m/3))
 
 
