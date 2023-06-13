@@ -51,14 +51,9 @@ library(e1071)      # skewness
 # The estimated accuracy, that is, the classifier's performance on the test set, 
 # is denoted by $theta_hat$.
 
-alpha = 0.05
+source("Parameters_PublicCompetition.R") # n, theta, m, alpha
 
-m = 1000
-n = 3000
-theta = 0.9
 mu = n*theta # the expected number of correct predictions
-
-rho = 0.6 # correlation coefficient, the number is calculated from Mania (2019)
 
 # Simulate dependency
 
@@ -83,8 +78,6 @@ p_flip0 = theta - rho*theta# P(Y_j = 1|Y_0 = 0), same as (mu/(n-mu))*(1-p_dep)
 
 # Simulations is the only way
 
-rep = 100000          #  9 sec for 100,000. Verifying with 1 million because of the randomness of Y
-
 min_dep = numeric(rep) # min number of failures with dependency
 min_indep = numeric(rep) # for independent, as a check
 
@@ -108,7 +101,7 @@ for (ell in 1:rep){
   # }
   
   y0 = rbinom(n,1,theta)
-  theta_y0[ell] = sum(y0) # keeping this 
+  theta_y0[ell] = sum(y0) # keeping this mu #s
   
   flip1 = rbinom(m,theta_y0[ell],p_flip1) # flipping correct predictions
   flip0 = rbinom(m,n-theta_y0[ell],p_flip0) # flipping incorrect predictions
@@ -145,6 +138,19 @@ min_dep_alpha2 = sort_min_dep[(alpha/2)*rep] # find the alpha/2 bound
 
 sprintf("The simulated dependent upper bound of the %s confidence interval is %.7f, with %s repetitions.",  
         1-alpha, (n-min_dep_alpha2)/n, rep)
+
+# The expected value
+Esota = mean(min_dep)
+
+sprintf("The simulated expected value is %.7f, with %s repetitions.",  
+        (n-Esota)/n, rep)
+
+# The standard deviation
+Vsota = mean(min_dep*min_dep) - Esota*Esota
+
+sprintf("The simulated standard deviation is %.7f, with %s repetitions.",  
+        sqrt(Vsota)/n, rep)
+
 
 sort_min_indep = sort(min_indep)
 min_indep_alpha2 = sort_min_indep[(alpha/2)*rep]

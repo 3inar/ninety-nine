@@ -49,19 +49,14 @@ library(latex2exp)  # mathematical notation
 # Consider a classification problem with a test set of size $n =3,000$, and 
 # $m = 1,000$ classifiers with varying probability of correct classification 
 
-alpha = 0.05
+source("Parameters_PublicCompetition.R") # n, theta, m, alpha, theta_min, theta_max, theta_vec
 
-m = 1000
-n = 3000
-theta_min = 0.875
-theta_max = 0.9
+
 theta_mean = (theta_max+theta_min)/2
-step = (theta_max-theta_min)/m
-theta_vec = seq(theta_min, theta_max, step)
+
 
 # Simulate non-identical
 
-rep = 100000          # 6 sec for 100,000, 3 min for 1,000,000
 
 min_nonid = numeric(rep) # min number of failures 
 min_id = numeric(rep)
@@ -95,7 +90,7 @@ sprintf("The simulated non-identical upper bound of the %s confidence interval i
 sort_min_id = sort(min_id) # sort the minimum number of failures
 min_id_alpha2 = sort_min_id[(alpha/2)*rep] # find the alpha/2 bound
 
-sprintf("The simulated iid upper bound of the %s confidence interval is %.5f, with %s repetitions.True SOTA: %s",  
+sprintf("The simulated iid upper bound of the %s confidence interval is %.5f, with %s repetitions. True SOTA: %s",  
         1-alpha, (n-min_id_alpha2)/n, rep, (n-min_id_alpha2)/n-theta_mean)
 
 # If there are $m$ classifiers, what must be the prob, $Palpha2$, of each 
@@ -219,7 +214,7 @@ Vsota = esquare - Esota^2
 
 sprintf("The expected number of failures is %.4f, with a variance of %.4f.",
         Esota, Vsota)
-sprintf("The expected theta_hat_SOTA is %.4f, with standard deviation of %.4f.",
+sprintf("The expected theta_hat_SOTA is %.6f, with standard deviation of %.6f.",
         (n-Esota)/n, sqrt(Vsota)/n)
 
 

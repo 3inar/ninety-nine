@@ -43,7 +43,7 @@ hist(C2$AUC, breaks=200)
 hist(comb_data$prv_score[comb_data$prv_score > 0.9], breaks = 30, xlim=c(0.9,0.95), ylim = c(0,500))
 
 ###############################################################################
-############################ 4.3 Dependent non-identical #############################
+############################ 4.4 Estimating $\theta_{SOTA}$ from accuracies #############################
 ###############################################################################
 
 # Consider a classification problem with a test set of size $3,000$, and a 
