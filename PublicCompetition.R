@@ -50,13 +50,10 @@ source("ProbDistr_thetaSOTA.R")
 # to as the accuracy is $(n-x_j)/n$, where $x_j$ is the observed number of failures
 # for classifier $j$.
 
-n = 3000
-theta = 0.9
-mu = n*theta # the expected number of correct predictions for a single classifier
-m = 1000
+source("Parameters_PublicCompetition.R") # n, theta, m, alpha, mu = n*theta, rep
 
 # 95% confidence interval for hat{theta} = mu, single classifier
-alpha = 0.05
+
 ci_binom = binom.confint(mu,n,conf.level=1-alpha, methods = "exact") # CI for binomial
 
 sprintf("The %s confidence interval for an estimated accuracy of %s is (%.4f,%.4f).",  
@@ -153,7 +150,7 @@ P_beat_sota
 sprintf("The probability of achieving an estimated accuracy better than the upper bound of the CI for theta_hat_SOTA, %.4f, for a classifier with significantly better probability of correct prediction, p=%.4f, is just %.4f.",
         theta_alpha2, ci_binom[["upper"]], P_beat_sota[1])
 
-# beat esota?
+# Beat esota?
 
 beat_esota = pbinom(Esota, n, 1-ci_binom[["upper"]]) 
 
@@ -161,43 +158,38 @@ sprintf("The probability of achieving an accuracy better than E(SOTA)=%.4f, for 
         Esota_theta, ci_binom[["upper"]], beat_esota)
 
 ######################### varying m, n, p ####################################
-# I should write this in a more clever way
 
-n = c(3000,1000,10000)
-m = c(1000,100,500)
-theta = c(0.85,0.9,0.95)
+n_vec = c(3000,1000,10000)
+m_vec = c(1000,100,500)
+theta_vec = c(0.85,0.9,0.95)
 
 for (i in 1:3){
   for (j in 1:3){
     for (k in 1:3){
-      Esota =  expect(n[i], theta[k], m[j])
-      Esota_theta = 1-Esota/n[i]
-      Vsota = variance(n[i], theta[k], m[j])
-      Std_sota_theta = sqrt(Vsota)/n[i]
+      Esota =  expect(n_vec[i], theta_vec[k], m_vec[j])
+      Esota_theta = 1-Esota/n_vec[i]
+      Vsota = variance(n_vec[i], theta_vec[k], m_vec[j])
+      Std_sota_theta = sqrt(Vsota)/n_vec[i]
       sprintf("The expected theta_sota is %.4f, with a standard deviation of %.6f, for m=%s, n=%s, theta=%s.",
-              Esota_theta, Std_sota_theta, m[j], n[i], theta[k])
+              Esota_theta, Std_sota_theta, m_vec[j], n_vec[i], theta_vec[k])
     }
   }
 }
 
 i = 3; j = 1; k = 2
-Esota = expect(n[i], theta[k], m[j])
-Esota_theta = 1-Esota/n[i]
-Vsota = variance(n[i], theta[k], m[j])
-Std_sota_theta = sqrt(Vsota)/n[i]
+Esota = expect(n_vec[i], theta_vec[k], m_vec[j])
+Esota_theta = 1-Esota/n_vec[i]
+Vsota = variance(n_vec[i], theta_vec[k], m_vec[j])
+Std_sota_theta = sqrt(Vsota)/n_vec[i]
 sprintf("The expected theta_sota is %.4f, with a standard deviation of %.6f, for m=%s, n=%s, theta=%s.",
-        Esota_theta, Std_sota_theta, m[j], n[i], theta[k])
+        Esota_theta, Std_sota_theta, m_vec[j], n_vec[i], theta_vec[k])
 
 
 ##############################################################################################
 ################################### Figures ##################################################
 ##############################################################################################
 
-# # # # # # # # # # # # # # # # # Figure 1 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-n = 3000
-theta = 0.9
-mu = n*theta # the expected number of correct predictions
-m = 1000
+################################### Figure 1 #################################################
 Esota = expect(n, theta, m)
 
 # let k be the number of successes, = n-x
@@ -223,12 +215,9 @@ axis(1 , las = 2, at=c(ci_binom[["lower"]]*n, n*theta,
                        ci_binom[["upper"]]*n, n-Esota, k_alpha2), 
      labels=c(TeX('$\\theta_{alpha/2}$'), TeX('$\\theta$'), TeX('$\\theta_{1-alpha/2}$'), 
               TeX(r'($E \hat{theta}_{SOTA}$)'), TeX('$\\theta^m_{1-alpha/2}$')))
+# # # # # # # # # # # # # # # # # # end figure 1 # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-# # # # # # # # # # # # # # # # # # end figure 1 # # # # # # # # # 
-
-
-# # # # # # # # # # # # # # # # # Figure 2 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
+################################### Figure 2 ##########################################################
 Fz = cdf(n,theta,m)
 
 # the whole range, not very much information
@@ -246,10 +235,9 @@ plab = round(1000*(n-xax)/n)/1000
 axis(1, las = 2, at=xax, labels = as.character(plab))
 axis(2, las = 2)
 axis(3, las = 2, at=xax, labels = as.character(klab))
-
 # # # # # # # # # # # # # # # # # end figure 2 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-# # # # # # # # # # # # # # # # # Figure 3 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+################################### Figure 3 ###################################################
 
 fz = pmf(n,theta,m,f0 = T)
 
@@ -273,14 +261,6 @@ axis(3, las = 2, at=xax, labels = as.character(klab))
 ##############################################################################################
 
 # I will here recreate the numbers from above. 
-rep = 100000 #  seconds on 100,000 reps, nice and smooth histogram
-
-# the parameters
-n = 3000
-theta = 0.9
-mu = n*theta # the expected number of correct predictions for a single classifier
-m = 1000
-alpha = 0.05
 
 # I will not simulate the binomial distribution and its conf.int. 
 ci_binom = binom.confint(mu,n,conf.level=1-alpha, methods = "exact") # CI for binomial
@@ -295,20 +275,12 @@ x_vec = rbinom(m, n, 1-theta)
 # Have a quick look
 hist(x_vec, xlab = mean(x_vec))
 
-fz_ma = matrix(0,n+1,rep)
+# fz_ma = matrix(0,n+1,rep) # requires too much vector memory rep = 1,000,000
 fz_sim = numeric(n+1)
-
-#for (i in 0: n){
- # j = i+1 # for counting
-#  veci = any(x_vec==i) # I: at least one with i failures
- # vecfewi = any(x_vec<i) # II: at least one with fewer than i failures
-  #fz_ma[j,ell] = veci-vecfewi # 1 if I is true and II is false - definition of f(z)
-  # 0 if both true or both false
-  # -1 if I false and II true - set to 0
-#}
 
 tic()
 for (ell in 1: rep){
+  fz_rep = numeric(n+1) # clear this for each repetition
   x_vec = rbinom(m, n, 1-theta) # the number of failures in each of the m classifiers
   
   # Here, we want to find out for how many repetitions did at least one classifier have i failures, 
@@ -317,14 +289,15 @@ for (ell in 1: rep){
   for (i in 0: n){
     j = i+1 # for counting
     if(any(x_vec==i)){ # at least one with i failures
-      fz_ma[j,ell] = 1 # then the rest is not 'none had fewer'
+      fz_rep[j] = 1 # then the rest is not 'none had fewer'
       break
     } 
   }
+  fz_sim = fz_sim+fz_rep
 }
 
-toc()
-fz_sim = rowSums(fz_ma)/rep
+toc() # rowSums(fz_ma)
+fz_sim = fz_sim/rep
 
 plot(0:n,fz_sim, type = 's')
 
@@ -345,7 +318,6 @@ print(c(P_low,P_up))
 P_simlow = sum(fz_sim[1:x_alpha2])
 P_simup = sum(fz_sim[1:x_alpha2+1])
 print(c(P_simlow,P_simup))
-
 
 # Expectation
 
@@ -390,11 +362,11 @@ z = 200:300
 plot(z,fz_cumsum[z], type = 's', xlab = 'number of failures/accuracy', 
      ylab = 'F(z)')
 
-Fz_ma = matrix(0,n+1,rep)
 Fz_sim = numeric(n+1)
 
 tic()
 for (ell in 1: rep){
+  Fz_rep = numeric(n+1)
   x_vec = rbinom(m, n, 1-theta) # the number of failures in each of the m classifiers
   
   # Here, we want to find out for how many repetitions did at least one classifier have i or fewer failures, 
@@ -402,13 +374,14 @@ for (ell in 1: rep){
   for (i in 0: n){
     j = i+1 # for counting
     if(any(x_vec==i)){ # at least one with i failures
-      Fz_ma[j:n+1,ell] = 1 # then the rest has 'or fewer'
+      Fz_rep[j:n+1] = 1 # then the rest has 'or fewer'
       break
     } 
   }
+  Fz_sim = Fz_sim+Fz_rep
 }
 toc()
-Fz_sim = rowSums(Fz_ma)/rep
+Fz_sim = Fz_sim/rep
 
 plot(Fz_sim, type = 's')
 
@@ -418,3 +391,4 @@ plot(z,Fz_sim[z], type = 's', xlab = 'number of failures/accuracy',
      ylab = 'F(z)')
 
 # # # # # # # # # # # # # # # # # ok # # # # # # # # # # # # # # # # # # # # # # # 
+
