@@ -14,6 +14,6 @@ theta_vec = seq(theta_min, theta_max, step)
 
 rho = 0.6 # correlation coefficient, the number is calculated from Mania (2019)
 
-rep = 10000000 #  number of repetitions, 100,000 gives nice and smooth histograms, 1 million is doable
+rep = 100000 #  number of repetitions, 100,000 gives nice and smooth histograms, 1 million is doable
 
 theta_0 =  theta

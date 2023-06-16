@@ -42,6 +42,10 @@ library(tictoc)     # for timing
 library(latex2exp)  # mathematical notation
 library(e1071)      # skewness
 
+# Contains the function 
+
+# simulated pmf - dep_id_pmf
+
 ###############################################################################
 ############################ 4.1 Dependent, identical classifiers #############################
 ###############################################################################
@@ -55,116 +59,107 @@ source("Parameters_PublicCompetition.R") # n, theta, m, alpha
 
 mu = n*theta # the expected number of correct predictions
 
-# Simulate dependency
+# The simulated pmf of dependent, identical classifiers
+# parameters: n, theta, m, rho, rep, fixed = F is a variant
+dep_id_pmf <- function(n, theta, m, rho, rep, fixed = F){   
 
-# Set-up from Boland et al (1989) 'Modelling dependence in simple and indirect majority systems',
-# where we have a leading classifier with classifications Y_0, and then the m classifiers with 
-# correlation rho = corr(Y_0, Y_j). The m classifiers are independent of each other given Y_0.
+  # Set-up from Boland et al (1989) 'Modelling dependence in simple and indirect majority systems',
+  # where we have a leading classifier with classifications Y_0, and then the m classifiers with 
+  # correlation rho = corr(Y_0, Y_j). The m classifiers are independent of each other given Y_0.
 
-# For simplicity, let hat{\theta}_0 = \theta
-# y0 = numeric(n) # vector of zeros of length n
-# y0[1:mu] = 1 # exactly \mu of them are correct classifications
+  # the probabilities of Y_j being the opposite of Y_0
+  p_flip1 = 1-theta - rho*(1-theta) # P(Y_j = 0|Y_0 = 1), same as 1-p_dep
+  p_flip0 = theta - rho*theta# P(Y_j = 1|Y_0 = 0), same as (mu/(n-mu))*(1-p_dep)
 
+  # Simulations is the only way
+  min_dep = numeric(rep) # min number of failures with dependency
+  min_indep = numeric(rep) # for independent, as a check
 
+  theta_y0 = numeric(rep)
+  x_dep_hist = numeric(rep)
 
-# In the first arXiv version, I had not yet discovered the Boland paper, so I had my own definitions.
-# p_dep is the probability of a correct prediction if the leading prediction is correct. The next line
-# just shows that Boland and me were doing the same thing, but theirs was much better articulated.
-p_dep = theta + rho*(1-theta) # P(Y_j = 1|Y_0 = 1)
+  if (fixed){
+    y0 = numeric(n) # vector of zeros of length n
+    y0[1:mu] = 1 # exactly \mu of them are correct classifications
+  } 
 
-# the probabilities of Y_j being the opposite of Y_0
-p_flip1 = 1-theta - rho*(1-theta) # P(Y_j = 0|Y_0 = 1), same as 1-p_dep
-p_flip0 = theta - rho*theta# P(Y_j = 1|Y_0 = 0), same as (mu/(n-mu))*(1-p_dep)
+  for (ell in 1:rep){
+  
+    x_dep = numeric(m)  # number of failures for m experiments
 
-# Simulations is the only way
+    y0 = rbinom(n,1,theta)
+    theta_y0[ell] = sum(y0) # keeping this mu #s
+  
+    flip1 = rbinom(m,theta_y0[ell],p_flip1) # flipping correct predictions
+    flip0 = rbinom(m,n-theta_y0[ell],p_flip0) # flipping incorrect predictions
 
-min_dep = numeric(rep) # min number of failures with dependency
-min_indep = numeric(rep) # for independent, as a check
+    x_dep = n-(theta_y0[ell]-flip1+flip0) # number of wrong predictions for each classifier
+    x_dep_hist[ell] = x_dep[1] # keeping this as an example
+  
+    min_dep[ell] = min(x_dep) # minimum number of wrong predictions for each rep
+  
+    x_indep = rbinom(m,n,1-theta) # independent classifiers for reference
+    min_indep[ell] = min(x_indep)
+  }
 
-theta_y0 = numeric(rep)
-x_dep_hist = numeric(rep)
+  X = list(theta_y0 = theta_y0, x_dep_hist = x_dep_hist, min_dep = min_dep, min_indep = min_indep, x_dep = x_dep, x_indep = x_indep)
+  
+  return(X)
+}
 
 tic()
-for (ell in 1:rep){
-  
-  x_dep = numeric(m)  # number of failures for m experiments
-
-  # for (j in 1:m){ # I believe this inner loop is unnecessary
-  #  # vectors of 0s and 1s indicating a flip relative to y0
-  #  flip1 = rbinom(mu,1,p_flip1) # flipping correct predictions
-  #  flip0 = rbinom(n-mu,1,p_flip0) # flipping incorrect predictions
-  #  flip = c(flip1,flip0)
-    
-  #  y = abs(y0-flip) # correct predictions
-    
-  #  x_dep[j] = n-sum(y)
-  # }
-  
-  y0 = rbinom(n,1,theta)
-  theta_y0[ell] = sum(y0) # keeping this mu #s
-  
-  flip1 = rbinom(m,theta_y0[ell],p_flip1) # flipping correct predictions
-  flip0 = rbinom(m,n-theta_y0[ell],p_flip0) # flipping incorrect predictions
-
-  x_dep = n-(theta_y0[ell]-flip1+flip0) # number of wrong predictions for each classifier
-  x_dep_hist[ell] = x_dep[1] # keeping this as an example
-  
-  min_dep[ell] = min(x_dep) # minimum number of wrong predictions for each rep
-  
-  x_indep = rbinom(m,n,1-theta) # independent classifiers for reference
-  min_indep[ell] = min(x_indep)
-  
-}
+X = dep_id_pmf(n, theta, m, rho, rep, fixed = F)
 toc()
 
-hist(theta_y0, xlab = round(mean(theta_y0)))
-hist(x_dep_hist,xlab = round(mean(x_dep_hist)))
+# Example histogram of the number of failures for m classifiers.
+histbreaks = seq(min(c(X$x_dep,X$x_indep)), max(c(X$x_dep,X$x_indep))+8,10)
+hist(X$x_dep, xlab = 'number of failures', ylab = 'number of classifiers', 
+     breaks = histbreaks, ylim = c(0,m/3))
 
-# Histograms of the minimum number of failures for m classifiers, in rep repetitions.
-
-histbreaks = seq(min(c(min_dep,min_indep)), max(c(min_dep,min_indep))+8,3)
-
-hist(min_dep, xlab = 'minimum number of failures', ylab = 'number of classifiers', 
+# This is the main outcome.
+# Histograms of the minimum number of failures for m dependent classifiers, in rep repetitions. 
+histbreaks = seq(min(c(X$min_dep,X$min_indep)), max(c(X$min_dep,X$min_indep))+8,3)
+hist(X$min_dep, xlab = 'minimum number of failures', ylab = 'number of classifiers', 
      breaks = histbreaks, ylim = c(0,rep/3))
 
-hist(min_indep, xlab = 'minimum number of failures', ylab = 'number of classifiers', 
-     breaks = histbreaks, ylim = c(0,rep/3))
+source("ProbDistr_thetaSOTA.R")
+# source("Parameters_PublicCompetition.R") # n, theta, m, alpha
 
-print(c(skewness(min_dep), skewness(min_indep)))
-
-# The upper bound of the 95% confidence interval
-sort_min_dep = sort(min_dep) # sort the minimum number of failures
-min_dep_alpha2 = sort_min_dep[(alpha/2)*rep] # find the alpha/2 bound
-
+# The confidence interval
+min_dep_alpha2 = sim_ci(alpha, X$min_dep)
 sprintf("The simulated dependent upper bound of the %s confidence interval is %.7f, with %s repetitions.",  
         1-alpha, (n-min_dep_alpha2)/n, rep)
 
 # The expected value
-Esota = mean(min_dep)
-
+Esota = sim_mean(X$min_dep)
 sprintf("The simulated expected value is %.7f, with %s repetitions.",  
         (n-Esota)/n, rep)
 
-# The standard deviation
-Vsota = mean(min_dep*min_dep) - Esota*Esota
-
+# The variance
+Vsota = sim_var(X$min_dep)
 sprintf("The simulated standard deviation is %.7f, with %s repetitions.",  
         sqrt(Vsota)/n, rep)
 
-
-sort_min_indep = sort(min_indep)
-min_indep_alpha2 = sort_min_indep[(alpha/2)*rep]
-
-sprintf("The simulated independent upper bound of the %s confidence interval is %.7f, with %s repetitions.",  
-        1-alpha, (n-min_indep_alpha2)/n, rep)
+##################### Check-ups  ################
 
 # Example histogram of the number of failures for m classifiers.
+histbreaks = seq(min(c(X$x_dep,X$x_indep)), max(c(X$x_dep,X$x_indep))+8,10)
+hist(X$x_indep, xlab = 'number of failures', ylab = 'number of classifiers', 
+     #breaks = histbreaks, 
+     ylim = c(0,m/3))
 
-histbreaks = seq(min(c(x_dep,x_indep)), max(c(x_dep,x_indep))+8,10)
+# Displays the distribution of the observed theta_y0's (we know it's binomial, so it's more of a check-up)
+hist(X$theta_y0/n, xlab = mean(round(X$theta_y0)/n))
+# Displays the distribution of one observed x_dep per rep (we know it's binomial, same as 1-theta_y0)
+hist(X$x_dep_hist,xlab = mean((n-X$x_dep_hist)/n))
 
-hist(x_dep, xlab = 'number of failures', ylab = 'number of classifiers', 
-     breaks = histbreaks, ylim = c(0,m/3))
-hist(x_indep, xlab = 'number of failures', ylab = 'number of classifiers', 
-     breaks = histbreaks, ylim = c(0,m/3))
+# Displays the independent counterpart
+histbreaks = seq(min(c(X$min_dep,X$min_indep)), max(c(X$min_dep,X$min_indep))+8,3)
+hist(X$min_indep, xlab = 'minimum number of failures', ylab = 'number of classifiers', 
+     breaks = histbreaks, ylim = c(0,rep/3))
 
+# The upper bound for the independent counterpart
+min_indep_alpha2 = sim_ci(alpha, X$min_indep)
+sprintf("The simulated independent upper bound of the %s confidence interval is %.7f, with %s repetitions.",  
+        1-alpha, (n-min_indep_alpha2)/n, rep)
 

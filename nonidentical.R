@@ -41,13 +41,19 @@ library(binom)      # confidence interval for binomial distribution
 library(tictoc)     # for timing
 library(latex2exp)  # mathematical notation
 
+# functions
+
+# simulated pmf - sim_nonid_pmf
+# cdf - nonid_cdf
+# cdf based pmf - nonid_pmf
+
 
 ###############################################################################
 ############################ 4.2 Non-identical aka Poisson Binomial #############################
 ###############################################################################
 
-# Consider a classification problem with a test set of size $n =3,000$, and 
-# $m = 1,000$ classifiers with varying probability of correct classification 
+# Consider a classification problem with a test set of size $n$, and 
+# $m$ classifiers with varying probability of correct classification 
 
 source("Parameters_PublicCompetition.R") # n, theta, m, alpha, theta_min, theta_max, theta_vec
 
@@ -56,38 +62,43 @@ theta_mean = (theta_max+theta_min)/2
 
 
 # Simulate non-identical
+sim_nonid_pmf <- function(n, theta_mean, theta_vec, m, rep){   
 
+  min_nonid = numeric(rep) # min number of failures 
+  min_id = numeric(rep)
 
-min_nonid = numeric(rep) # min number of failures 
-min_id = numeric(rep)
-
-tic()
-for (ell in 1:rep){
+  for (ell in 1:rep){
   
-  x_nonid = rbinom(m,n,1-theta_vec) # number of failures for classifier j=1, .., m
-  x_id = rbinom(m,n,1-theta_mean)
+    x_nonid = rbinom(m,n,1-theta_vec) # number of failures for classifier j=1, .., m
+    x_id = rbinom(m,n,1-theta_mean) # i'm not sure if it makes sense to compare the two?
     
-  min_nonid[ell] = min(x_nonid)
-  min_id[ell] = min(x_id)
+    min_nonid[ell] = min(x_nonid)
+    min_id[ell] = min(x_id)
     
+  }
+  X = list(min_nonid = min_nonid, min_id = min_id)
+  
+  return(X)
 }
+tic()
+X = sim_nonid_pmf(n, theta_mean, theta_vec, m, rep)
 toc()
 
 # Histograms of the minimum number of failures for m classifiers, in rep repetitions.
 
 histbreaks = seq(200,300,1)
-hist(min_nonid, xlab = 'number of failures', ylab = 'number of classifiers', breaks = 100, xlim = c(200,300)) 
+hist(X$min_nonid, xlab = 'number of failures', ylab = 'number of classifiers', breaks = 100, xlim = c(200,300)) 
 #  ylim = c(0,300), 
 
 # The upper bound of the 95% confidence interval
-sort_min_nonid = sort(min_nonid) # sort the minimum number of failures
+sort_min_nonid = sort(X$min_nonid) # sort the minimum number of failures
 min_nonid_alpha2 = sort_min_nonid[(alpha/2)*rep] # find the alpha/2 bound
 
 sprintf("The simulated non-identical upper bound of the %s confidence interval is %.5f, with %s repetitions. Bias: %s.",  
         1-alpha, (n-min_nonid_alpha2)/n, rep, (n-min_nonid_alpha2)/n-theta_max)
 
 # The upper bound of the 95% confidence interval
-sort_min_id = sort(min_id) # sort the minimum number of failures
+sort_min_id = sort(X$min_id) # sort the minimum number of failures
 min_id_alpha2 = sort_min_id[(alpha/2)*rep] # find the alpha/2 bound
 
 sprintf("The simulated iid upper bound of the %s confidence interval is %.5f, with %s repetitions. True SOTA: %s",  
@@ -126,25 +137,25 @@ sprintf("With a probablitiy of alpha/2 = %s, at least %s team will achieve an ac
 
 
 # Analytical result
-
-Fz = numeric(n+1)
-for (z in 0:n){
+nonid_cdf <- function(n, theta_vec, m){   
+  Fz = numeric(n+1)
+  for (z in 0:n){
+    P = numeric(m)
+    term = numeric(m)
   
-  P = numeric(m)
-  term = numeric(m)
-  
-  for (j in 1:m){
-    P[j] = pbinom(z,n,(1-theta_vec[j])) 
-    term[j] = 1-P[j]
+    for (j in 1:m){
+      P[j] = pbinom(z,n,(1-theta_vec[j])) 
+      term[j] = 1-P[j]
+    }
+    i = z+1
+    Fz[i] = 1 - prod(term)
   }
-  
-  i = z+1
-  Fz[i] = 1 - prod(term)
-  
+  return(Fz)
 }
 
 # # # # # # # # # # # # # # # # # Figure 6 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+Fz = nonid_cdf(n, theta_vec, m)
 # the whole range, not very much information
 plot(0:n,Fz, type = 'l', xlab = 'number of failures', 
      ylab = 'probability of at least one team')
@@ -169,11 +180,17 @@ print(c(which(Fz>alpha/2)[1]-1,min_nonid_alpha2)) # ok
 
 ################# probability mass function ##########################
 
-fz = numeric(n+1)
-fz[1] = Fz[1]
-fz[2:(n+1)] = Fz[2:(n+1)]-Fz[1:n] # this is how pmf is defined: f(x) = F(x)-F(x-1)
+nonid_pmf <- function(n, theta_vec, m){   
+  fz = numeric(n+1)
+  Fz = nonid_cdf(n, theta_vec, m)
+  fz[1] = Fz[1]
+  fz[2:(n+1)] = Fz[2:(n+1)]-Fz[1:n] # this is how pmf is defined: f(x) = F(x)-F(x-1)
+  
+  return(fz)
+}
 
-# # # # # # # # # # # # # # # # # Figure 3 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # Figure 7 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+fz = nonid_pmf(n, theta_vec, m)
 
 plot(0:n,fz, type = 's')
 

@@ -116,7 +116,7 @@ sprintf("The top-ranked accuracy is at least %.4f with a probability of %.4f. Th
 
 ################################################### Simulations ###########################################
 
-rep = 10000 # We recommend 10 million repetitions, because of the small Px = 0.00020 in b). It takes about 900 seconds
+rep = 1000000 # We recommend 10 million repetitions, because of the small Px = 0.00020 in b). It takes about 900 seconds
 
 # a) Consider $n$ flips of a fair coin, and the outcome is the number of heads, 
 # referred to as the number of successes in a binomial distribution. 
@@ -134,7 +134,7 @@ x_vec = rbinom(m, n, 1-theta)
 # Have a quick look
 hist(x_vec)
 
-# 10 million repetitions takes 120 seconds 
+
 n_success = numeric(rep) # pre-allocate empty vector
 
 tic()
@@ -183,7 +183,6 @@ n_success = numeric(rep) # pre-allocate empty vector
 
 
 tic()
-
 for (i in 0: rep){
   x_vec = rbinom(m, n, 1-theta) # the number of failures in each of the m experiment
   
@@ -191,9 +190,9 @@ for (i in 0: rep){
   # X \leq x failures
   n_success[i] = length(which(x_vec<=x)) # how many experiments have at most x failures
 }
-
-sim_P_Cx = length(which(n_success > 0))/rep # the number of simulations with success outcome
 toc()
+sim_P_Cx = length(which(n_success > 0))/rep # the number of simulations with success outcome
+
 
 
 # The probability of observing at most $x$ failures in one trial 

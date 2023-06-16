@@ -6,8 +6,17 @@
 
 # cdf       - cumulative distribution function
 # pmf       - probability mass function
+
 # expect    - expectation
 # variance  - variance
+
+# simulated functions
+
+# sim_var - simulated variance
+# sim_mean - simulated mean
+# sim_ci - simulated confidence interval, 
+
+
 
 ###############################################################################
 ############################ 3.1 Notation #############################
@@ -142,10 +151,39 @@ variance <- function(n,theta,m){
   
 }
 
+##################### Simulated functions ####################################
+
+# Confidence interval 
+
+# The simulated upper bound of the 95% confidence interval
+sim_ci = function(alpha, min_x){
+  sort_min_x = sort(min_x) # sort the minimum number of failures
+  min_x_alpha2 = sort_min_x[(alpha/2)*rep] # find the alpha/2 bound
+  
+  return(min_x_alpha2)
+}
+
+# The simulated expected value
+sim_mean <- function(min_x){
+  Esota = mean(min_x)
+  
+  return(Esota)
+}
+
+# The simulated variance
+sim_var <- function(min_x){
+  Esota = mean(min_x)
+  Vsota = mean(min_x*min_x) - Esota*Esota
+  
+  return(Vsota)
+}
 
 
+###################################### Check-ups ######################################
 
-###################################### Check-ups ############################
+checkup = 0
+
+if (checkup){
 
 # Parameters from coin-flip experiment a)
 n = 20
@@ -180,3 +218,5 @@ VarZ = variance(n,theta,m)
 
 sprintf("The expected value is %.4f, and the variance is %.4f.",
         EZ, VarZ)
+}
+
