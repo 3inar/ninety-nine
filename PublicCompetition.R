@@ -176,7 +176,7 @@ for (i in 1:3){
   }
 }
 
-i = 3; j = 1; k = 2
+j = 1; i = 3; k = 2
 Esota = expect(n_vec[i], theta_vec[k], m_vec[j])
 Esota_theta = 1-Esota/n_vec[i]
 Vsota = variance(n_vec[i], theta_vec[k], m_vec[j])
@@ -189,7 +189,7 @@ sprintf("The expected theta_sota is %.4f, with a standard deviation of %.6f, for
 ################################### Figures ##################################################
 ##############################################################################################
 
-################################### Figure 1 #################################################
+################################### Figure multi_ci #################################################
 Esota = expect(n, theta, m)
 
 # let k be the number of successes, = n-x
@@ -217,7 +217,7 @@ axis(1 , las = 2, at=c(ci_binom[["lower"]]*n, n*theta,
               TeX(r'($E \hat{theta}_{SOTA}$)'), TeX('$\\theta^m_{1-alpha/2}$')))
 # # # # # # # # # # # # # # # # # # end figure 1 # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-################################### Figure 2 ##########################################################
+################################### Figure cumul_fail ##########################################################
 Fz = cdf(n,theta,m)
 
 # the whole range, not very much information
