@@ -86,8 +86,10 @@ dep_id_pmf <- function(n, theta, m, rho, rep, fixed = F){
   for (ell in 1:rep){
   
     x_dep = numeric(m)  # number of failures for m experiments
-
-    y0 = rbinom(n,1,theta)
+    
+    if (!fixed){
+      y0 = rbinom(n,1,theta)
+    }
     theta_y0[ell] = sum(y0) # keeping this mu #s
   
     flip1 = rbinom(m,theta_y0[ell],p_flip1) # flipping correct predictions
@@ -108,19 +110,18 @@ dep_id_pmf <- function(n, theta, m, rho, rep, fixed = F){
 }
 
 tic()
-X = dep_id_pmf(n, theta, m, rho, rep, fixed = F)
+X = dep_id_pmf(n, theta, m, rho, rep, fixed = T)
 toc()
 
 # Example histogram of the number of failures for m classifiers.
-histbreaks = seq(min(c(X$x_dep,X$x_indep)), max(c(X$x_dep,X$x_indep))+8,10)
 hist(X$x_dep, xlab = 'number of failures', ylab = 'number of classifiers', 
-     breaks = histbreaks, ylim = c(0,m/3))
+     breaks = 10, ylim = c(0,m/3))
 
 # This is the main outcome.
 # Histograms of the minimum number of failures for m dependent classifiers, in rep repetitions. 
-histbreaks = seq(min(c(X$min_dep,X$min_indep)), max(c(X$min_dep,X$min_indep))+8,3)
+# histbreaks = seq(min(c(X$min_dep,X$min_indep)), max(c(X$min_dep,X$min_indep))+8,3)
 hist(X$min_dep, xlab = 'minimum number of failures', ylab = 'number of classifiers', 
-     breaks = histbreaks, ylim = c(0,rep/3))
+     breaks = 20, ylim = c(0,rep/3))
 
 source("ProbDistr_thetaSOTA.R")
 # source("Parameters_PublicCompetition.R") # n, theta, m, alpha
