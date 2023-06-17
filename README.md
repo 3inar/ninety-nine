@@ -34,7 +34,8 @@ Section 'Non-identical, dependent classifiers': dependent_nonidentical.R calls P
                                                 dep_nonid_pmf_fun.R with function
                                                 dep_nonid_pmf - simulated pmf for dependent, nonidentical classifiers
                                                 
-Section 'Discussion': auc_generator.R
+Section 'Discussion': auc_generator.R: creates AUC curves
+                      melanoma.R: investigates the Melanoma 2020 kaggle competition
                                                 
 Additional files:
 
