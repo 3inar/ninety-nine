@@ -1,5 +1,5 @@
 # Simulate dependent, nonidentical
-dep_nonid_pmf <- function(n, theta, m, rho, rep, theta_vec, theta_0){   
+dep_nonid_pmf <- function(n, m, rho, rep, theta_vec, theta_0){   
   
   # Set-up from Boland et al (1989) 'Modelling dependence in simple and indirect majority systems',
   # where we have a leading classifier with classifications Y_0, and then the m classifiers with 
