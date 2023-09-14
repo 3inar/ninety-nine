@@ -14,7 +14,7 @@
 
 # sim_var - simulated variance
 # sim_mean - simulated mean
-# sim_ci - simulated confidence interval, 
+# sim_ci - simulated confidence interval
 
 
 
