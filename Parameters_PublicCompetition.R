@@ -1,4 +1,4 @@
-# parameters
+# All parameters used in the manuscript, except for the coin-flip example
 
 n = 3000 # size of test set
 theta = 0.9 # probability of correct prediction
