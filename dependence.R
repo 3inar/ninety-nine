@@ -150,7 +150,8 @@ hist(X$x_indep, xlab = 'number of failures', ylab = 'number of classifiers',
      ylim = c(0,m/3))
 
 # Displays the distribution of the observed theta_y0's (we know it's binomial, so it's more of a check-up)
-hist(X$theta_y0/n, xlab = mean(round(X$theta_y0)/n))
+hist(X$theta_y0/n, xlab = mean(round(X$theta_y0)/n)) # only make sense if fixed = F
+
 # Displays the distribution of one observed x_dep per rep (we know it's binomial, same as 1-theta_y0)
 hist(X$x_dep_hist,xlab = mean((n-X$x_dep_hist)/n))
 
