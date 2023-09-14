@@ -121,7 +121,7 @@ source("dep_nonid_pmf_fun.R") # for the function 'dep_nonid_pmf' - simulated pmf
 # Simulate dependency
 theta_0 = theta_max # theta_0 is the probability of correct prediction for the leading classifier. 
 # I think it should be theta_SOTA, but I'm not entirely sure
-rep = 10
+rep = 10000
 tic()
 X = dep_nonid_pmf(n, theta, m, rho, rep, theta_vec, theta_0)
 toc()
