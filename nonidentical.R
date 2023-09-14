@@ -94,14 +94,14 @@ hist(X$min_nonid, xlab = 'number of failures', ylab = 'number of classifiers', b
 sort_min_nonid = sort(X$min_nonid) # sort the minimum number of failures
 min_nonid_alpha2 = sort_min_nonid[(alpha/2)*rep] # find the alpha/2 bound
 
-sprintf("The simulated non-identical upper bound of the %s confidence interval is %.5f, with %s repetitions. Bias: %s.",  
+sprintf("The simulated non-identical upper bound of the %s confidence interval is %.5f, with %s repetitions. Distance to SOTA: %s.",  
         1-alpha, (n-min_nonid_alpha2)/n, rep, (n-min_nonid_alpha2)/n-theta_max)
 
 # The upper bound of the 95% confidence interval
 sort_min_id = sort(X$min_id) # sort the minimum number of failures
 min_id_alpha2 = sort_min_id[(alpha/2)*rep] # find the alpha/2 bound
 
-sprintf("The simulated iid upper bound of the %s confidence interval is %.5f, with %s repetitions. True SOTA: %s",  
+sprintf("The simulated iid upper bound of the %s confidence interval is %.5f, with %s repetitions. Distance to SOTA: %s",  
         1-alpha, (n-min_id_alpha2)/n, rep, (n-min_id_alpha2)/n-theta_mean)
 
 # If there are $m$ classifiers, what must be the prob, $Palpha2$, of each 
