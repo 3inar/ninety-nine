@@ -20,30 +20,25 @@ library(tictoc)     # for timing
 # https://www.kaggle.com/c/siim-isic-melanoma-classification/leaderboard
 
 comb_data <- readRDS('/Users/kajsam/Documents/kaggle-leaderboard-scrape/SIIM-ISIC_Melanoma_kaggle_leadboard_data.RDS')
-
 head(comb_data) # have a look
 
-# all teams
 dat <- data.frame(AUC = comb_data$prv_score, dataset = "test")
-
-# violin plot of validation and test
-
-p = ggplot(dat, aes(x = dataset, y = AUC)) +
-  geom_violin(trim = T)
-
-p + scale_x_discrete(limits=c("test"))
-
-# best performing teams
-# C2 <- data.frame(AUC = comb_data$prv_score[comb_data$prv_score > 0.8], dataset = "test")
 
 # have a look at the histogram
 hist(dat$AUC, breaks=200)
 
-hist(comb_data$prv_score[comb_data$prv_score > 0.9], breaks = 30, xlim=c(0.9,0.95), ylim = c(0,200))
-
 ###############################################################################
 ############################ 4.4 A kaggle challenge example #############################
 ###############################################################################
+
+# A quick estimate for AUC_SOTA, see AUROC.R -> 0.9216
+
+# With balanced accuracy and binary prediction, we have that accuracy = sqrt(AUC)
+
+theta_obs = sqrt(dat$AUC)
+hist(theta_obs, breaks=200)
+print(max(theta_obs))
+
 
 # We don't have access to the test set labels, so we'll have to estimate based on assumptions. 
 # Here is what we do know:
@@ -70,20 +65,14 @@ n_ben = n_test-n_mal # estimated number of benign cases
 source("Parameters_PublicCompetition.R") # n, theta, m, alpha, rho, theta_min, theta_max, theta_vec, theta_trunc
 
 # The class imbalance gives a false sense of stability. I'm adjusting n so that the width of the 95% CI 
-# corresponds to the AUC CI = 0.0240
-
-n_adj= round(n_test/4+300)
-mu = floor(n_adj*theta_trunc)
-
+# corresponds to the AUC CI = 0.0240. Only if we pretend AUC to be theta. 
+# n_adj= round(n_test/4+300)
+# mu = floor(n_adj*theta_trunc)
 # 95\% confidence interval
-ci_binom = binom.confint(mu,n_adj,conf.level=1-alpha, methods = "exact") # CI for binomial
-
-sprintf("The %s confidence interval for an estimated accuracy of %.4f with n = %s is (%.4f,%.4f), width = %.4f.",  
-        (1-alpha)*100, mean(theta_vec), n_adj, ci_binom["lower"], ci_binom["upper"],ci_binom["upper"]-ci_binom["lower"] )
-
-# Parameters
-# update the overwritten (sure there is a better way)
-n = n_adj # Number of images, n
+# ci_binom = binom.confint(mu,n_adj,conf.level=1-alpha, methods = "exact") # CI for binomial
+# sprintf("The %s confidence interval for an estimated accuracy of %.4f with n = %s is (%.4f,%.4f), width = %.4f.",  
+#        (1-alpha)*100, mean(theta_vec), n_adj, ci_binom["lower"], ci_binom["upper"],ci_binom["upper"]-ci_binom["lower"] )
+# n = n_adj # Number of images, n
 
 # Simulate dependency
 theta_0 = theta_trunc # theta_0 is the probability of correct prediction for the leading classifier. 
@@ -98,10 +87,10 @@ c = -theta_0^2
 trunc_min1 = (-b+sqrt(b^2-4*a*c))/(2*a)
 trunc_min2 = (-b-sqrt(b^2-4*a*c))/(2*a)
 
-trunc_dat = comb_data$prv_score[(comb_data$prv_score < theta_trunc)]
+trunc_dat = theta_obs[(theta_obs < theta_trunc)]
 trunc_dat = trunc_dat[trunc_dat > trunc_min]
 
-m = length(comb_data$prv_score[(comb_data$prv_score > trunc_min)])
+m = length(theta_obs[(theta_obs > trunc_min)])
 
 
 
@@ -111,7 +100,7 @@ source("dep_nonid_pmf_fun.R") # for the function 'dep_nonid_pmf' - simulated pmf
 
 
 
-# rep = 1000
+rep = 1000
 
 # Bootstrap a theta-vector of length m from the kaggle observations truncated at theta_trunc
 B = 100
@@ -120,6 +109,7 @@ theta_vec = sample(x=trunc_dat, size=m, replace=TRUE)
 
 # have a look at the histogram
 hist(theta_vec, breaks=200)
+hist(theta_obs[theta_obs > trunc_min], breaks=200)
 
 lowerCI = numeric(B) 
 upperCI = numeric(B) 
@@ -155,76 +145,51 @@ for (b in 1:B){
 toc
 
 hat_theta = (n-X$x_dep)/n
-hist(hat_theta, breaks=200)
+hist(hat_theta, breaks=200, ylim = c(0,100), 
+     main = 'one bootstrap repetition', xlab = 'simulated accuracies', ylab = 'number of teams')
 
-hist(comb_data$prv_score[(comb_data$prv_score > trunc_min)], breaks = 200)
+#hist(comb_data$prv_score[(comb_data$prv_score > trunc_min)], breaks = 200, ylim = c(0,100), 
+#     main = 'kaggle data', xlab = 'observed accuracies', ylab = 'number of teams')
 
-
-
-sprintf("The mean bootstrapped simulated  %s confidence interval is (%.5f,%.5f) with %s repetitions and %s bootstraps.",  
-        1-alpha, (n-mean(lowerCI))/n, (n-mean(upperCI))/n, rep, B)
-
-# The standard deviation
-Vsota = mean(upperCI*upperCI) - mean(upperCI)*mean(upperCI)
-sprintf("The bootstrapped simulated standard deviation of the upper CI is %.7f, with %s repetitions and %s bootstraps.",  
-        sqrt(Vsota)/n, rep, B)
-
-sprintf("The mean bootstrapped simulated 99 confidence interval is (%.5f,%.5f) with %s repetitions and %s bootstraps.",  
-        (n-mean(lowerCI99))/n, (n-mean(upperCI99))/n, rep, B)
-
-# The standard deviation
-Vsota = mean(upperCI99*upperCI99) - mean(upperCI99)*mean(upperCI99)
-sprintf("The bootstrapped simulated standard deviation of the upper 99 CI is %.7f, with %s repetitions and %s bootstraps.",  
-        sqrt(Vsota)/n, rep, B)
+hist(theta_obs[(theta_obs > trunc_min)], breaks = 200, ylim = c(0,100), 
+     main = 'kaggle data', xlab = 'observed accuracies', ylab = 'number of teams')
 
 
+# Mean and standard deviation of the 95 CI upper and lower bound
+mean_lowerCI = mean(lowerCI)
+mean_upperCI = mean(upperCI)
+Vsota = mean(upperCI*upperCI) - mean_upperCI*mean_upperCI
 
+sprintf("The mean bootstrapped simulated %s confidence interval is (%.5f,%.5f) with %s repetitions and %s bootstraps. The standard deviation of the upper CI is %.7f",  
+        1-alpha, (n-mean_lowerCI)/n, (n-mean_upperCI)/n, rep, B,  sqrt(Vsota)/n)
 
+# Mean and standard deviation of the 99 CI upper and lower bound
+mean_lowerCI99 = mean(lowerCI99)
+mean_upperCI99 = mean(upperCI99)
+Vsota99 = mean(upperCI99*upperCI99) - mean_upperCI99*mean_upperCI99
 
-# The expected value
-Esota = mean(X$min_dep)
+sprintf("The mean bootstrapped simulated 99 confidence interval is (%.5f,%.5f) with %.0f repetitions and %s bootstraps. The standard deviation of the upper CI is %.7f",   
+        (n-mean_lowerCI99)/n, (n-mean_upperCI99)/n, rep, B,  sqrt(Vsota99)/n)
 
-# The standard deviation
-Vsota = mean(X$min_dep*X$min_dep) - Esota*Esota
-
-sprintf("The simulated expected value is %.7f and standard deviation is %.7f, with %s repetitions.",  
-        (n-Esota)/n, sqrt(Vsota)/n, rep)
 
 hat_theta = (n-X$x_dep)/n
-hist(hat_theta, breaks = 30, xlim=c(0.89,0.95), ylim = c(0,500), main = 'example from one repetition')
+hist(hat_theta[hat_theta > trunc_min], xlim=c(trunc_min,0.98), breaks = 30, ylim = c(0,200), main = 'example from one repetition')
 
-hist(comb_data$prv_score[comb_data$prv_score > 0.89], breaks = 30, 
-     xlim=c(0.89,0.95), ylim = c(0,500), main = 'kaggle data', xlab = 'pretend it is accurcies')
+hist(theta_obs[theta_obs > trunc_min], breaks = 50, 
+     xlim=c(trunc_min,0.98), ylim = c(0,200), main = 'kaggle data', xlab = 'pretend it is accurcies')
 
-hist((n-X$min_dep)/n, breaks = 30, xlim=c(0.89,0.95), freq = F, main = 'simulated distribution')
+hist((n-X$min_dep)/n, breaks = 30, xlim=c(trunc_min,0.98), freq = F, main = 'distribution of max accuracies')
 
-
-
-
-hat_theta_up = (n-min_dep_alpha2)/n
-hat_theta_low = (n-min_dep_alpha2_low)/n
+sprintf("There are %s teams with accuracies above %.4f. With true SOTA of %.4f, the upper 99 CI is %.4f, whereas max kaggle accuracy is %.4f.",  
+        m, trunc_min, theta_trunc, (n-mean_upperCI99)/n, max(theta_obs))
 
 
-sprintf("%s/2 percent of the %s teams: %s",  
-        alpha, m, m*alpha/2)
-
-sprintf("Number of teams above the upper bound: %s",  
-        length(C2$AUC[C2$AUC>hat_theta_up]))
-
-sprintf("The simulated dependent upper bound of the %s confidence interval is %.5f, with %s repetitions.",  
-        1-0.01, (n-min_dep_one)/n, rep)
-sprintf("%s/2 percent of the %s teams: %s",  
-        0.01, m, m*0.01/2)
-
-sprintf("Number of teams above the upper bound: %s",  
-        length(C2$AUC[C2$AUC>(n-min_dep_one)/n]))
-
-
-sprintf("The true SOTA is %s.",  
-        theta_max)
-
-
-
+teams99 = length(theta_obs[theta_obs > (n-mean_upperCI99)/n])
+sprintf("%s out of %s teams have accuracies above 99 CI, %.1f percent.",  
+        teams99, m, 100*teams99/m)
+teams95 = length(theta_obs[theta_obs > (n-mean_upperCI)/n])
+sprintf("%s out of %s teams have accuracies above 95 CI, %.1f percent.", 
+        teams95, m, 100*teams95/m)
 
 
 
