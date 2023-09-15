@@ -57,12 +57,14 @@ library(latex2exp)  # mathematical notation
 
 source("Parameters_PublicCompetition.R") # n, theta, m, alpha, rho, theta_min, theta_max, theta_vec, 
 
+length(theta_vec)
+
 source("dep_nonid_pmf_fun.R")
 
 
 
 tic()
-X = dep_nonid_pmf(n, theta, m, rho, rep, theta_vec, theta_0 = theta)
+X = dep_nonid_pmf(n, m, rho, rep, theta_vec, theta_0 = theta)
 toc()
 
 # Histograms of the minimum number of failures for m classifiers, in rep repetitions.
