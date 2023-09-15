@@ -12,7 +12,7 @@ theta_max = theta
 step = (theta_max-theta_min)/(m-1)
 theta_vec = seq(theta_min, theta_max, step)
 
-theta_trunc = 0.9275 # truncating for the bootstrap
+theta_trunc = sqrt(0.9225) # truncating for the bootstrap
 
 rho = 0.6 # correlation coefficient, the number is calculated from Mania (2019)
 
