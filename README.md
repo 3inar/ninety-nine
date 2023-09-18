@@ -35,6 +35,7 @@ Section 'Non-identical, dependent classifiers': dependent_nonidentical.R calls P
                                                 dep_nonid_pmf - simulated pmf for dependent, nonidentical classifiers
 
 Section 'A kaggle challenge example': AUROC.R for quick estimate of AUC_SOTA
+                                      SOTA_bootstrap.R for better estimate of AUC_SOTA
                                                 
 Section 'Discussion': auc_generator.R: creates AUC curves
                       melanoma.R: investigates the Melanoma 2020 kaggle competition
