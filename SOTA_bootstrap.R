@@ -35,7 +35,7 @@ hist(dat$AUC, breaks=200)
 
 # With balanced accuracy and binary prediction, we have that accuracy = sqrt(AUC)
 
-theta_obs = sqrt(dat$AUC)
+theta_obs = dat$AUC #sqrt(dat$AUC)
 hist(theta_obs, breaks=200)
 print(max(theta_obs))
 
@@ -100,7 +100,7 @@ source("dep_nonid_pmf_fun.R") # for the function 'dep_nonid_pmf' - simulated pmf
 
 
 
-rep = 1000
+#rep = 10000
 
 # Bootstrap a theta-vector of length m from the kaggle observations truncated at theta_trunc
 B = 100
@@ -190,6 +190,10 @@ sprintf("%s out of %s teams have accuracies above 99 CI, %.1f percent.",
 teams95 = length(theta_obs[theta_obs > (n-mean_upperCI)/n])
 sprintf("%s out of %s teams have accuracies above 95 CI, %.1f percent.", 
         teams95, m, 100*teams95/m)
+
+teamsSOTA = length(theta_obs[theta_obs > theta_trunc])
+sprintf("%s out of %s teams have accuracies above the true sota, %.1f percent.", 
+        teamsSOTA, m, 100*teamsSOTA/m)
 
 
 
