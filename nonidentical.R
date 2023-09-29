@@ -57,31 +57,11 @@ library(latex2exp)  # mathematical notation
 
 source("Parameters_PublicCompetition.R") # n, theta, m, alpha, theta_min, theta_max, theta_vec
 
+source("indep_nonid_pmf_fun.R") # for the function 'indep_nonid_pmf' - simulated pmf
+# nonid_cdf, nonid_pmf - analytical pmf
 
-theta_mean = (theta_max+theta_min)/2
-
-
-# Simulate non-identical
-sim_nonid_pmf <- function(n, theta_mean, theta_vec, m, rep){   
-
-  min_nonid = numeric(rep) # min number of failures 
-  min_id = numeric(rep)
-
-  for (ell in 1:rep){
-  
-    x_nonid = rbinom(m,n,1-theta_vec) # number of failures for classifier j=1, .., m
-    x_id = rbinom(m,n,1-theta_mean) # i'm not sure if it makes sense to compare the two?
-    
-    min_nonid[ell] = min(x_nonid)
-    min_id[ell] = min(x_id)
-    
-  }
-  X = list(min_nonid = min_nonid, min_id = min_id)
-  
-  return(X)
-}
 tic()
-X = sim_nonid_pmf(n, theta_mean, theta_vec, m, rep)
+X = indep_nonid_pmf(n, theta_vec, m, rep)
 toc()
 
 # Histograms of the minimum number of failures for m classifiers, in rep repetitions.
@@ -96,13 +76,6 @@ min_nonid_alpha2 = sort_min_nonid[(alpha/2)*rep] # find the alpha/2 bound
 
 sprintf("The simulated non-identical upper bound of the %s confidence interval is %.5f, with %s repetitions. Distance to SOTA: %s.",  
         1-alpha, (n-min_nonid_alpha2)/n, rep, (n-min_nonid_alpha2)/n-theta_max)
-
-# The upper bound of the 95% confidence interval
-sort_min_id = sort(X$min_id) # sort the minimum number of failures
-min_id_alpha2 = sort_min_id[(alpha/2)*rep] # find the alpha/2 bound
-
-sprintf("The simulated iid upper bound of the %s confidence interval is %.5f, with %s repetitions. Distance to SOTA: %s",  
-        1-alpha, (n-min_id_alpha2)/n, rep, (n-min_id_alpha2)/n-theta_mean)
 
 # If there are $m$ classifiers, what must be the prob, $Palpha2$, of each 
 # classifier having at most $x$ failures, for the probability of at least Cx = 1
@@ -128,30 +101,15 @@ P = pbinom(Cx-1,m,Palpha2, lower.tail = F) # should be 0.025
 # If the probability of wrongly predicting at most x out of n data points 
 # is Palpha2. What is x when theta = 0.9?
 
+theta_mean = (theta_max+theta_min)/2
+
 k_alpha2 = qbinom(Palpha2, n, theta_mean, lower.tail = F)
 x_alpha2 = n-k_alpha2
 theta_alpha2 = (n-x_alpha2)/n
 sprintf("With a probablitiy of alpha/2 = %s, at least %s team will achieve an accuracy of at least %.4f.",
         alpha/2, Cx, theta_alpha2)
 
-
-
-# Analytical result
-nonid_cdf <- function(n, theta_vec, m){   
-  Fz = numeric(n+1)
-  for (z in 0:n){
-    P = numeric(m)
-    term = numeric(m)
-  
-    for (j in 1:m){
-      P[j] = pbinom(z,n,(1-theta_vec[j])) 
-      term[j] = 1-P[j]
-    }
-    i = z+1
-    Fz[i] = 1 - prod(term)
-  }
-  return(Fz)
-}
+# Analytical results:
 
 # # # # # # # # # # # # # # # # # Figure 6 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -179,15 +137,6 @@ print(c(which(Fz>alpha/2)[1]-1,min_nonid_alpha2)) # ok
 
 
 ################# probability mass function ##########################
-
-nonid_pmf <- function(n, theta_vec, m){   
-  fz = numeric(n+1)
-  Fz = nonid_cdf(n, theta_vec, m)
-  fz[1] = Fz[1]
-  fz[2:(n+1)] = Fz[2:(n+1)]-Fz[1:n] # this is how pmf is defined: f(x) = F(x)-F(x-1)
-  
-  return(fz)
-}
 
 # # # # # # # # # # # # # # # # # Figure 7 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 fz = nonid_pmf(n, theta_vec, m)
