@@ -35,9 +35,10 @@ class[1:n_mal] = 1 # true class label
 # Create toy example with AUC = 0.9490
 
 predict1 = class
-false1 = 0.39 # this parameter is adjusted until required AUC is produced
+false1 = 0.322 # this parameter is adjusted until required AUC is produced
 
-# 0.322 -> 0.949
+# 0.390 ->  0.9216
+# 0.322 -> 0.9490
 
 
 # malignant prediction
@@ -55,7 +56,11 @@ plot(roc1)
 auc_sota = auc(class,predict1)
 print(auc_sota)
 # ci.auc(class, predict1) # deLong doesn't work that well
-CI = ci.auc(class, predict1, method = "bootstrap", boot.n=50000, conf.level=0.99) 
+CI = ci.auc(class, predict1, method = "bootstrap", boot.n=50000, conf.level=0.95)
+
+print(CI)
+
+print(CI[3]-CI[1])
 
 # kaggle data
 
