@@ -26,7 +26,8 @@ Section 'Dependent, identical classifiers': dependence.R calls ProbDistr_thetaSO
                                             dep_id_pmf - simulated pmf for dependent, identical classifiers, fixed or random Y0
                                             
 Section 'Non-identical, independent classifiers': nonidentical.R calls Parameters_PublicCompetition.R
-                                                  sim_nonid_pmf - simulated pmf for non-identical, independent classifiers
+                                                  indep_nonid_pmf_fun.R with function 
+                                                  indep_nonid_pmf - simulated pmf for non-identical, independent classifiers
                                                   nonid_cdf - cdf for non-identical, independent classifiers
                                                   nonid_pmf - pmf based on cdf
                                                   
