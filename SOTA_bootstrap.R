@@ -85,9 +85,9 @@ trunc_dat = trunc_dat[trunc_dat > trunc_min]
 m = length(theta_obs[(theta_obs > trunc_min)])
 
 # The class imbalance gives a false sense of stability. I'm adjusting n so that the width of the 95% CI 
-# corresponds to the AUC CI = 0.0240. Only if we pretend AUC to be theta. 
-n_adj= round(n_test/4+5)
-mu = floor(n_adj*theta_trunc)
+# corresponds to the AUC CI = 0.0309 (from AUROC) or 0.0230 (from fig 8, middle panel). Only if we pretend AUC to be theta. 
+n_adj= round(n_test/4+110)
+mu = floor(n_adj*theta_SOTA)
 # 95\% confidence interval
 alpha = 0.05
 ci_binom = binom.confint(mu,n_adj,conf.level=1-alpha, methods = "exact") # CI for binomial
@@ -186,7 +186,7 @@ hist(theta_obs[theta_obs > trunc_min], breaks = 50,
 hist((n-X$min_dep)/n, breaks = 30, xlim=c(trunc_min,0.98), freq = F, main = 'distribution of max accuracies')
 
 sprintf("There are %s teams with accuracies above %.4f. With true SOTA of %.4f, the upper 99 CI is %.4f, whereas max kaggle accuracy is %.4f.",  
-        m, trunc_min, theta_trunc, (n-mean_upperCI99)/n, max(theta_obs))
+        m, trunc_min, theta_SOTA, (n-mean_upperCI99)/n, max(theta_obs))
 
 
 teams99 = length(theta_obs[theta_obs > (n-mean_upperCI99)/n])
@@ -196,7 +196,7 @@ teams95 = length(theta_obs[theta_obs > (n-mean_upperCI)/n])
 sprintf("%s out of %s teams have accuracies above 95 CI, %.1f percent.", 
         teams95, m, 100*teams95/m)
 
-teamsSOTA = length(theta_obs[theta_obs > theta_trunc])
+teamsSOTA = length(theta_obs[theta_obs > theta_SOTA])
 sprintf("%s out of %s teams have accuracies above the true sota, %.1f percent.", 
         teamsSOTA, m, 100*teamsSOTA/m)
 
