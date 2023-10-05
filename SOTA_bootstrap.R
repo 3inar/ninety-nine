@@ -43,29 +43,25 @@ test_prop = 0.7 # 30/70 split
 
 # Approximations and estimates
 n_test = round(test_prop*n_val_test) # approximated test set size - this should be fairly accurate
-
-sprintf("Estimated test set size: %s.",
-        n_test)
-
 n_mal = round(test_prop*n_val_test*malignant_rate) # estimated number of malignant cases
 # based on equal proportions in validation and test set. this is a strong assumption, but the most reasonable one
-
-sprintf("Estimated number of malignant cases: %s.",
-        n_mal)
-
 n_ben = n_test-n_mal # estimated number of benign cases
 
-m = length(theta_obs)
+sprintf("Estimated number of malignant cases: %s. Estimated test set size: %s. Number of teams: %s.",
+        n_mal, n_test, length(theta_obs))
 
 ########################### Dependent, non-identical #########################
 
-rho = 0.6
+rho = 0.6 # correlation coefficient, the number is calculated from Mania (2019)
 
-theta_SOTA = 0.9255 # This is the parameter that needs to be adjusted until, say upper limit of 99% CI = max(theta_obs)
+theta_SOTA = max(theta_obs)
+# theta_SOTA = 0.9378 # This is the parameter that needs to be adjusted until, say E(theta_sota) = max(theta_obs)
+# theta_SOTA = 0.9295 # This is the parameter that needs to be adjusted until, say upper limit of 95% CI = max(theta_obs)
+
 
 # Simulate dependency
 
-theta_0 = theta_SOTA # theta_0 is the probability of correct prediction for the leading classifier. 
+theta_0 = theta_SOTA#-0.08 # theta_0 is the probability of correct prediction for the leading classifier. adjust to E(theta_SOTA)? 
 
 # with a dependency of rho, the minimum theta_j is 
 trunc_min = ((rho*rho)*theta_0/(1-theta_0))/(1+(rho*rho)*theta_0/(1-theta_0))
@@ -79,37 +75,37 @@ trunc_min1 = (-b+sqrt(b^2-4*a*c))/(2*a)
 trunc_min2 = (-b-sqrt(b^2-4*a*c))/(2*a)
 
 # bootstrap sampling from kaggle data lower than theta_SOTA, and higher that the lower cut-off
-trunc_dat = theta_obs[(theta_obs < theta_SOTA)]
-trunc_dat = trunc_dat[trunc_dat > trunc_min]
+trunc_dat = theta_obs[(theta_obs > trunc_min)&(theta_obs < theta_SOTA)]
 
 m = length(theta_obs[(theta_obs > trunc_min)])
 
 # The class imbalance gives a false sense of stability. I'm adjusting n so that the width of the 95% CI 
 # corresponds to the AUC CI = 0.0309 (from AUROC) or 0.0230 (from fig 8, middle panel). Only if we pretend AUC to be theta. 
-n_adj= round(n_test/4+110)
+
+# n_adj = 1481 # for theta_SOTA = max(theta_obs)
+# n_adj = 1750 # for E(theta_SOTA) = max(theta_obs)
+n_adj= 1972 # for 95 CI = max(theta_obs)
 mu = floor(n_adj*theta_SOTA)
 # 95\% confidence interval
 alpha = 0.05
 ci_binom = binom.confint(mu,n_adj,conf.level=1-alpha, methods = "exact") # CI for binomial
 sprintf("The %s confidence interval for an estimated accuracy of %.4f with n = %s is (%.4f,%.4f), width = %.4f.",  
-        (1-alpha)*100, mean(trunc_dat), n_adj, ci_binom["lower"], ci_binom["upper"],ci_binom["upper"]-ci_binom["lower"] )
+        (1-alpha)*100, theta_SOTA, n_adj, ci_binom["lower"], ci_binom["upper"],ci_binom["upper"]-ci_binom["lower"] )
 n = n_adj # Number of images, n
-
-
 
 
 source("dep_nonid_pmf_fun.R") # for the function 'dep_nonid_pmf' - simulated pmf
 
-rep = 10000
+rep = 100000
 
 # Bootstrap a theta-vector of length m from the kaggle observations truncated at theta_trunc
-B = 10
+B = 5
 
 theta_vec = sample(x=trunc_dat, size=m, replace=TRUE)
 
 # have a look at the histogram
-hist(theta_vec, breaks=200)
-hist(theta_obs[theta_obs > trunc_min], breaks=200)
+hist(theta_vec, breaks=250, xlim = c(0.82, 0.96))
+hist(theta_obs[theta_obs > trunc_min], breaks=200, xlim = c(0.82, 0.96))
 
 lowerCI = numeric(B) 
 upperCI = numeric(B) 
@@ -118,7 +114,6 @@ lowerCI99 = numeric(B)
 upperCI99 = numeric(B) 
 mdn = numeric(B)
 
-tic
 for (b in 1:B){
   theta_vec = sample(x=trunc_dat, size=m, replace=TRUE)
   
@@ -139,24 +134,27 @@ for (b in 1:B){
   
   lowerCI99[b] = min_dep_alpha2_low
   upperCI99[b] = min_dep_alpha2
-  mdn[b] =  sort_min_dep[(1/2)*rep]
+  mdn[b] =  (n-mean(X$min_dep))/n
   
-  print(c(b,mdn[b]))
-  print((n-upperCI99[b])/n)
+  print(c(b))
+  print(c((n-lowerCI[b])/n, (n-upperCI[b])/n))
+  print((n-mean(X$min_dep))/n)
   
 }
-toc
 
-mdn
+teamsSOTA = length(theta_obs[theta_obs > theta_SOTA])
+sprintf("%s out of %s teams have accuracies above the true sota, %.1f percent.", 
+        teamsSOTA, m, 100*teamsSOTA/m)
+
+
+
+mean(mdn)
 
 hat_theta = (n-X$x_dep)/n
-hist(hat_theta, breaks=200, ylim = c(0,100), 
+hist(hat_theta, breaks=200, ylim = c(0,100), xlim = c(trunc_min, 0.96),
      main = 'one bootstrap repetition', xlab = 'simulated accuracies', ylab = 'number of teams')
 
-#hist(comb_data$prv_score[(comb_data$prv_score > trunc_min)], breaks = 200, ylim = c(0,100), 
-#     main = 'kaggle data', xlab = 'observed accuracies', ylab = 'number of teams')
-
-hist(theta_obs[(theta_obs > trunc_min)], breaks = 200, ylim = c(0,100), 
+hist(theta_obs[(theta_obs > trunc_min)], breaks = 200, ylim = c(0,100), xlim = c(trunc_min, 0.96),
      main = 'kaggle data', xlab = 'observed accuracies', ylab = 'number of teams')
 
 
@@ -177,9 +175,6 @@ sprintf("The mean bootstrapped simulated 99 confidence interval is (%.5f,%.5f) w
         (n-mean_lowerCI99)/n, (n-mean_upperCI99)/n, rep, B,  sqrt(Vsota99)/n)
 
 
-hat_theta = (n-X$x_dep)/n
-hist(hat_theta[hat_theta > trunc_min], xlim=c(trunc_min,0.98), breaks = 30, ylim = c(0,200), main = 'example from one repetition')
-
 hist(theta_obs[theta_obs > trunc_min], breaks = 50, 
      xlim=c(trunc_min,0.98), ylim = c(0,200), main = 'kaggle data', xlab = 'pretend it is accurcies')
 
@@ -189,17 +184,9 @@ sprintf("There are %s teams with accuracies above %.4f. With true SOTA of %.4f, 
         m, trunc_min, theta_SOTA, (n-mean_upperCI99)/n, max(theta_obs))
 
 
-teams99 = length(theta_obs[theta_obs > (n-mean_upperCI99)/n])
-sprintf("%s out of %s teams have accuracies above 99 CI, %.1f percent.",  
-        teams99, m, 100*teams99/m)
-teams95 = length(theta_obs[theta_obs > (n-mean_upperCI)/n])
-sprintf("%s out of %s teams have accuracies above 95 CI, %.1f percent.", 
-        teams95, m, 100*teams95/m)
-
-teamsSOTA = length(theta_obs[theta_obs > theta_SOTA])
-sprintf("%s out of %s teams have accuracies above the true sota, %.1f percent.", 
-        teamsSOTA, m, 100*teamsSOTA/m)
-
+teams95CI = length(theta_obs[theta_obs > ((n-mean_lowerCI)/n)])
+sprintf("%s out of %s teams have accuracies above the lower 95 CI, %.1f percent.", 
+        teams95CI, m, 100*teams95CI/m)
 
 
 
