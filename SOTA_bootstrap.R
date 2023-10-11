@@ -54,15 +54,20 @@ sprintf("Estimated number of malignant cases: %s. Estimated test set size: %s. N
 
 rho = 0.6 # correlation coefficient, the number is calculated from Mania (2019)
 
-theta_SOTA = max(theta_obs)
-# theta_SOTA = 0.9378 # This is the parameter that needs to be adjusted until, say E(theta_sota) = max(theta_obs)
-# theta_SOTA = 0.9295 # This is the parameter that needs to be adjusted until, say upper limit of 95% CI = max(theta_obs)
+option = 3
 
+if (option == 1){
+  theta_SOTA = max(theta_obs)
+} else if (option == 2){
+  theta_SOTA = 0.9378 # This is the parameter that needs to be adjusted until, say E(theta_sota) = max(theta_obs)
+} else if (option == 3){
+  theta_SOTA = 0.9295 # This is the parameter that needs to be adjusted until, say upper limit of 95% CI = max(theta_obs)
+}
 
 # Simulate dependency
-
 theta_0 = theta_SOTA#-0.08 # theta_0 is the probability of correct prediction for the leading classifier. adjust to E(theta_SOTA)? 
 
+# The theta_obs must be truncated
 # with a dependency of rho, the minimum theta_j is 
 trunc_min = ((rho*rho)*theta_0/(1-theta_0))/(1+(rho*rho)*theta_0/(1-theta_0))
 
@@ -81,10 +86,14 @@ m = length(theta_obs[(theta_obs > trunc_min)])
 
 # The class imbalance gives a false sense of stability. I'm adjusting n so that the width of the 95% CI 
 # corresponds to the AUC CI = 0.0309 (from AUROC) or 0.0230 (from fig 8, middle panel). Only if we pretend AUC to be theta. 
+if (option == 1){
+  n_adj = 1481 # for theta_SOTA = max(theta_obs)
+} else if (option == 2){
+  n_adj = 1750 # for E(theta_SOTA) = max(theta_obs)
+} else if (option == 3){
+  n_adj= 1972 # for 95 CI = max(theta_obs)
+}
 
-# n_adj = 1481 # for theta_SOTA = max(theta_obs)
-# n_adj = 1750 # for E(theta_SOTA) = max(theta_obs)
-n_adj= 1972 # for 95 CI = max(theta_obs)
 mu = floor(n_adj*theta_SOTA)
 # 95\% confidence interval
 alpha = 0.05
@@ -95,67 +104,84 @@ n = n_adj # Number of images, n
 
 
 source("dep_nonid_pmf_fun.R") # for the function 'dep_nonid_pmf' - simulated pmf
+source("indep_nonid_pmf_fun.R") # for the function 'indep_nonid_pmf' - simulated pmf
+# nonid_cdf, nonid_pmf - analytical pmf
+
 
 rep = 100000
 
 # Bootstrap a theta-vector of length m from the kaggle observations truncated at theta_trunc
-B = 5
-
-theta_vec = sample(x=trunc_dat, size=m, replace=TRUE)
-
-# have a look at the histogram
-hist(theta_vec, breaks=250, xlim = c(0.82, 0.96))
-hist(theta_obs[theta_obs > trunc_min], breaks=200, xlim = c(0.82, 0.96))
+B = 100
 
 lowerCI = numeric(B) 
 upperCI = numeric(B) 
 
-lowerCI99 = numeric(B) 
-upperCI99 = numeric(B) 
-mdn = numeric(B)
+lowerCIindep = numeric(B) 
+upperCIindep = numeric(B) 
+
+
+E_SOTA = numeric(B) # the mean (over the bootstraps) minimum number of failures among all classifiers
 
 for (b in 1:B){
-  theta_vec = sample(x=trunc_dat, size=m, replace=TRUE)
+  theta_vec = sample(x=trunc_dat, size=m, replace=TRUE) # bootstrap from truncated kaggle observations
   
-  X = dep_nonid_pmf(n, m, rho, rep, theta_vec, theta_0 = theta_0)
+  # minimum number of wrong classifications among all classifiers, vector of length rep
+  X = dep_nonid_pmf(n, m, rho, rep, theta_vec, theta_0 = theta_0) 
+  
+  # Xindep = indep_nonid_pmf(n, theta_vec, m, rep)
   
   # The bounds of the 95% confidence interval
   sort_min_dep = sort(X$min_dep) # sort the minimum number of failures
-  min_dep_alpha2 = sort_min_dep[(alpha/2)*rep] # find the alpha/2 lower bound
+  min_dep_alpha2 = sort_min_dep[(alpha/2)*rep] # find the alpha/2 upper bound
   min_dep_alpha2_low = sort_min_dep[(1-alpha/2)*rep] # find the alpha/2 lower bound
   
   lowerCI[b] = min_dep_alpha2_low
   upperCI[b] = min_dep_alpha2
   
-  # The bounds of the 99% confidence interval
-  sort_min_dep = sort(X$min_dep) # sort the minimum number of failures
-  min_dep_alpha2 = sort_min_dep[(0.01/2)*rep] # find the alpha/2 lower bound
-  min_dep_alpha2_low = sort_min_dep[(1-0.01/2)*rep] # find the alpha/2 lower bound
+  # The bounds of the 95% confidence interval, indep
+  # sort_min_indep = sort(Xindep$min_nonid) # sort the minimum number of failures
+  # min_indep_alpha2 = sort_min_indep[(alpha/2)*rep] # find the alpha/2 upper bound
+  # min_indep_alpha2_low = sort_min_indep[(1-alpha/2)*rep] # find the alpha/2 lower bound
   
-  lowerCI99[b] = min_dep_alpha2_low
-  upperCI99[b] = min_dep_alpha2
-  mdn[b] =  (n-mean(X$min_dep))/n
+  # lowerCIindep[b] = min_indep_alpha2_low
+  # upperCIindep[b] = min_indep_alpha2
   
-  print(c(b))
+  
+  
+  
+  E_SOTA[b] =  (n-mean(X$min_dep))/n # The expected value
+  
+  print(c(b, sort_min_dep[(1/2)*rep]))
   print(c((n-lowerCI[b])/n, (n-upperCI[b])/n))
+  # print(c((n-lowerCIindep[b])/n, (n-upperCIindep[b])/n))
   print((n-mean(X$min_dep))/n)
+  
+  if (option == 3){
+    mean_lowerCI = mean(lowerCI[1:b])
+    mean_upperCI = mean(upperCI[1:b])
+    Vsota = mean(upperCI[1:b]*upperCI[1:b]) - mean_upperCI*mean_upperCI
+    print(c((n-mean_lowerCI)/n, (n-mean_upperCI)/n, sqrt(Vsota)/n)) #/n to get prob instead of number of images
+  }
   
 }
 
-teamsSOTA = length(theta_obs[theta_obs > theta_SOTA])
-sprintf("%s out of %s teams have accuracies above the true sota, %.1f percent.", 
-        teamsSOTA, m, 100*teamsSOTA/m)
+# have a look at the histograms
+hist(theta_obs[theta_obs > trunc_min], breaks=200, xlim = c(0.82, 0.96),
+     main = 'kaggle realisations', xlab = 'accuracies', ylab = 'number of teams')
 
-
-
-mean(mdn)
+hist(theta_vec, breaks=250, xlim = c(0.82, 0.96),
+     main = 'one bootstrap', xlab = 'bootstrapped accuracies', ylab = 'number of teams')
 
 hat_theta = (n-X$x_dep)/n
 hist(hat_theta, breaks=200, ylim = c(0,100), xlim = c(trunc_min, 0.96),
-     main = 'one bootstrap repetition', xlab = 'simulated accuracies', ylab = 'number of teams')
+     main = 'one realisation', xlab = 'simulated accuracies', ylab = 'number of teams')
 
-hist(theta_obs[(theta_obs > trunc_min)], breaks = 200, ylim = c(0,100), xlim = c(trunc_min, 0.96),
-     main = 'kaggle data', xlab = 'observed accuracies', ylab = 'number of teams')
+teamsSOTA = length(theta_obs[theta_obs > theta_SOTA])
+sprintf("%s teams have accuracies above the true sota, %s.", 
+        teamsSOTA, theta_SOTA)
+
+sprintf("The expected value of max(theta_obs) %.4f.", 
+        mean(E_SOTA))
 
 
 # Mean and standard deviation of the 95 CI upper and lower bound
@@ -166,166 +192,11 @@ Vsota = mean(upperCI*upperCI) - mean_upperCI*mean_upperCI
 sprintf("The mean bootstrapped simulated %s confidence interval is (%.5f,%.5f) with %s repetitions and %s bootstraps. The standard deviation of the upper CI is %.7f",  
         1-alpha, (n-mean_lowerCI)/n, (n-mean_upperCI)/n, rep, B,  sqrt(Vsota)/n)
 
-# Mean and standard deviation of the 99 CI upper and lower bound
-mean_lowerCI99 = mean(lowerCI99)
-mean_upperCI99 = mean(upperCI99)
-Vsota99 = mean(upperCI99*upperCI99) - mean_upperCI99*mean_upperCI99
-
-sprintf("The mean bootstrapped simulated 99 confidence interval is (%.5f,%.5f) with %.0f repetitions and %s bootstraps. The standard deviation of the upper CI is %.7f",   
-        (n-mean_lowerCI99)/n, (n-mean_upperCI99)/n, rep, B,  sqrt(Vsota99)/n)
-
-
-hist(theta_obs[theta_obs > trunc_min], breaks = 50, 
-     xlim=c(trunc_min,0.98), ylim = c(0,200), main = 'kaggle data', xlab = 'pretend it is accurcies')
-
 hist((n-X$min_dep)/n, breaks = 30, xlim=c(trunc_min,0.98), freq = F, main = 'distribution of max accuracies')
 
-sprintf("There are %s teams with accuracies above %.4f. With true SOTA of %.4f, the upper 99 CI is %.4f, whereas max kaggle accuracy is %.4f.",  
-        m, trunc_min, theta_SOTA, (n-mean_upperCI99)/n, max(theta_obs))
-
-
 teams95CI = length(theta_obs[theta_obs > ((n-mean_lowerCI)/n)])
-sprintf("%s out of %s teams have accuracies above the lower 95 CI, %.1f percent.", 
-        teams95CI, m, 100*teams95CI/m)
-
-
-
-
-
-
-
-
-########################### Independent, non-identical #########################
-
-# A quick estimate for AUC_SOTA, see AUROC.R -> 0.9216
-
-theta_trunc = 0.9405 # This is the parameter that needs to be adjusted until, say upper limit of 99% CI = max(theta_obs)
-
-teamsSOTA = length(theta_obs[theta_obs > theta_trunc])
-sprintf("%s out of %s teams have accuracies above the true sota, %.1f percent.", 
-        teamsSOTA, m, 100*teamsSOTA/m)
-
-source("indep_nonid_pmf_fun.R") # for the function 'indep_nonid_pmf' - simulated pmf
-                                # nonid_cdf, nonid_pmf - analytical pmf
-
-# Bootstrap a theta-vector of length m from the kaggle observations truncated at theta_trunc
-B = 100000
-
-trunc_dat = theta_obs[(theta_obs < theta_trunc)]
-
-theta_vec = sample(x=trunc_dat, size=m, replace=TRUE)
-
-# have a look at the histogram
-hist(theta_vec, breaks=200)
-hist(theta_obs, breaks=200)
-
-upperCI95 = numeric(B)
-upperCI99 = numeric(B) 
-
-rep = 1
-for (b in 1:B){
-  theta_vec = sample(x=trunc_dat, size=m, replace=TRUE)
-  
-  X = indep_nonid_pmf(n, theta_vec, m, rep)
-  
-  
-  upperCI99[b] = X$min_nonid
-  
-  n99 = length(theta_obs[theta_obs > (n-upperCI99[b])/n])
-  
-  #print(c(b, (n-upperCI99[b])/n, n99))
-  
-}
-
-length(upperCI99[upperCI99>(n-max(theta_obs)*n)])
-
-
-
-
-
-
-
-for (b in 1:B){
-  theta_vec = sample(x=trunc_dat, size=m, replace=TRUE)
-  theta_vec = sort(theta_vec)
-  
-  # Fz = nonid_cdf(n, theta_vec, m)
-  fz = nonid_pmf(n, theta_vec, m)
-  
-  # Expected value
-  Eterm = numeric(n+1)
-  for (z in 0:n){
-    i = z+1
-    Eterm[i] = z*fz[i]
-  }
-  
-  Esota = sum(Eterm)
-  Esota_theta = 1-Esota/n
-  
-  # Variance
-  vterm = numeric(n+1)
-  for (z in 0:n){
-    i = z+1
-    vterm[i] = z^2*fz[i]
-  }
-  esquare = sum(vterm)
-  
-  Vsota = esquare - Esota^2
-  
-  sprintf("The expected number of failures is %.4f, with a variance of %.4f.",
-          Esota, Vsota)
-  sprintf("The expected theta_hat_SOTA is %.6f, with standard deviation of %.6f.",
-          (n-Esota)/n, sqrt(Vsota)/n)
-  
-  print(c(b, (n-Esota)/n, sqrt(Vsota)/n, (n-which(Fz>0.01/2)[1]-1)/n))
-
-  
-}
-
-
-
-
-
-
-
-hist(theta_obs, breaks = 200, ylim = c(0,300), 
-     main = 'kaggle data', xlab = 'observed accuracies', ylab = 'number of teams')
-
-
-# Mean and standard deviation of the 95 CI upper bound
-mean_upperCI95 = mean(upperCI95)
-Vsota = mean(upperCI95*upperCI95) - mean_upperCI95*mean_upperCI95
-
-sprintf("The mean bootstrapped upper bound of the 95 confidence interval is %.5f with %s bootstraps. The standard deviation of the upper CI is %.7f",  
-        (n-mean_upperCI95)/n, B,  sqrt(Vsota)/n)
-
-# Mean and standard deviation of the 99 CI upper bound
-mean_upperCI99 = mean(upperCI99)
-Vsota99 = mean(upperCI99*upperCI99) - mean_upperCI99*mean_upperCI99
-
-sprintf("The mean bootstrapped upper bound of the 99 confidence interval is %.5f with %s bootstraps. The standard deviation of the upper CI is %.7f",   
-        (n-mean_upperCI99)/n, B,  sqrt(Vsota99)/n)
-
-hist(theta_obs, breaks = 50, 
-     xlim=c(0.3,0.98), ylim = c(0,200), main = 'kaggle data', xlab = 'pretend it is accurcies')
-
-sprintf("There are %s teams. With true SOTA of %.4f, the upper 99 CI is %.4f, whereas max kaggle accuracy is %.4f.",  
-        m, theta_trunc, (n-mean_upperCI99)/n, max(theta_obs))
-
-
-teams99 = length(theta_obs[theta_obs > (n-mean_upperCI99)/n])
-sprintf("%s out of %s teams have accuracies above 99 CI, %.1f percent.",  
-        teams99, m, 100*teams99/m)
-teams95 = length(theta_obs[theta_obs > (n-mean_upperCI95)/n])
-sprintf("%s out of %s teams have accuracies above 95 CI, %.1f percent.", 
-        teams95, m, 100*teams95/m)
-
-teamsSOTA = length(theta_obs[theta_obs > theta_trunc])
-sprintf("%s out of %s teams have accuracies above the true sota, %.1f percent.", 
-        teamsSOTA, m, 100*teamsSOTA/m)
-
-
-
+sprintf("%s teams have accuracies above the lower 95 CI.", 
+        teams95CI)
 
 
 
