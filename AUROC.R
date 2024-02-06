@@ -35,10 +35,25 @@ class[1:n_mal] = 1 # true class label
 # Create toy example with AUC = 0.9490
 
 predict1 = class
-false1 = 0.322 # this parameter is adjusted until required AUC is produced
+false1 = 0.2145 # this parameter is adjusted until required AUC is produced
 
-# 0.390 ->  0.9216
-# 0.322 -> 0.9490
+# param.  AUC.  upper 95% CI
+# 0.322  0.9257 0.9449 
+# 0.31   0.9265 0.9457
+# 0.3    0.9264
+# 0.27   0.9271 0.9462 
+# 0.24   0.928. 0.9471
+# 0.22.  0.9292 0.9484
+# 0.21.  0.9293 0.9485
+# 0.2125 0.9296 0.9489 
+# 0.2145  0.93  0.949
+# 0.215  0.9301 0.9492
+# 0.2    0.9304 0.9494 
+
+
+
+
+
 
 
 # malignant prediction
