@@ -55,18 +55,18 @@ sprintf("Estimated number of malignant cases: %s. Estimated test set size: %s. N
 rho = 0.6 # correlation coefficient, the number is calculated from Mania (2019)
 lambda = 4 # shrinking parameter, I adjusted it so that number of teams above SOTA is same for sim and kaggle
 
-option = 4
+option = 5
 
 if (option == 1){
   theta_SOTA = max(theta_obs) # Demonstrating that max(theta_obs) is a biased estimate for theta_SOTA
-} else if (option == 2){
-  theta_SOTA = 0.9378 # This is the parameter that needs to be adjusted until E(theta_sota) = max(theta_obs)
-} else if (option == 3){
-  maud = 0.9335 # Still E(theta_sota), shrink instead of crop, 0.923 for lambda = 1.5, 0.93 for lambda = 2, 0.9325 for lambda = 3
+} else if (option == 2){ # crop
+  theta_SOTA = 0.9378 # parameter adjusted until E(theta_sota) = max(theta_obs)
+} else if (option == 3){ # shrink
+  maud = 0.9335 # parameter adjusted until E(theta_sota) = max(theta_obs)
   theta_shrink = (theta_obs-maud)/lambda + maud 
   theta_SOTA = max(theta_shrink)
-} else if (option == 4){
-  theta_SOTA = 0.9295 # This is the parameter that needs to be adjusted until upper limit of 95% CI = max(theta_obs)
+} else if (option == 4){ # crop
+  theta_SOTA = 0.9295 # parameter until upper limit of 95% CI = max(theta_obs)
 } else if (option == 5){ #Still 95% CI = max(theta_obs), shrink 
   maud = 0.92415
   theta_shrink = (theta_obs-maud)/lambda + maud 
@@ -82,6 +82,8 @@ theta_0 = theta_SOTA # theta_0 is the probability of correct prediction for the 
 # The theta_obs must be truncated
 # with a dependency of rho, the minimum theta_j is 
 trunc_min = ((rho*rho)*theta_0/(1-theta_0))/(1+(rho*rho)*theta_0/(1-theta_0))
+
+print(trunc_min)
 
 # the two solutions for the quadratic equation (does not influence the lower cut-off)
 a = -rho^2*theta_0*(1-theta_0)-theta_0^2
@@ -100,6 +102,7 @@ if ((option == 1)|(option == 2)|(option == 4)){
 }
 
 m = length(theta_obs[(theta_obs > trunc_min)])
+print(m)
 
 # The class imbalance gives a false sense of stability. I'm adjusting n so that the width of the 95% CI 
 # corresponds to the AUC CI = 0.0230 (from fig 8, middle panel). Only if we pretend AUC to be theta. 
@@ -129,10 +132,10 @@ source("indep_nonid_pmf_fun.R") # for the function 'indep_nonid_pmf' - simulated
 # nonid_cdf, nonid_pmf - analytical pmf
 
 
-rep = 100000
+rep = 10000#0
 
 # Bootstrap a theta-vector of length m from the kaggle observations truncated at theta_trunc
-B = 1000
+B = 1#000
 
 lowerCI = numeric(B) 
 upperCI = numeric(B) 
@@ -140,8 +143,9 @@ upperCI = numeric(B)
 lowerCIindep = numeric(B) 
 upperCIindep = numeric(B) 
 
-E_SOTA = numeric(B) # the mean (over the bootstraps) minimum number of failures among all classifiers
-max_SOTA = numeric(B) # the max for each bootstraps
+E_SOTA = numeric(B) # the mean minimum number of failures among all classifiers
+V_SOTA = numeric(B) # the variance of the minimum number of failures among all classifiers
+# max_SOTA = numeric(B) # the max for each bootstraps
 teamsSOTA = numeric(B) #number of teams above SOTA
 
 for (b in 1:B){
@@ -168,9 +172,10 @@ for (b in 1:B){
   # upperCIindep[b] = min_indep_alpha2
   
   E_SOTA[b] =  (n-mean(X$min_dep))/n # The expected value
-  max_SOTA[b] = sort_min_dep[1]
+  V_SOTA[b] = mean(X$min_dep*X$min_dep) - mean(X$min_dep)*mean(X$min_dep)
+  # max_SOTA[b] = sort_min_dep[1] # this will be influenced by rep, and is therefore without meaning
   
-  print(c(b, sort_min_dep[(1/2)*rep], max_SOTA[b]))
+  print(c(b, sort_min_dep[(1/2)*rep], sqrt(V_SOTA[b])/n))
   print((n-upperCI[b])/n)
   
   teamsSOTA[b] = mean(X$teamsSOTA)
@@ -191,7 +196,7 @@ hist(hat_theta, breaks=200, ylim = c(0,100), xlim = c(0.84, 0.96),
 
 
 
-sprintf("%s teams have accuracies above the true sota, %s.", 
+sprintf("%s simulated teams have accuracies above the true sota, %s.", 
         mean(teamsSOTA), theta_SOTA)
 teamSOTA = length(theta_obs[theta_obs > theta_SOTA])
 sprintf("%s teams have accuracies above the true sota, %s.", 
@@ -200,7 +205,7 @@ sprintf("%s teams have accuracies above the true sota, %s.",
 
 
 
-sprintf("The expected value of max(theta_obs) is %.4f. The standard deviations is %.4f.", 
+sprintf("The expected value of max(theta_obs) is %.4f. The standard deviations is %.6f.", 
         mean(E_SOTA), sqrt(var(E_SOTA)))
 
 
@@ -213,7 +218,7 @@ sprintf("The mean bootstrapped simulated %s confidence interval is (%.5f,%.5f) w
         1-alpha, (n-mean_lowerCI)/n, (n-mean_upperCI)/n, rep, B,  sqrt(V_CI)/n, sqrt(var(upperCI))/n)
 
 hist((n-X$min_dep)/n, breaks = 30, xlim=c(trunc_min,0.99), freq = F, main = 'max accuracies one bootstrap')
-hist((n-max_SOTA)/n, xlim=c(trunc_min,0.99), freq = F, main = 'max accuracies all bootstraps')
+# hist((n-max_SOTA)/n, xlim=c(trunc_min,0.99), freq = F, main = 'max accuracies all bootstraps')
 
 
 
