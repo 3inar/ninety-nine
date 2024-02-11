@@ -34,22 +34,22 @@ class[1:n_mal] = 1 # true class label
 
 # Create toy example with AUC = 0.9490
 
+false1 = 0.376 # this parameter is adjusted until required AUC is produced
 predict1 = class
-false1 = 0.2145 # this parameter is adjusted until required AUC is produced
+
 
 # param.  AUC.  upper 95% CI
-# 0.322  0.9257 0.9449 
-# 0.31   0.9265 0.9457
-# 0.3    0.9264
-# 0.27   0.9271 0.9462 
-# 0.24   0.928. 0.9471
-# 0.22.  0.9292 0.9484
-# 0.21.  0.9293 0.9485
-# 0.2125 0.9296 0.9489 
-# 0.2145  0.93  0.949
-# 0.215  0.9301 0.9492
-# 0.2    0.9304 0.9494 
-
+# 0.2 0.9808
+# 0.3 0.9558
+# 0.35 0.9395
+# 0.375 0.931
+# 0.376 0.9308          0.949
+# 0.378 0.9305
+# 0.3785 0.9304
+# 0.3786 0.9303
+# 0.379 0.9289
+# 0.38 0.9287
+# 0.4 0.922
 
 
 
@@ -95,5 +95,7 @@ print(m_top)
 m_sota = length(AUC[AUC>CI[[2]]])
 print(m_sota)
 m_above = length(AUC[AUC>CI[[3]]])
+print(m_above)
+m_above = length(AUC[AUC>auc_sota])
 print(m_above)
 print(100*m_above/m_top)
