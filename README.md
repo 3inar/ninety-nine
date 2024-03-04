@@ -7,8 +7,10 @@ Files needed to reproduce numbers/figures:
 
 Parameters_PublicCompetition.R - all parameters used in the manuscript
 
-Section 'Two coin-flip examples': CoinFlip.R 
-                                  - optional ProbDistr_thetaSOTA.R
+## Section 'Two coin-flip examples': 
+
+> CoinFlip.R 
+> optional ProbDistr_thetaSOTA.R
 
 Section 'The probability distribution of p_SOTA': ProbDistr_thetaSOTA.R with functions 
                                                   cdf       - cumulative distribution function
