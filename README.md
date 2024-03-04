@@ -16,7 +16,7 @@ Parameters_PublicCompetition.R - all parameters used in the manuscript
 
 ProbDistr_thetaSOTA.R with functions.  
 
-cdf       - cumulative distribution function. 
+cdf       - cumulative distribution function  
 pmf       - probability mass function. 
 expect    - expectation. 
 variance  - variance. 
