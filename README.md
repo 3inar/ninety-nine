@@ -9,17 +9,20 @@ Parameters_PublicCompetition.R - all parameters used in the manuscript
 
 ## Section 'Two coin-flip examples': 
 
-> CoinFlip.R 
+> CoinFlip.R  
 > optional ProbDistr_thetaSOTA.R
 
-Section 'The probability distribution of p_SOTA': ProbDistr_thetaSOTA.R with functions 
-                                                  cdf       - cumulative distribution function
-                                                  pmf       - probability mass function
-                                                  expect    - expectation
-                                                  variance  - variance
-                                                  sim_var - simulated variance
-                                                  sim_mean - simulated mean
-                                                  sim_ci - simulated confidence interval
+## Section 'The probability distribution of p_SOTA':  
+
+ProbDistr_thetaSOTA.R with functions.  
+
+cdf       - cumulative distribution function. 
+pmf       - probability mass function. 
+expect    - expectation. 
+variance  - variance. 
+sim_var - simulated variance. 
+sim_mean - simulated mean. 
+sim_ci - simulated confidence interval. 
                                                   
 Section 'A simulated public competition example': PublicCompetition.R calls ProbDistr_thetaSOTA.R and Parameters_PublicCompetition.R
                                                   
