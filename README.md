@@ -1,13 +1,13 @@
 # ninety-nine
 
-Code for the manuscript 'What is the state of the art? Accounting for multiplicity in machine learning benchmark performance' 	
+Code for the manuscript *What is the state of the art? Accounting for multiplicity in machine learning benchmark performance* 	
 https://doi.org/10.48550/arXiv.2303.07272
 
 Files needed to reproduce numbers/figures:
 
 Parameters_PublicCompetition.R - all parameters used in the manuscript
 
-## Section 'Two coin-flip examples': 
+## Section *Two coin-flip examples* 
 
 > CoinFlip.R  
 > optional ProbDistr_thetaSOTA.R
