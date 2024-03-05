@@ -12,6 +12,9 @@ theta_max = theta
 step = (theta_max-theta_min)/(m-1)
 theta_vec = seq(theta_min, theta_max, step)
 
+malignant_rate = 584/33126 # rate of positives in melanoma data training set 
+# ( from https://arxiv.org/ftp/arxiv/papers/2008/2008.07360.pdf)
+
 rho = 0.6 # correlation coefficient, the number is calculated from Mania (2019)
 
 rep = 100000 #  number of repetitions, 100,000 gives nice and smooth histograms, 1 million is doable
