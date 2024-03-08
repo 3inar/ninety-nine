@@ -135,7 +135,7 @@ source("indep_nonid_pmf_fun.R") # for the function 'indep_nonid_pmf' - simulated
 rep = 1000#00
 
 # Bootstrap a theta-vector of length m from the kaggle observations truncated at theta_trunc
-B = 50 #1000
+B = 20 #1000
 
 lowerCI = numeric(B) 
 upperCI = numeric(B) 
