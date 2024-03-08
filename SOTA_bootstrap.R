@@ -55,7 +55,7 @@ sprintf("Estimated number of malignant cases: %s. Estimated test set size: %s. N
 rho = 0.6 # correlation coefficient, the number is calculated from Mania (2019)
 lambda = 4 # shrinking parameter, I adjusted it so that number of teams above SOTA is same for sim and kaggle
 
-option = 5
+option = 3
 
 if (option == 1){
   theta_SOTA = max(theta_obs) # Demonstrating that max(theta_obs) is a biased estimate for theta_SOTA
@@ -67,7 +67,7 @@ if (option == 1){
   theta_SOTA = max(theta_shrink)
 } else if (option == 4){ # crop
   theta_SOTA = 0.9295 # parameter until upper limit of 95% CI = max(theta_obs)
-} else if (option == 5){ #Still 95% CI = max(theta_obs), shrink 
+} else if (option == 5){ # shrink
   maud = 0.92415
   theta_shrink = (theta_obs-maud)/lambda + maud 
   theta_SOTA = max(theta_shrink)
@@ -132,10 +132,10 @@ source("indep_nonid_pmf_fun.R") # for the function 'indep_nonid_pmf' - simulated
 # nonid_cdf, nonid_pmf - analytical pmf
 
 
-rep = 10000#0
+rep = 1000#00
 
 # Bootstrap a theta-vector of length m from the kaggle observations truncated at theta_trunc
-B = 1#000
+B = 50 #1000
 
 lowerCI = numeric(B) 
 upperCI = numeric(B) 
@@ -147,6 +147,7 @@ E_SOTA = numeric(B) # the mean minimum number of failures among all classifiers
 V_SOTA = numeric(B) # the variance of the minimum number of failures among all classifiers
 # max_SOTA = numeric(B) # the max for each bootstraps
 teamsSOTA = numeric(B) #number of teams above SOTA
+qq_x = numeric(1)
 
 for (b in 1:B){
   theta_vec = sample(x=trunc_dat, size=m, replace=TRUE) # bootstrap from truncated kaggle observations
@@ -181,18 +182,35 @@ for (b in 1:B){
   teamsSOTA[b] = mean(X$teamsSOTA)
   
   print(teamsSOTA[b])
+  
+  qq_x = c(qq_x,X$x_dep)  
+  
 }
 
 # have a look at the histograms
-hist(theta_vec, breaks=250, xlim = c(0.84, 0.96),
-     main = 'one bootstrap', xlab = 'bootstrapped accuracies', ylab = 'number of teams')
+# hist(theta_vec, breaks=250, xlim = c(0.84, 0.96),
+#     main = 'one bootstrap', xlab = 'bootstrapped accuracies', ylab = 'number of teams')
 
 hist(theta_obs[theta_obs > trunc_min], breaks=200, xlim = c(0.84, 0.96),
-     main = 'kaggle realisations', xlab = 'accuracies', ylab = 'number of teams')
+     main = 'kaggle observations', xlab = 'accuracies', ylab = 'number of teams')
 
-hat_theta = (n-X$x_dep)/n
-hist(hat_theta, breaks=200, ylim = c(0,100), xlim = c(0.84, 0.96),
-     main = 'one realisation', xlab = 'simulated accuracies', ylab = 'number of teams')
+hat_theta_line = (n-X$x_dep)/n
+kaggle_line = rep(theta_obs[theta_obs > trunc_min],B)
+hat_theta = (n-qq_x[-1])/n
+hist(hat_theta, breaks=250, xlim = c(0.84, 0.96), #ylim = c(0,100), 
+     main = paste(B,'realisations'), xlab = 'simulated accuracies', ylab = 'number of teams')
+hist(hat_theta_line, breaks=200, xlim = c(0.84, 0.96), ylim = c(0,100), 
+     main = paste('one realisation'), xlab = 'simulated accuracies', ylab = 'number of teams')
+
+qqplot(theta_obs[theta_obs > 0.88], hat_theta[hat_theta>0.88], cex = 0.5, xlab = 'kaggle observations',
+       ylab = paste('option=',option,' size=',length(qq_x)), conf.level = 0.95,
+       xaxt = "n", yaxt = "n",
+       conf.args = list(exact = NULL, simulate.p.value = TRUE, B = 2000, col = NA, border = NULL))
+axis(1,at=c(0.88, 0.90, 0.92, 0.93, 0.94,0.945, 0.95), tck = 1, lty = 2, col = "gray")
+axis(2,at=c(0.88, 0.90, 0.92, 0.93, 0.94,0.945, 0.95), tck = 1, lty = 2, col = "gray")
+abline(0,1, col = "red", lwd = 2, lty = 2) #lm(sort(hat_theta) ~ sort(kaggle_line))
+# grid(nx = NULL, ny = NULL, col = "lightgray", lty = "dotted",
+#      lwd = par("lwd"), equilogs = TRUE)
 
 
 
