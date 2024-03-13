@@ -37,8 +37,15 @@ boxplot(predicted$predicted, predicted$truth)
 ################################################################################
 ################################################################################
 
-# from kajsa.R file; visual intelligence seminar. Should perhaps just go with
-# the ParametersPublicCompetition file
+## Imports the following parameters (among others)
+# n - size of test set
+# m - number of classifiers
+# alpha - significance level
+# rho - correlation coefficient
+# malignant_rate # proportion of positives in melanoma training set 
+# rep - number of repetitions
+# NB: TODO: the above overwrites the internal function rep and should be changed probably
+source("Parameters_PublicCompetition.R")
 
 n_pos = round(n*malignant_rate)
 n_neg = n - n_pos
@@ -54,16 +61,6 @@ sd(replicate(10000, sampling_auc(.9490)))
 sd(replicate(10000, sampling_auc(.9378)))
 sd(replicate(10000, sampling_auc(.9295)))
 
-
-## Imports the following parameters (among others)
-# n - size of test set
-# m - number of classifiers
-# alpha - significance level
-# rho - correlation coefficient
-# malignant_rate # proportion of positives in melanoma training set 
-# rep - number of repetitions
-# NB: TODO: the above overwrites the internal function rep and should be changed probably
-source("Parameters_PublicCompetition.R")
 
 # private leaderboard scores of the melanoma challenge
 load("melanoma_private.rda")
@@ -83,7 +80,7 @@ sim_competition <- function(aucs, n_true, n_false) {
     classifier <- make_classifier(x)
     predictions <- predict(classifier, n_true, n_false)
     oauc <- empirical_auc(predictions)
-    list(classifier=classifier, predictions=predictions, 
+    list(classifier=classifier, predictions=NA, 
          expected_auc=x, observed_auc=oauc)})
 }
 
@@ -106,28 +103,26 @@ num_classifiers <- 1000
 test_size <- 3000
 ntr <- floor(test_size*malignant_rate)
 nfa <- test_size - ntr
+
+## TODO:: future package + purrr to make it parallel
+
 system.time({
-  auc_sims <- plyr::rlply(200, function () { 
+  auc_sims <- plyr::rlply(10000, function () { 
                 sim_competition(rep(ex_auc, num_classifiers), ntr, nfa)
               }, .progress="text")
 })
 
-mxx <- plyr::laply(auc_sims, \(x) max(get_aucs(x)))
-# head(plyr::laply(auc_sims, \(x) { get_predictions(x) }))
 
+mxx <- plyr::laply(auc_sims, \(x) max(get_aucs(x)))
 aucc <- plyr::laply(auc_sims, \(x) get_aucs(x))
+
+hist(aucc, nclass=100); abline(v=mean(aucc), lwd=3)
+hist(mxx)
 
 perm_predicts <- function(predicts) {
   predicts$truth <- sample(predicts$truth)
   predicts
 }
-
-sample_preds <- auc_sims[[1]][[1]]$predictions
-permutation_aucs <- plyr::raply(100000, empirical_auc(perm_predicts(sample_preds)))
-hist(permutation_aucs[permutation_aucs > 0.55], nclass=500)
-abline(v=(1:52)/52)
-
-hist(aucc[aucc > .90], nclass=500)
 
 
 # The reference classifier is quite good but it shouldn't actually matter much

@@ -11,8 +11,8 @@ make_classifier <- function(auc) {
   if (auc < 0 || auc > 1) stop("AUCs should be between 0 and 1")
   x <- 1  # counted as the Trues 
   y <- 2
-  mu <- rnorm(2)
-  sd <- abs(rnorm(2))
+  mu <- c(0,0)
+  sd <- c(1, 1)
   sd_z <- sqrt(sd[x]^2 + sd[y]^2)
   
   # pnorm is the CDF of a Gaussian rv., we optimize wrt mu_y so that the above
