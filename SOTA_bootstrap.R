@@ -2,7 +2,7 @@
 # https://www.overleaf.com/project/63c8012bf045548a94e2d140
 # by Kajsa Møllersen (kajsa.mollersen@uit.no) September 2023 
 
-# pretending that the AUCs from kaggle are thetas - probabilities of correct prediction
+# approximating the AUCs from kaggle with thetas - probabilities of correct prediction
 
 library(dplyr)
 library(magrittr)
@@ -12,100 +12,81 @@ library(readr)
 library(ggplot2)
 
 library(plotly)
-
 library(binom)      # confidence interval for binomial distribution
 library(tictoc)     # for timing
 
+###############################################################################
+############################ \section{A kaggle challenge example} #############################
+###############################################################################
 
+# Data comes from this website:
 # https://www.kaggle.com/c/siim-isic-melanoma-classification/leaderboard
+# It has been scraped and saved locally 
 
 comb_data <- readRDS('/Users/kajsam/Documents/kaggle-leaderboard-scrape/SIIM-ISIC_Melanoma_kaggle_leadboard_data.RDS')
 head(comb_data) # have a look
 
+# Only interested in the private scores, i.e., the independent test set results
 dat <- data.frame(AUC = comb_data$prv_score, dataset = "test")
 
-# have a look at the histogram
-hist(dat$AUC, breaks=200)
-
-###############################################################################
-############################ 4.4 A kaggle challenge example #############################
-###############################################################################
-
-# With balanced accuracy and binary prediction, we have that accuracy = AUC
-theta_obs = dat$AUC 
+# Have a quick look at the histogram
+hist(dat$AUC, breaks=200, main = paste("Histogram of AUCs"), xlab = "AUCs", ylab = "number of teams")
 
 # We don't have access to the test set labels, so we'll have to estimate based on assumptions. 
-# Here is what we do know:
-
-malignant_rate = 584/33126 # in training set ( from https://arxiv.org/ftp/arxiv/papers/2008/2008.07360.pdf)
+# Numbers from https://arxiv.org/ftp/arxiv/papers/2008/2008.07360.pdf
+malignant_rate = 584/33126 # in training set 
 n_val_test = 10982 # size of test and validation set combined
 test_prop = 0.7 # 30/70 split
 
 # Approximations and estimates
 n_test = round(test_prop*n_val_test) # approximated test set size - this should be fairly accurate
 n_mal = round(test_prop*n_val_test*malignant_rate) # estimated number of malignant cases
-# based on equal proportions in validation and test set. this is a strong assumption, but the most reasonable one
-n_ben = n_test-n_mal # estimated number of benign cases
 
-sprintf("Estimated number of malignant cases: %s. Estimated test set size: %s. Number of teams: %s.",
-        n_mal, n_test, length(theta_obs))
+sprintf("Estimated number of malignant cases: %s. Estimated test set size: %s. Number of teams: %s. Maximum kaggle AUC: %s",
+        n_mal, n_test, length(dat$AUC), max(dat$AUC))
 
-########################### Dependent, non-identical #########################
+#################################################################################
+####################### \subsection{Strategies for estimating SOTA} #################
+###############################################################################
+
+# With balanced accuracy and binary prediction, we have that accuracy = AUC
+theta_obs = dat$AUC 
+
+# The SOTA estimation is done by bootstrapping from a cropped/shrinked version 
+# of the kagge observations, and then a simulation is performed with correlation. 
+# The parameters for cropping/shrinking are adjusted according to the wanted 
+# outcome: either that the expected value of the maximum simulated theta is equal 
+# to the maximum kaggle AUC, or that the upper limit of the 95% CI of the 
+# maximum simulated theta is equal to the maximum kaggle AUC
 
 rho = 0.6 # correlation coefficient, the number is calculated from Mania (2019)
 lambda = 4 # shrinking parameter, I adjusted it so that number of teams above SOTA is same for sim and kaggle
 
-option = 3
+option = 2
 
 if (option == 1){
   theta_SOTA = max(theta_obs) # Demonstrating that max(theta_obs) is a biased estimate for theta_SOTA
+  main_title = 'direct bootstrap'
 } else if (option == 2){ # crop
   theta_SOTA = 0.9378 # parameter adjusted until E(theta_sota) = max(theta_obs)
+  main_title = 'crop expected value'
 } else if (option == 3){ # shrink
   maud = 0.9335 # parameter adjusted until E(theta_sota) = max(theta_obs)
   theta_shrink = (theta_obs-maud)/lambda + maud 
   theta_SOTA = max(theta_shrink)
+  main_title = 'shrink expected value'
 } else if (option == 4){ # crop
   theta_SOTA = 0.9295 # parameter until upper limit of 95% CI = max(theta_obs)
+  main_title = 'crop upper CI'
 } else if (option == 5){ # shrink
   maud = 0.92415
   theta_shrink = (theta_obs-maud)/lambda + maud 
   theta_SOTA = max(theta_shrink)
+  main_title = 'shrink upper CI'
 }
-theta_SOTA
-teamSOTA = length(theta_obs[theta_obs > theta_SOTA])
-sprintf("%s teams have accuracies above the true sota, %s.", 
-        teamSOTA, theta_SOTA)
-# Simulate dependency
-theta_0 = theta_SOTA # theta_0 is the probability of correct prediction for the leading classifier. adjust to E(theta_SOTA)? 
-
-# The theta_obs must be truncated
-# with a dependency of rho, the minimum theta_j is 
-trunc_min = ((rho*rho)*theta_0/(1-theta_0))/(1+(rho*rho)*theta_0/(1-theta_0))
-
-print(trunc_min)
-
-# the two solutions for the quadratic equation (does not influence the lower cut-off)
-a = -rho^2*theta_0*(1-theta_0)-theta_0^2
-b = rho^2*theta_0*(1-theta_0)+2*theta_0
-c = -theta_0^2
-
-trunc_min1 = (-b+sqrt(b^2-4*a*c))/(2*a)
-trunc_min2 = (-b-sqrt(b^2-4*a*c))/(2*a)
-
-# bootstrap sampling from kaggle data lower than theta_SOTA, and higher that the lower cut-off
-if ((option == 1)|(option == 2)|(option == 4)){
-  trunc_dat = theta_obs[(theta_obs > trunc_min)&(theta_obs < theta_SOTA)]
-} else {
-  # shrink instead of crop
-  trunc_dat = theta_shrink[(theta_shrink > trunc_min)]
-}
-
-m = length(theta_obs[(theta_obs > trunc_min)])
-print(m)
 
 # The class imbalance gives a false sense of stability. I'm adjusting n so that the width of the 95% CI 
-# corresponds to the AUC CI = 0.0230 (from fig 8, middle panel). Only if we pretend AUC to be theta. 
+# corresponds to the AUC CI = 0.0230 (from fig 8, middle panel). Only if we approximate AUC by theta. 
 if (option == 1){
   n_adj = 1481 # for theta_SOTA = max(theta_obs)
 } else if ((option == 2)|(option == 3)){
@@ -121,106 +102,137 @@ sprintf("The %s confidence interval for an estimated accuracy of %.4f with n = %
         (1-alpha)*100, theta_SOTA, n_adj, ci_binom["lower"], ci_binom["upper"],ci_binom["upper"]-ci_binom["lower"] )
 n = n_adj # Number of images, n
 
-sprintf("Adjusted test set size: %s. Number of teams with accuracy above %s is %s.",
-        n, trunc_min, m)
+sprintf("Adjusted test set size: %s.",
+        n)
 
+
+# Simulate dependency
+theta_0 = theta_SOTA # theta_0 is the probability of correct prediction for the leading classifier. adjust to E(theta_SOTA)? 
+
+# The theta_obs must be truncated
+# with a dependency of rho, the minimum theta_j is 
+trunc_min = ((rho*rho)*theta_0/(1-theta_0))/(1+(rho*rho)*theta_0/(1-theta_0))
+
+# the two solutions for the quadratic equation (does not influence the lower cut-off)
+# a = -rho^2*theta_0*(1-theta_0)-theta_0^2
+# b = rho^2*theta_0*(1-theta_0)+2*theta_0
+# c = -theta_0^2
+# x1 = (-b+sqrt(b^2-4*a*c))/(2*a)
+# x2 = (-b-sqrt(b^2-4*a*c))/(2*a)
+
+sprintf("With an estimated SOTA of %s and a correlation coefficient of %s, the minimum value for theta_j is %.4f.",
+        theta_0, rho, trunc_min)
+
+m = length(theta_obs[(theta_obs > trunc_min)]) # number of teams left
+sprintf("The number of teams above the lower threshold is %s.",
+        m)
+
+# Have a quick look at the truncated histogram
+trunc_dat = theta_obs[theta_obs>trunc_min]
+hist(trunc_dat, breaks=200, main = paste("Histogram of ", m, "AUCs truncated from below"), xlab = "AUCs", ylab = "number of teams")
+
+
+
+# bootstrap sampling from kaggle data lower than theta_SOTA, and higher that the lower cut-off
+if ((option == 1)|(option == 2)|(option == 4)){
+  trunc_dat = theta_obs[(theta_obs > trunc_min)&(theta_obs < theta_SOTA)]
+} else {
+  # shrink instead of crop
+  trunc_dat = theta_shrink[(theta_shrink > trunc_min)]
+}
 
 
 
 source("dep_nonid_pmf_fun.R") # for the function 'dep_nonid_pmf' - simulated pmf
 source("indep_nonid_pmf_fun.R") # for the function 'indep_nonid_pmf' - simulated pmf
-# nonid_cdf, nonid_pmf - analytical pmf
+                                # nonid_cdf, nonid_pmf - analytical pmf
 
 
-rep = 1000#00
+rep = 10000 # 100 000 number of repetitions. high number gives low variation. 
+B = 20 #1000 number of bootstraps. high number gives stable error estimation
 
-# Bootstrap a theta-vector of length m from the kaggle observations truncated at theta_trunc
-B = 20 #1000
 
-lowerCI = numeric(B) 
-upperCI = numeric(B) 
+lowerCI = numeric(B) # lower limit of confidence interval
+upperCI = numeric(B) # upper limit of confidence interval
 
-lowerCIindep = numeric(B) 
-upperCIindep = numeric(B) 
+E_SOTA = numeric(B) # the mean (over rep) minimum number of failures among all classifiers
+V_SOTA = numeric(B) # the variance of the expected value of minimum number of failures among all classifiers
+teamsSOTA = numeric(B) # mean number of teams above SOTA
+qq_x = numeric(1) # keep some for the qq-plot
+boot_x = numeric(1) # keep some for bootstrap illustration
 
-E_SOTA = numeric(B) # the mean minimum number of failures among all classifiers
-V_SOTA = numeric(B) # the variance of the minimum number of failures among all classifiers
-# max_SOTA = numeric(B) # the max for each bootstraps
-teamsSOTA = numeric(B) #number of teams above SOTA
-qq_x = numeric(1)
-
+tic()
 for (b in 1:B){
   theta_vec = sample(x=trunc_dat, size=m, replace=TRUE) # bootstrap from truncated kaggle observations
   
-  # minimum number of wrong classifications among all classifiers, vector of length rep
+  # minimum number of wrong classifications among all classifiers, vectors of length rep
   X = dep_nonid_pmf(n, m, rho, rep, theta_vec, theta_0 = theta_0) 
-  
-  # Xindep = indep_nonid_pmf(n, theta_vec, m, rep)
   
   # The bounds of the 95% confidence interval
   sort_min_dep = sort(X$min_dep) # sort the minimum number of failures
-  min_dep_alpha2 = sort_min_dep[(alpha/2)*rep] # find the alpha/2 upper bound
-  min_dep_alpha2_low = sort_min_dep[(1-alpha/2)*rep] # find the alpha/2 lower bound
-  
-  lowerCI[b] = min_dep_alpha2_low
-  upperCI[b] = min_dep_alpha2
-  
-  # The bounds of the 95% confidence interval, indep
-  # sort_min_indep = sort(Xindep$min_nonid) # sort the minimum number of failures
-  # min_indep_alpha2 = sort_min_indep[(alpha/2)*rep] # find the alpha/2 upper bound
-  # min_indep_alpha2_low = sort_min_indep[(1-alpha/2)*rep] # find the alpha/2 lower bound
-  # lowerCIindep[b] = min_indep_alpha2_low
-  # upperCIindep[b] = min_indep_alpha2
+  lowerCI[b] = sort_min_dep[(1-alpha/2)*rep] # find the alpha/2 lower bound
+  upperCI[b] = sort_min_dep[(alpha/2)*rep] # find the alpha/2 upper bound
   
   E_SOTA[b] =  (n-mean(X$min_dep))/n # The expected value
-  V_SOTA[b] = mean(X$min_dep*X$min_dep) - mean(X$min_dep)*mean(X$min_dep)
-  # max_SOTA[b] = sort_min_dep[1] # this will be influenced by rep, and is therefore without meaning
-  
-  print(c(b, sort_min_dep[(1/2)*rep], sqrt(V_SOTA[b])/n))
-  print((n-upperCI[b])/n)
+  V_SOTA[b] = mean(X$min_dep*X$min_dep) - mean(X$min_dep)*mean(X$min_dep) # The variance
   
   teamsSOTA[b] = mean(X$teamsSOTA)
   
-  print(teamsSOTA[b])
-  
   qq_x = c(qq_x,X$x_dep)  
+  boot_x = c(boot_x,X$min_dep)  
   
 }
+toc()
 
 # have a look at the histograms
-# hist(theta_vec, breaks=250, xlim = c(0.84, 0.96),
-#     main = 'one bootstrap', xlab = 'bootstrapped accuracies', ylab = 'number of teams')
 
-hist(theta_obs[theta_obs > trunc_min], breaks=200, xlim = c(0.84, 0.96),
+par(mfrow = c(2,2))
+# a bootstrap
+hist(theta_vec, breaks=250, xlim = c(0.84, 0.96), ylim = c(0,100), 
+     main = 'one bootstrap', xlab = 'bootstrapped accuracies', ylab = 'number of teams')
+# the kaggle 
+hist(theta_obs[theta_obs > trunc_min], breaks=250, xlim = c(0.84, 0.96), ylim = c(0,100), 
      main = 'kaggle observations', xlab = 'accuracies', ylab = 'number of teams')
-
-hat_theta_line = (n-X$x_dep)/n
-kaggle_line = rep(theta_obs[theta_obs > trunc_min],B)
+# one realisation 
+hist((n-X$x_dep)/n, breaks=250, xlim = c(0.84, 0.96), ylim = c(0,100), 
+     main = paste('one realisation'), xlab = 'simulated accuracies', ylab = 'number of teams')
+# many realisations
 hat_theta = (n-qq_x[-1])/n
 hist(hat_theta, breaks=250, xlim = c(0.84, 0.96), #ylim = c(0,100), 
      main = paste(B,'realisations'), xlab = 'simulated accuracies', ylab = 'number of teams')
-hist(hat_theta_line, breaks=200, xlim = c(0.84, 0.96), ylim = c(0,100), 
-     main = paste('one realisation'), xlab = 'simulated accuracies', ylab = 'number of teams')
+
+par(mfrow = c(1,1))
+# one realisation 
+hist((n-X$x_dep)/n, breaks=250, xlim = c(0.84, 0.96), ylim = c(0,100), col = 'red',
+     main = main_title, xlab = 'simulated accuracies', ylab = 'number of teams')
+par(new=TRUE)
+hist(theta_obs[theta_obs > trunc_min], breaks=250, xlim = c(0.84, 0.96), ylim = c(0,100), 
+     main = main_title, xlab = 'accuracies', ylab = 'number of teams')
+par(new=FALSE)
+hist(theta_obs[theta_obs > trunc_min], breaks=250, xlim = c(0.84, 0.96), ylim = c(0,100), 
+     main = main_title, xlab = 'accuracies', ylab = 'number of teams')
+par(new=TRUE)
+# one realisation 
+hist((n-X$x_dep)/n, breaks=250, xlim = c(0.84, 0.96), ylim = c(0,100), col = 'red',
+     main = main_title, xlab = 'simulated accuracies', ylab = 'number of teams')
+
+# have a look at the qq-plot
 
 qqplot(theta_obs[theta_obs > 0.88], hat_theta[hat_theta>0.88], cex = 0.5, xlab = 'kaggle observations',
        ylab = paste('option=',option,' size=',length(qq_x)), conf.level = 0.95,
-       xaxt = "n", yaxt = "n",
+       xaxt = "n", yaxt = "n", main = main_title,
        conf.args = list(exact = NULL, simulate.p.value = TRUE, B = 2000, col = NA, border = NULL))
 axis(1,at=c(0.88, 0.90, 0.92, 0.93, 0.94,0.945, 0.95), tck = 1, lty = 2, col = "gray")
 axis(2,at=c(0.88, 0.90, 0.92, 0.93, 0.94,0.945, 0.95), tck = 1, lty = 2, col = "gray")
 abline(0,1, col = "red", lwd = 2, lty = 2) #lm(sort(hat_theta) ~ sort(kaggle_line))
-# grid(nx = NULL, ny = NULL, col = "lightgray", lty = "dotted",
-#      lwd = par("lwd"), equilogs = TRUE)
 
 
 
-sprintf("%s simulated teams have accuracies above the true sota, %s.", 
-        mean(teamsSOTA), theta_SOTA)
+sprintf("The mean number of simulated teams have accuracies above the true sota, %s, is %.1f.", 
+        theta_SOTA, mean(teamsSOTA))
 teamSOTA = length(theta_obs[theta_obs > theta_SOTA])
 sprintf("%s teams have accuracies above the true sota, %s.", 
         teamSOTA, theta_SOTA)
-
-
 
 
 sprintf("The expected value of max(theta_obs) is %.4f. The standard deviations is %.6f.", 
@@ -235,14 +247,25 @@ V_CI = mean(upperCI*upperCI) - mean_upperCI*mean_upperCI
 sprintf("The mean bootstrapped simulated %s confidence interval is (%.5f,%.5f) with %s repetitions and %s bootstraps. The standard deviation of the upper CI is %.7f  %.7f",  
         1-alpha, (n-mean_lowerCI)/n, (n-mean_upperCI)/n, rep, B,  sqrt(V_CI)/n, sqrt(var(upperCI))/n)
 
+# the distribution of SOTA
 hist((n-X$min_dep)/n, breaks = 30, xlim=c(trunc_min,0.99), freq = F, main = 'max accuracies one bootstrap')
-# hist((n-max_SOTA)/n, xlim=c(trunc_min,0.99), freq = F, main = 'max accuracies all bootstraps')
+hist((n-boot_x[-1])/n, breaks = 50, xlim=c(trunc_min,0.99), freq = F, main = paste('max accuracies', B,'bootstraps'))
 
+# checking if this corresponds to mean CI
+sort_min_dep = sort((n-boot_x[-1])/n)
+lowerCIboot = sort_min_dep[(1-alpha/2)*rep*B] # find the alpha/2 lower bound
+upperCIboot = sort_min_dep[(alpha/2)*rep*B] # find the alpha/2 upper bound
+# it does
 
 
 teams95CI = length(theta_obs[theta_obs > ((n-mean_lowerCI)/n)])
 sprintf("%s teams have accuracies above the lower 95 CI.", 
         teams95CI)
+
+teamSOTA = length(theta_obs[theta_obs > theta_SOTA])
+sprintf("%s teams have accuracies above the estimated sota, %s.", 
+        teamSOTA, theta_SOTA)
+
 
 
 
