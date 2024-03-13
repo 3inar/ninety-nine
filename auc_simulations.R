@@ -1,42 +1,3 @@
-library(pROC)
-
-source("auc_functions.R")
-
-aucs = seq(from=.89,to=.915, by=.0001)
-
-# want CI to have upper limit .9490
-experiment = plyr::aaply(aucs, 1, function(x) {
-  xx = plyr::raply(10000, function() {
-    cls_95 <- make_classifier(x)
-    predicted <- predict(cls_95, true_size=50, false_size=2950)
-    # I just use the default DeLong interval
-    lim_95 = suppressMessages(ci.auc(predicted$truth, predicted$predicted,
-                                 conf.level=.95)[3])
-    lim_99 = suppressMessages(ci.auc(predicted$truth, predicted$predicted,
-                                 conf.level=.99)[3])
-    c(lim_95,lim_99)
-  })
-  
-  colMeans(xx)
-}, .progress = "text")
-
-plot(aucs, experiment[,1], type="l")
-lines(aucs, experiment[,2], type="l")
-abline(h=.95, col="grey")
-
-aucs[which.min(abs(experiment[,1] - 0.9490))]
-aucs[which.min(abs(experiment[,2] - 0.9490))]
-
-auc(predicted$truth, predicted$predicted)
-plot(roc(predicted$truth, predicted$predicted))
-boxplot(predicted$predicted, predicted$truth)
-
-################################################################################
-################################################################################
-########### standard deviations for AUCs with values 0.9490, 0.9378 og 0.9295
-################################################################################
-################################################################################
-
 ## Imports the following parameters (among others)
 # n - size of test set
 # m - number of classifiers
@@ -44,23 +5,11 @@ boxplot(predicted$predicted, predicted$truth)
 # rho - correlation coefficient
 # malignant_rate # proportion of positives in melanoma training set 
 # rep - number of repetitions
-# NB: TODO: the above overwrites the internal function rep and should be changed probably
+# NB: TODO: the above has same name as the internal function rep and should be changed probably
 source("Parameters_PublicCompetition.R")
 
-n_pos = round(n*malignant_rate)
-n_neg = n - n_pos
-
-sampling_auc <- function(true_auc) {
-  cls <- make_classifier(true_auc)
-  predicted <- predict(cls, true_size=n_pos, false_size=n_neg)
-  
-  empirical_auc(predicted)
-}
-
-sd(replicate(10000, sampling_auc(.9490)))
-sd(replicate(10000, sampling_auc(.9378)))
-sd(replicate(10000, sampling_auc(.9295)))
-
+## IMports functions to simulate classifiers w/ given AUCs
+source("auc_functions.R")
 
 # private leaderboard scores of the melanoma challenge
 load("melanoma_private.rda")
@@ -80,7 +29,10 @@ sim_competition <- function(aucs, n_true, n_false) {
     classifier <- make_classifier(x)
     predictions <- predict(classifier, n_true, n_false)
     oauc <- empirical_auc(predictions)
-    list(classifier=classifier, predictions=NA, 
+
+    # used to return the original classifier and its predictions but it takes a
+    # lot of memory space 
+    list(classifier=NA, predictions=NA, 
          expected_auc=x, observed_auc=oauc)})
 }
 
@@ -92,11 +44,6 @@ get_predictions <- function(obj) {
   plyr::laply(obj, \(x) { x$predictions$predicted })
 }
 
-profvis({
-  smallsim <- sim_competition(rep(.9, 10000), 900, 2000)
-})
-
-
 # row 2 of table 1 (used in fig3) recreated
 ex_auc <- .9
 num_classifiers <- 1000
@@ -104,12 +51,15 @@ test_size <- 3000
 ntr <- floor(test_size*malignant_rate)
 nfa <- test_size - ntr
 
-## TODO:: future package + purrr to make it parallel
+## TODO:: future package + furrr to make it parallel
+## I have 8 logical AND 8 physical cores
+future::plan("multisession", workers=4)
 
 system.time({
-  auc_sims <- plyr::rlply(10000, function () { 
+  auc_sims <- furrr::future_map(1:10000, function (x) { 
+                source("auc_functions.R") # this might be slow but I don't think I care
                 sim_competition(rep(ex_auc, num_classifiers), ntr, nfa)
-              }, .progress="text")
+              }, .progress=T, .options= furrr::furrr_options(seed=T))
 })
 
 
@@ -117,7 +67,7 @@ mxx <- plyr::laply(auc_sims, \(x) max(get_aucs(x)))
 aucc <- plyr::laply(auc_sims, \(x) get_aucs(x))
 
 hist(aucc, nclass=100); abline(v=mean(aucc), lwd=3)
-hist(mxx)
+hist(mxx, nclass=100)
 
 perm_predicts <- function(predicts) {
   predicts$truth <- sample(predicts$truth)
@@ -133,18 +83,7 @@ reference_predicts <- predict(reference_classifier)
 corr_predictions <- correlated_predict(baby_classifier, reference_classifier,
                                        reference_predicts, 0.6)
 
-
-corr_predictions
-
 plot(reference_predicts$predicted, corr_predictions$predicted, pch=(1 + corr_predictions$truth))
 empirical_auc(reference_predicts)
 
-profvis({
-  replicate(1000, empirical_auc(corr_predictions))
-})
 
-
-
-## this all seems to work
-# TODO: 
-# * Figure out what was Kajsas experiment

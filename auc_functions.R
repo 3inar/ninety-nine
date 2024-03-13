@@ -45,6 +45,19 @@ mus <- function(obj) {
   slot(obj, "mu")
 }
 
+# Given reference values x1...xn, and parameters for a bivariate normal for 
+# (x, y), generates predictions from y|xi
+draw_correlated <- function(reference_values, mu1, mu2, sd1, sd2, corl) {
+  # https://www2.stat.duke.edu/courses/Spring12/sta104.1/Lectures/Lec22.pdf
+  Z1 <- reference_values
+  Z1 <- (Z1 - mu1)/sd1
+  Z2 <- rnorm(length(Z1))
+
+  conditionals <- sd2*(corl*Z1 + sqrt(1 - corl^2)*Z2) + mu2
+
+  return(conditionals)
+}
+
 # Given some prediction from a "leader" classifier, generate orrelated
 # predictions for a "follower" classifier. The requested correlation will be
 # fulfilled for the conditional distributions score|true, score|false, but for
@@ -60,18 +73,15 @@ correlated_predict <- function(follower, leader, leading_predictions, corl) {
   sd_f <- sds(follower)
 
   # trues
-  Z1 <- predictions[truth == 1]
-  Z1 <- (Z1 - mu_l[1])/sd_l[1]
-  Z2 <- rnorm(length(Z1))
+  pred_true <- draw_correlated(predictions[truth==1], 
+                               mu_l[1], mu_f[1], 
+                               sd_l[1], sd_f[1], corl)
 
-  pred_true <- sd_f[1]*(corl*Z1 + sqrt(1 - corl^2)*Z2) + mu_f[1]
 
   # falses
-  Z1 <- predictions[truth == 0]
-  Z1 <- (Z1 - mu_l[2])/sd_l[2]
-  Z2 <- rnorm(length(Z1))
-
-  pred_false <- sd_f[2]*(corl*Z1 + sqrt(1 - corl^2)*Z2) + mu_f[2]
+  pred_true <- draw_correlated(predictions[truth==0], 
+                               mu_l[2], mu_f[2], 
+                               sd_l[2], sd_f[2], corl)
 
   pred = numeric(length(predictions))
   pred[truth == 1] <- pred_true
