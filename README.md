@@ -7,12 +7,12 @@ Files needed to reproduce numbers/figures:
 
 `Parameters_PublicCompetition.R` - all parameters used in the manuscript
 
-## Section *Two coin-flip examples* 
+## Section *3.2 Two coin-flip examples* 
 
 > CoinFlip.R  
 > optional ProbDistr_thetaSOTA.R
 
-## Section 'The probability distribution of p_SOTA':  
+## Section *3.3 The probability distribution of $\hat{\theta}_{SOTA}^{\max}*  
 
 ProbDistr_thetaSOTA.R with functions:  
 
