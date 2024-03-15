@@ -12,7 +12,7 @@ Files needed to reproduce numbers/figures:
 > CoinFlip.R  
 > optional ProbDistr_thetaSOTA.R
 
-## Section *3.3 The probability distribution of $\hat{\theta}_{SOTA}^{\max}*  
+## Section *3.3 The probability distribution of $\hat{\theta}_{SOTA}^{\max}$*  
 
 ProbDistr_thetaSOTA.R with functions:  
 
