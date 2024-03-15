@@ -98,12 +98,12 @@ if (option == 1){
 mu = floor(n_adj*theta_SOTA)
 alpha = 0.05 # 95\% confidence interval
 ci_binom = binom.confint(mu,n_adj,conf.level=1-alpha, methods = "exact") # CI for binomial
-sprintf("The %s confidence interval for an estimated accuracy of %.4f with n = %s is (%.4f,%.4f), width = %.4f.",  
-        (1-alpha)*100, theta_SOTA, n_adj, ci_binom["lower"], ci_binom["upper"],ci_binom["upper"]-ci_binom["lower"] )
+print(sprintf("The %s confidence interval for an estimated accuracy of %.4f with n = %s is (%.4f,%.4f), width = %.4f.",  
+        (1-alpha)*100, theta_SOTA, n_adj, ci_binom["lower"], ci_binom["upper"],ci_binom["upper"]-ci_binom["lower"] ))
 n = n_adj # Number of images, n
 
-sprintf("Adjusted test set size: %s.",
-        n)
+print(sprintf("Adjusted test set size: %s.",
+        n))
 
 
 # Simulate dependency
@@ -120,12 +120,12 @@ trunc_min = ((rho*rho)*theta_0/(1-theta_0))/(1+(rho*rho)*theta_0/(1-theta_0))
 # x1 = (-b+sqrt(b^2-4*a*c))/(2*a)
 # x2 = (-b-sqrt(b^2-4*a*c))/(2*a)
 
-sprintf("With an estimated SOTA of %s and a correlation coefficient of %s, the minimum value for theta_j is %.4f.",
-        theta_0, rho, trunc_min)
+print(sprintf("With an estimated SOTA of %s and a correlation coefficient of %s, the minimum value for theta_j is %.4f.",
+        theta_0, rho, trunc_min))
 
 m = length(theta_obs[(theta_obs > trunc_min)]) # number of teams left
-sprintf("The number of teams above the lower threshold is %s.",
-        m)
+print(sprintf("The number of teams above the lower threshold is %s.",
+        m))
 
 # Have a quick look at the truncated histogram
 trunc_dat = theta_obs[theta_obs>trunc_min]
@@ -144,12 +144,9 @@ if ((option == 1)|(option == 2)|(option == 4)){
 
 
 source("dep_nonid_pmf_fun.R") # for the function 'dep_nonid_pmf' - simulated pmf
-source("indep_nonid_pmf_fun.R") # for the function 'indep_nonid_pmf' - simulated pmf
-                                # nonid_cdf, nonid_pmf - analytical pmf
 
-
-rep = 10000 # 100 000 number of repetitions. high number gives low variation. 
-B = 20 #1000 number of bootstraps. high number gives stable error estimation
+rep = 1000 # 100 000 number of repetitions. high number gives low variation. 
+B = 100 #1000 number of bootstraps. high number gives stable error estimation
 
 
 lowerCI = numeric(B) # lower limit of confidence interval
@@ -158,8 +155,8 @@ upperCI = numeric(B) # upper limit of confidence interval
 E_SOTA = numeric(B) # the mean (over rep) minimum number of failures among all classifiers
 V_SOTA = numeric(B) # the variance of the expected value of minimum number of failures among all classifiers
 teamsSOTA = numeric(B) # mean number of teams above SOTA
-qq_x = numeric(1) # keep some for the qq-plot
-boot_x = numeric(1) # keep some for bootstrap illustration
+qq_x = matrix(nrow = B, ncol = m) # keep some for the qq-plot
+boot_x = matrix(nrow = B, ncol = rep) # keep some for bootstrap illustration
 
 tic()
 for (b in 1:B){
@@ -169,20 +166,27 @@ for (b in 1:B){
   X = dep_nonid_pmf(n, m, rho, rep, theta_vec, theta_0 = theta_0) 
   
   # The bounds of the 95% confidence interval
-  sort_min_dep = sort(X$min_dep) # sort the minimum number of failures
+  sort_min_dep = sort(X$min_fail) # sort the minimum number of failures
   lowerCI[b] = sort_min_dep[(1-alpha/2)*rep] # find the alpha/2 lower bound
   upperCI[b] = sort_min_dep[(alpha/2)*rep] # find the alpha/2 upper bound
   
-  E_SOTA[b] =  (n-mean(X$min_dep))/n # The expected value
-  V_SOTA[b] = mean(X$min_dep*X$min_dep) - mean(X$min_dep)*mean(X$min_dep) # The variance
+  E_SOTA[b] =  (n-mean(X$min_fail))/n # The expected value
+  V_SOTA[b] = mean(X$min_fail*X$min_fail) - mean(X$min_fail)*mean(X$min_fail) # The variance
   
   teamsSOTA[b] = mean(X$teamsSOTA)
   
-  qq_x = c(qq_x,X$x_dep)  
-  boot_x = c(boot_x,X$min_dep)  
+  qq_x[b,] = X$x_fail
+  boot_x[b,] = X$min_fail  
   
 }
-toc()
+
+hist(V_SOTA)
+
+qq_x = as.vector(qq_x)
+boot_x = as.vector(boot_x)
+tid = toc()
+print(sprintf("%s repetitions, %s bootstraps took %s",
+              rep, B, tid))
 
 # have a look at the histograms
 
@@ -194,16 +198,16 @@ hist(theta_vec, breaks=250, xlim = c(0.84, 0.96), ylim = c(0,100),
 hist(theta_obs[theta_obs > trunc_min], breaks=250, xlim = c(0.84, 0.96), ylim = c(0,100), 
      main = 'kaggle observations', xlab = 'accuracies', ylab = 'number of teams')
 # one realisation 
-hist((n-X$x_dep)/n, breaks=250, xlim = c(0.84, 0.96), ylim = c(0,100), 
+hist((n-X$x_fail)/n, breaks=250, xlim = c(0.84, 0.96), ylim = c(0,100), 
      main = paste('one realisation'), xlab = 'simulated accuracies', ylab = 'number of teams')
 # many realisations
-hat_theta = (n-qq_x[-1])/n
+hat_theta = (n-qq_x)/n
 hist(hat_theta, breaks=250, xlim = c(0.84, 0.96), #ylim = c(0,100), 
      main = paste(B,'realisations'), xlab = 'simulated accuracies', ylab = 'number of teams')
 
 par(mfrow = c(1,1))
 # one realisation 
-hist((n-X$x_dep)/n, breaks=250, xlim = c(0.84, 0.96), ylim = c(0,100), col = 'red',
+hist((n-X$x_fail)/n, breaks=250, xlim = c(0.84, 0.96), ylim = c(0,100), col = 'red',
      main = main_title, xlab = 'simulated accuracies', ylab = 'number of teams')
 par(new=TRUE)
 hist(theta_obs[theta_obs > trunc_min], breaks=250, xlim = c(0.84, 0.96), ylim = c(0,100), 
@@ -213,7 +217,7 @@ hist(theta_obs[theta_obs > trunc_min], breaks=250, xlim = c(0.84, 0.96), ylim = 
      main = main_title, xlab = 'accuracies', ylab = 'number of teams')
 par(new=TRUE)
 # one realisation 
-hist((n-X$x_dep)/n, breaks=250, xlim = c(0.84, 0.96), ylim = c(0,100), col = 'red',
+hist((n-X$x_fail)/n, breaks=250, xlim = c(0.84, 0.96), ylim = c(0,100), col = 'red',
      main = main_title, xlab = 'simulated accuracies', ylab = 'number of teams')
 
 # have a look at the qq-plot
@@ -228,15 +232,14 @@ abline(0,1, col = "red", lwd = 2, lty = 2) #lm(sort(hat_theta) ~ sort(kaggle_lin
 
 
 
-sprintf("The mean number of simulated teams have accuracies above the true sota, %s, is %.1f.", 
-        theta_SOTA, mean(teamsSOTA))
+print(sprintf("The mean number of simulated teams have accuracies above the true sota, %s, is %.1f.", 
+        theta_SOTA, mean(teamsSOTA)))
 teamSOTA = length(theta_obs[theta_obs > theta_SOTA])
-sprintf("%s teams have accuracies above the true sota, %s.", 
-        teamSOTA, theta_SOTA)
+print(sprintf("%s teams have accuracies above the true sota, %s.", 
+        teamSOTA, theta_SOTA))
 
-
-sprintf("The expected value of max(theta_obs) is %.4f. The standard deviations is %.6f.", 
-        mean(E_SOTA), sqrt(var(E_SOTA)))
+print(sprintf("The expected value of max(theta_obs) is %.4f. The standard deviations is %.6f.", 
+        mean(E_SOTA), sqrt(var(E_SOTA))))
 
 
 # Mean and standard deviation of the 95 CI upper and lower bound
@@ -244,12 +247,12 @@ mean_lowerCI = mean(lowerCI)
 mean_upperCI = mean(upperCI)
 V_CI = mean(upperCI*upperCI) - mean_upperCI*mean_upperCI
 
-sprintf("The mean bootstrapped simulated %s confidence interval is (%.5f,%.5f) with %s repetitions and %s bootstraps. The standard deviation of the upper CI is %.7f  %.7f",  
-        1-alpha, (n-mean_lowerCI)/n, (n-mean_upperCI)/n, rep, B,  sqrt(V_CI)/n, sqrt(var(upperCI))/n)
+print(sprintf("The mean bootstrapped simulated %s confidence interval is (%.5f,%.5f) with %s repetitions and %s bootstraps. The standard deviation of the upper CI is %.7f  %.7f",  
+        1-alpha, (n-mean_lowerCI)/n, (n-mean_upperCI)/n, rep, B,  sqrt(V_CI)/n, sqrt(var(upperCI))/n))
 
 # the distribution of SOTA
-hist((n-X$min_dep)/n, breaks = 30, xlim=c(trunc_min,0.99), freq = F, main = 'max accuracies one bootstrap')
-hist((n-boot_x[-1])/n, breaks = 50, xlim=c(trunc_min,0.99), freq = F, main = paste('max accuracies', B,'bootstraps'))
+hist((n-X$min_fail)/n, breaks = 30, xlim=c(trunc_min,0.99), freq = F, main = 'max accuracies one bootstrap')
+hist((n-boot_x)/n, breaks = 50, xlim=c(trunc_min,0.99), freq = F, main = paste('max accuracies', B,'bootstraps'))
 
 # checking if this corresponds to mean CI
 sort_min_dep = sort((n-boot_x[-1])/n)
@@ -259,18 +262,10 @@ upperCIboot = sort_min_dep[(alpha/2)*rep*B] # find the alpha/2 upper bound
 
 
 teams95CI = length(theta_obs[theta_obs > ((n-mean_lowerCI)/n)])
-sprintf("%s teams have accuracies above the lower 95 CI.", 
-        teams95CI)
+print(sprintf("%s teams have accuracies above the lower 95 CI.", 
+        teams95CI))
 
 teamSOTA = length(theta_obs[theta_obs > theta_SOTA])
-sprintf("%s teams have accuracies above the estimated sota, %s.", 
-        teamSOTA, theta_SOTA)
-
-
-
-
-
-
-
-
+print(sprintf("%s teams have accuracies above the estimated sota, %s.", 
+        teamSOTA, theta_SOTA))
 
