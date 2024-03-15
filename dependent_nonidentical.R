@@ -3,7 +3,7 @@
 # by Kajsa Møllersen (kajsa.mollersen@uit.no) February 2023 updated March 2023
 
 ###############################################################################
-############################ 3.1 Nomenclature #############################
+############################ Nomenclature #############################
 ###############################################################################
 
 # n     - number of trials/size of test set
@@ -43,7 +43,7 @@ library(latex2exp)  # mathematical notation
 
 
 ###############################################################################
-############################ 4.3 Dependent non-identical #############################
+############################ Dependent non-identical #############################
 ###############################################################################
 
 # Consider a classification problem with a test set of size $3,000$, and a 
@@ -55,12 +55,12 @@ library(latex2exp)  # mathematical notation
 
 # dep_nonid_pmf - simulated pmf
 
-source("Parameters_PublicCompetition.R") # n, theta, m, alpha, rho, theta_min, theta_max, theta_vec, 
+source("Parameters_PublicCompetition.R") # n, theta, m, alpha, rho, theta_min, theta_max, theta_vec
 
 length(theta_vec)
 
-source("dep_nonid_pmf_fun.R")
-
+source("dep_nonid_pmf_fun.R") # for function dep_nonid_pmf
+# returns X = list(min_fail, x_fail, teamsSOTA)
 
 
 tic()
@@ -69,21 +69,22 @@ toc()
 
 # Histograms of the minimum number of failures for m classifiers, in rep repetitions.
 
-hist(X$x_dep, xlab = 'number of failures', ylab = 'number of classifiers', 
+hist(X$x_fail, xlab = 'number of failures', ylab = 'number of classifiers', 
      ylim = c(0,250))
 
 
 source("ProbDistr_thetaSOTA.R")
 # The upper bound of the 95% confidence interval
-min_dep_alpha2 = sim_ci(alpha, X$min_dep)
+min_dep_alpha2 = sim_ci(alpha, X$min_fail)
 sprintf("The simulated dependent upper bound of the %s confidence interval is %.5f, with %s repetitions.",  
         1-alpha, (n-min_dep_alpha2)/n, rep)
 
 # The expected value
-Esota = mean(X$min_dep)
+Esota = mean(X$min_fail)
 
 # The standard deviation
-Vsota = mean(X$min_dep*X$min_dep) - Esota*Esota
+Vsota = mean(X$min_fail*X$min_fail) - Esota*Esota
 
 sprintf("The simulated expected value is %.7f and a standard deviation is %.7f, with %s repetitions.",  
         (n-Esota)/n, sqrt(Vsota)/n, rep)
+
