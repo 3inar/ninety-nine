@@ -1,4 +1,18 @@
 # Simulate dependent, nonidentical
+
+# n - number of trials/size of test set
+# m - number of experiments/classifiers
+# rho - correlation coefficient
+# rep - number of repetitions
+# theta_vec - vector of thetas (probabilities of correct prediction)
+# theta_0 - probability of correct prediction for leading classifier
+
+# output: list X
+# min_fail - vector of length rep with min number of failures for each rep
+# teamsSOTA - vector of length rep with number of teams performing above theta_0 for each rep
+# x_fail - vector of length m with number of failures for each team, as example
+
+
 dep_nonid_pmf <- function(n, m, rho, rep, theta_vec, theta_0){   
   
   # Set-up from Boland et al (1989) 'Modelling dependence in simple and indirect majority systems',
@@ -11,28 +25,27 @@ dep_nonid_pmf <- function(n, m, rho, rep, theta_vec, theta_0){
   p_flip1 = (theta_0 - rho*sqrt(sigma_0*sigma_vec) - theta_0*theta_vec)/theta_0 # P(Y_j = 0|Y_0 = 1)
   p_flip0 = (-rho*sqrt(sigma_0*sigma_vec)+(1-theta_0)*theta_vec)/(1-theta_0) # P(Y_j = 1|Y_0 = 0)
   
-  min_dep = numeric(rep) # min number of failures with dependency
-  min_indep = numeric(rep) # for independent, as a check
-  teamsSOTA = numeric(rep) # for independent, as a check
+  min_fail = numeric(rep) # min number of failures with dependency
+  teamsSOTA = numeric(rep) # number of teams above theta_0
   
   for (ell in 1:rep){
     
-    x_dep = numeric(m)  # number of failures for m experiments
+    x_fail = numeric(m)  # number of failures for m experiments
     
-    y0 = rbinom(n,1,theta_0)
-    theta_y0 = sum(y0) 
+    y0 = rbinom(n,1,theta_0) # leading classifier outcome
+    theta_y0 = sum(y0) # observed theta for leading classifier
     
     flip1 = rbinom(m,theta_y0,p_flip1) # flipping correct predictions
     flip0 = rbinom(m,n-theta_y0,p_flip0) # flipping incorrect predictions
     
-    x_dep = n-(theta_y0-flip1+flip0) # number of wrong predictions for each classifier
-    hat_theta = (n-x_dep)/n
+    x_fail = n-(theta_y0-flip1+flip0) # number of wrong predictions for each classifier
+    hat_theta = (n-x_fail)/n
     teamsSOTA[ell] = length(hat_theta[hat_theta > theta_0])
     
-    min_dep[ell] = min(x_dep)
+    min_fail[ell] = min(x_fail)
   }
   
-  X = list(min_dep = min_dep, x_dep = x_dep, teamsSOTA = teamsSOTA)
+  X = list(min_fail = min_fail, x_fail = x_fail, teamsSOTA = teamsSOTA)
   
   return(X)
 }
