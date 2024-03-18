@@ -4,6 +4,8 @@
 
 # approximating the AUCs from kaggle with thetas - probabilities of correct prediction
 
+# requires dep_nonid_pmf_fun.R
+
 library(dplyr)
 library(magrittr)
 library(rvest)
