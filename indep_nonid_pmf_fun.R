@@ -1,13 +1,13 @@
 # Simulate non-identical
 indep_nonid_pmf <- function(n, theta_vec, m, rep){   
   
-  min_nonid = numeric(rep) # min number of failures 
+  min_fail = numeric(rep) # min number of failures 
 
   for (ell in 1:rep){
-    x_nonid = rbinom(m,n,1-theta_vec) # number of failures for classifier j=1, .., m
-    min_nonid[ell] = min(x_nonid)
+    x_fail = rbinom(m,n,1-theta_vec) # number of failures for classifier j=1, .., m
+    min_fail[ell] = min(x_fail)
   }
-  X = list(min_nonid = min_nonid, x_nonid = x_nonid)
+  X = list(min_fail = min_fail, x_fail = x_fail)
   
   return(X)
 }
