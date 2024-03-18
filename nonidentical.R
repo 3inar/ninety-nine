@@ -67,15 +67,15 @@ toc()
 # Histograms of the minimum number of failures for m classifiers, in rep repetitions.
 
 histbreaks = seq(200,300,1)
-hist(X$min_nonid, xlab = 'number of failures', ylab = 'number of classifiers', breaks = 100, xlim = c(200,300)) 
+hist(X$min_fail, xlab = 'number of failures', ylab = 'number of classifiers', breaks = 100, xlim = c(200,300)) 
 #  ylim = c(0,300), 
 
 # The upper bound of the 95% confidence interval
-sort_min_nonid = sort(X$min_nonid) # sort the minimum number of failures
-min_nonid_alpha2 = sort_min_nonid[(alpha/2)*rep] # find the alpha/2 bound
+sort_min_fail = sort(X$min_fail) # sort the minimum number of failures
+min_fail_alpha2 = sort_min_fail[(alpha/2)*rep] # find the alpha/2 bound
 
 sprintf("The simulated non-identical upper bound of the %s confidence interval is %.5f, with %s repetitions. Distance to SOTA: %s.",  
-        1-alpha, (n-min_nonid_alpha2)/n, rep, (n-min_nonid_alpha2)/n-theta_max)
+        1-alpha, (n-min_fail_alpha2)/n, rep, (n-min_fail_alpha2)/n-theta_max)
 
 # If there are $m$ classifiers, what must be the prob, $Palpha2$, of each 
 # classifier having at most $x$ failures, for the probability of at least Cx = 1
@@ -132,8 +132,8 @@ axis(3, las = 2, at=xax, labels = as.character(klab))
 
 # Does this align with the simulations?
 
-print(c(Fz[min_nonid_alpha2], Fz[min_nonid_alpha2+1])) # ok 
-print(c(which(Fz>alpha/2)[1]-1,min_nonid_alpha2)) # ok
+print(c(Fz[min_fail_alpha2], Fz[min_fail_alpha2+1])) # ok 
+print(c(which(Fz>alpha/2)[1]-1,min_fail_alpha2)) # ok
 
 
 ################# probability mass function ##########################
