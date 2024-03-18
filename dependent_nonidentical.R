@@ -53,11 +53,7 @@ library(latex2exp)  # mathematical notation
 
 # Functions
 
-# dep_nonid_pmf - simulated pmf
-
 source("Parameters_PublicCompetition.R") # n, theta, m, alpha, rho, theta_min, theta_max, theta_vec
-
-length(theta_vec)
 
 source("dep_nonid_pmf_fun.R") # for function dep_nonid_pmf
 # returns X = list(min_fail, x_fail, teamsSOTA)
@@ -73,7 +69,7 @@ hist(X$x_fail, xlab = 'number of failures', ylab = 'number of classifiers',
      ylim = c(0,250))
 
 
-source("ProbDistr_thetaSOTA.R")
+source("ProbDistr_thetaSOTA.R") # for function sim_ci
 # The upper bound of the 95% confidence interval
 min_dep_alpha2 = sim_ci(alpha, X$min_fail)
 sprintf("The simulated dependent upper bound of the %s confidence interval is %.5f, with %s repetitions.",  
