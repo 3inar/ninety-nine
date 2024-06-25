@@ -54,15 +54,31 @@ calls Parameters_PublicCompetition.R and ProbDistr_thetaSOTA.R
 dep_nonid_pmf_fun.R with function  
 `dep_nonid_pmf` - simulated pmf for dependent, nonidentical classifiers
 
-## Section 'A kaggle challenge example': 
+                                                
+## Section 'Real world examples':
 
 AUROC.R for quick estimate of AUC_SOTA
 
 SOTA_bootstrap.R for better estimate of AUC_SOTA
-                                                
-## Section 'Discussion': 
 
-auc_generator.R: creates AUC curves
+auc_functions.R contains functions for working with and simulating AUCs:
+
+- `make_classifier` makes an object of class `classifier` with true aus as specified
+- `predict.classifier` makes predictions from a `classifier` object
+- `sds` gets the standard deviations for undelying distributions of a `classifier` object
+- `mus` gets the means for underlying distributions of a `classifier` object
+- `draw_correlated` conditional draw from a bivariate normal distribution
+- `correlated_predict` make correlated predictions where a `classifier` has a certain correlation to a "hidden" reference classifier
+- `empirical_auc` fast calculation of AUC from a `list(predicted=..., truth=...)`
+- `sim_competition` simulates an uncorrelated competition with given true AUCs
+
+auc_simulations.R
+
+auc_figure_ex_1.R
+auc_figure_ex_2.R
+auc_figure_roc_curves.R
+
+## Section 'Discussion': 
 
 melanoma.R: investigates the Melanoma 2020 kaggle competition
                                                 
@@ -75,5 +91,4 @@ closed_form.R: Extra simulations
 ## Outdated files:
 
 99Club_multiplicity.R: Contains text only
-                         
-                              
+auc_generator.R: creates AUC curves based on underlying beta distributions
