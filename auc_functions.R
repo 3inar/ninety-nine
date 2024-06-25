@@ -90,26 +90,26 @@ correlated_predict <- function(follower, leader, leading_predictions, corl) {
   return(list(truth = truth, predicted = pred))
 }
 
-empirical_auc_slow <- function(predictions) {
-  wc = wilcox.test(predictions$predicted[predictions$truth==1], 
-                   predictions$predicted[predictions$truth==0])
-  wc$statistic/(sum(predictions$truth==1)*sum(predictions$truth == 0))
-}
-
-# should be faster than wilcox.test or pROC https://blog.mbq.me/augh-roc/
-empirical_auc_newer <-function(predictions){
-  cls <- predictions$truth == 1
-  score <- predictions$predicted
-
-  n1 <-sum(!cls); sum(cls)->n2;
-  U <-sum(rank(score)[!cls])-n1*(n1+1)/2;
-
-  return(1-U/n1/n2);
-}
-
-empirical_auc_newer_still <- function(predictions) {
-  bigstatsr::AUC(predictions$predicted, predictions$truth)
-}
+# empirical_auc_slow <- function(predictions) {
+#   wc = wilcox.test(predictions$predicted[predictions$truth==1], 
+#                    predictions$predicted[predictions$truth==0])
+#   wc$statistic/(sum(predictions$truth==1)*sum(predictions$truth == 0))
+# }
+# 
+# # should be faster than wilcox.test or pROC https://blog.mbq.me/augh-roc/
+# empirical_auc_newer <-function(predictions){
+#   cls <- predictions$truth == 1
+#   score <- predictions$predicted
+# 
+#   n1 <-sum(!cls); sum(cls)->n2;
+#   U <-sum(rank(score)[!cls])-n1*(n1+1)/2;
+# 
+#   return(1-U/n1/n2);
+# }
+# 
+# empirical_auc_newer_still <- function(predictions) {
+#   bigstatsr::AUC(predictions$predicted, predictions$truth)
+# }
 
 empirical_auc<- function(predictions) {
   # need that third : because AUC2 is "not exported"
