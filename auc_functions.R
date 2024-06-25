@@ -115,3 +115,12 @@ empirical_auc<- function(predictions) {
   # need that third : because AUC2 is "not exported"
   bigstatsr:::AUC2(predictions$predicted, as.logical(predictions$truth))
 }
+
+# simulates a competition result based on "true"/expected aucs 
+sim_competition <- function(aucs, n_true, n_false) {
+  plyr::aaply(aucs, 1, \(x) { 
+    classifier <- make_classifier(x)
+    predictions <- predict(classifier, n_true, n_false)
+    empirical_auc(predictions)
+  })
+}
