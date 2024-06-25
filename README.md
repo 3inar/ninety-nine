@@ -72,11 +72,14 @@ auc_functions.R contains functions for working with and simulating AUCs:
 - `empirical_auc` fast calculation of AUC from a `list(predicted=..., truth=...)`
 - `sim_competition` simulates an uncorrelated competition with given true AUCs
 
-auc_simulations.R
+auc_simulations.R generates data for the figures and numbers in this section
 
-auc_figure_ex_1.R
-auc_figure_ex_2.R
-auc_figure_roc_curves.R
+auc_figure_ex_1.R makes the figure that shows the distribution of maximum AUC among 3000 classifiers all with true AUC 0.9
+
+auc_figure_ex_2.R makes the figures that show a true AUC distribution based on
+truncated kaggle scores and a simulation based on these
+
+auc_figure_roc_curves.R makes the figure that shows example ROC curves for a classifier with true AUC of .9
 
 ## Section 'Discussion': 
 
