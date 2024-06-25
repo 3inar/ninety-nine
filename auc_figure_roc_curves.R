@@ -16,7 +16,7 @@ ss <- sds(clasr)
 
 png("auc_figure_rocB.png", width=6, height=4, units="in", res=300)
 curve(dnorm(x, ms[1], ss[1]), xlim=c(-5+ms[2], 5), col="black", lwd=2,
-        main="Density of S- and S+ for E[AUC] = .9",
+        main="Density of S- and S+ for AUC = .9",
         xlab="Score",
         ylab="Density")
 curve(dnorm(x, ms[2], ss[2]), add=T, col="grey", lwd=2)
@@ -31,7 +31,7 @@ dev.off()
 png("auc_figure_rocA.png", width=6, height=4, units="in", res=300)
 preds <- predict(clasr, ntr, nfa)
 roccc <- roc(response=preds$truth, predictor=preds$predicted)
-plot(roccc, lwd=1, main="ROC curves for 100 simulated competitions, E[AUC] = .9")
+plot(roccc, lwd=1, main="ROC curves for 100 simulated competitions, AUC = .9")
 
 for (i in 1:99) {
         preds <- predict(clasr, ntr, nfa)

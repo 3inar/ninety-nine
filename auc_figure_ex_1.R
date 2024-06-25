@@ -19,7 +19,7 @@ quantile(aucc, prob=c(.025, .975))
 
 png("auc_figure_1.png", width=6, height=4, units="in", res=300)
 hist(mxx, nclass=200, prob=T,
-     main="Simulation distribution of apparent SOTA AUC,\nall models have E[AUC] = .9",
+     main="Simulation distribution of apparent SOTA AUC,\nall models have true AUC of .9",
      xlab="Observed largest AUC among 1000 models.")
 dev.off()
 
