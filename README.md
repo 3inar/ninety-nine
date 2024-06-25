@@ -7,54 +7,54 @@ Files needed to reproduce numbers/figures:
 
 `Parameters_PublicCompetition.R` - all parameters used in the manuscript
 
-## Section *Two coin-flip examples* 
+## Section *Two coin-flip examples*
 
-> CoinFlip.R  
+> CoinFlip.R
 > optional ProbDistr_thetaSOTA.R
 
-## Section 'The probability distribution of p_SOTA':  
+## Section 'The probability distribution of p_SOTA':
 
-ProbDistr_thetaSOTA.R with functions:  
+ProbDistr_thetaSOTA.R with functions:
 
-`cdf`       - cumulative distribution function  
-`pmf`       - probability mass function  
-`expect`    - expectation  
-`variance`  - variance  
-`sim_var` - simulated variance  
-`sim_mean` - simulated mean  
-`sim_ci` - simulated confidence interval 
-                                                  
-## Section 'A simulated public competition example': 
+`cdf`       - cumulative distribution function
+`pmf`       - probability mass function
+`expect`    - expectation
+`variance`  - variance
+`sim_var` - simulated variance
+`sim_mean` - simulated mean
+`sim_ci` - simulated confidence interval
 
-PublicCompetition.R  
+## Section 'A simulated public competition example':
+
+PublicCompetition.R
 calls ProbDistr_thetaSOTA.R and Parameters_PublicCompetition.R
-                                                  
-                                                  
-## Section 'Dependent, identical classifiers': 
 
-dependence.R  
-calls ProbDistr_thetaSOTA.R and Parameters_PublicCompetition.R  
+
+## Section 'Dependent, identical classifiers':
+
+dependence.R
+calls ProbDistr_thetaSOTA.R and Parameters_PublicCompetition.R
 `dep_id_pmf` - simulated pmf for dependent, identical classifiers, fixed or random Y0
-                                            
-## Section 'Non-identical, independent classifiers': 
 
-nonidentical.R  
-calls Parameters_PublicCompetition.R  
+## Section 'Non-identical, independent classifiers':
 
-indep_nonid_pmf_fun.R with functions  
-`indep_nonid_pmf` - simulated pmf for non-identical, independent classifiers  
-`nonid_cdf` - cdf for non-identical, independent classifiers  
+nonidentical.R
+calls Parameters_PublicCompetition.R
+
+indep_nonid_pmf_fun.R with functions
+`indep_nonid_pmf` - simulated pmf for non-identical, independent classifiers
+`nonid_cdf` - cdf for non-identical, independent classifiers
 `nonid_pmf` - pmf based on cdf
-                                                  
-## Section 'Non-identical, dependent classifiers': 
 
-dependent_nonidentical.R  
+## Section 'Non-identical, dependent classifiers':
+
+dependent_nonidentical.R
 calls Parameters_PublicCompetition.R and ProbDistr_thetaSOTA.R
 
-dep_nonid_pmf_fun.R with function  
+dep_nonid_pmf_fun.R with function
 `dep_nonid_pmf` - simulated pmf for dependent, nonidentical classifiers
 
-                                                
+
 ## Section 'Real world examples':
 
 AUROC.R for quick estimate of AUC_SOTA
@@ -81,10 +81,10 @@ truncated kaggle scores and a simulation based on these
 
 auc_figure_roc_curves.R makes the figure that shows example ROC curves for a classifier with true AUC of .9
 
-## Section 'Discussion': 
+## Section 'Discussion':
 
 melanoma.R: investigates the Melanoma 2020 kaggle competition
-                                                
+
 ## Additional files:
 
 SOTA_estimate.R: Creates toy example from the Melanoma 2020 kaggle competition to estimate theta_SOTA from observed performance
