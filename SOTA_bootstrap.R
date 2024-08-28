@@ -129,7 +129,7 @@ print(sprintf("The number of teams above the lower threshold is %s.",
 
 # Have a quick look at the truncated histogram
 trunc_dat = theta_obs[theta_obs>trunc_min]
-hist(trunc_dat, breaks=200, main = paste("Histogram of ", m, "AUCs truncated from below"), xlab = "AUCs", ylab = "number of teams")
+hist(trunc_dat, breaks=200, main = paste("Test set performance"), xlab = "AUCs", ylab = "number of teams")
 
 
 
