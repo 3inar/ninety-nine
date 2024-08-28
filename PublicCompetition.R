@@ -137,6 +137,8 @@ Esota_theta = 1-Esota/n
 sprintf("The expected value is %.4f",
         Esota_theta)
 
+
+
 # When the probability of correct prediction is $0.9$, there is a non-negligible probability that the 
 # top-ranked team will have an estimated accuracy of at least theta^m_alpha2 = 0.9213. 
 
@@ -160,8 +162,8 @@ sprintf("The probability of achieving an accuracy better than E(SOTA)=%.4f, for 
 ######################### varying m, n, p ####################################
 
 n_vec = c(3000,1000,10000)
-m_vec = c(1000,100,500)
-theta_vec = c(0.85,0.9,0.95)
+m_vec = c(1000,100,5000)
+theta_vec = c(0.9,0.85,0.95)
 
 for (i in 1:3){
   for (j in 1:3){
@@ -176,13 +178,190 @@ for (i in 1:3){
   }
 }
 
-j = 1; i = 3; k = 2
+j = 1; i = 1; k = 3
 Esota = expect(n_vec[i], theta_vec[k], m_vec[j])
 Esota_theta = 1-Esota/n_vec[i]
 Vsota = variance(n_vec[i], theta_vec[k], m_vec[j])
 Std_sota_theta = sqrt(Vsota)/n_vec[i]
 sprintf("The expected theta_sota is %.4f, with a standard deviation of %.6f, for m=%s, n=%s, theta=%s.",
         Esota_theta, Std_sota_theta, m_vec[j], n_vec[i], theta_vec[k])
+
+###############################################################################
+######### plotting n #########################
+###############################
+
+ylm = c(0.0,0.035)
+
+n_x = seq(1000, 10000, by=10)
+Esota_theta_vec = numeric(length(n_x))
+
+for (i in 1:length(n_x)){
+  Esota =  expect(n_x[i], theta, m)
+  Esota_theta_vec[i] = (1-Esota/n_x[i]) - theta
+}
+plot(n_x, Esota_theta_vec,"l", lty = "solid", col = "red", ylim=ylm,
+     xlab = "", ylab ="")
+par(new=TRUE) # new plot in same window
+
+# with the three ms
+
+for (i in 1:length(n_x)){
+  Esota =  expect(n_x[i], theta, m_vec[2])
+  Esota_theta_vec[i] = (1-Esota/n_x[i]) - theta
+}
+plot(n_x, Esota_theta_vec,"l", lty = "dotted", col = "darkgreen", ylim=ylm,
+     xlab = "", ylab ="")
+par(new=TRUE) # new plot in same window
+
+for (i in 1:length(n_x)){
+  Esota =  expect(n_x[i], theta, m_vec[3])
+  Esota_theta_vec[i] = (1-Esota/n_x[i]) - theta
+}
+plot(n_x, Esota_theta_vec,"l", lty = "longdash", col = "darkgreen", ylim=ylm,
+     xlab = "", ylab ="")
+par(new=TRUE) # new plot in same window
+
+# with the three thetas
+
+for (i in 1:length(n_x)){
+  Esota =  expect(n_x[i], theta_vec[2], m)
+  Esota_theta_vec[i] = (1-Esota/n_x[i]) - theta_vec[2]
+}
+plot(n_x, Esota_theta_vec,"l", lty = "dotted", col = "violet", ylim=ylm, 
+     xlab = "", ylab ="")
+par(new=TRUE) # new plot in same window
+
+for (i in 1:length(n_x)){
+  Esota =  expect(n_x[i], theta_vec[3], m)
+  Esota_theta_vec[i] = (1-Esota/n_x[i]) - theta_vec[3]
+}
+plot(n_x, Esota_theta_vec,"l", lty = "longdash", col = "violet", ylim=ylm,
+     main = "Bias as a function of test set size", xlab = "n", ylab = TeX(r'($E \hat{theta}_{SOTA} - {theta}_{SOTA}$)'))
+
+abline(v=3000, col="gray")
+
+legend(6000, 0.035, legend=c(TeX(r'(${theta}=0.85$)'),TeX(r'($m = 5000$)'), TeX(r'($n = 1000, {theta}=0.90$)'), 
+                             TeX(r'($m = 100$)'), TeX(r'(${theta}=0.95$)'),TeX(r'($n=1000$)')),
+       col=c("violet","darkgreen","red","darkgreen","violet","grey"), lty=c(3,5,1,3,5,1), cex=0.8)
+
+
+
+#####################################################################
+# plotting m ########################################
+################################
+
+ylm = c(0.0,0.035)
+
+m_x = seq(1, 5000, by=10)
+Esota_theta_vec = numeric(length(m_x))
+
+for (i in 1:length(m_x)){
+  Esota =  expect(n, theta, m_x[i])
+  Esota_theta_vec[i] = (1-Esota/n) - theta
+}
+plot(m_x, Esota_theta_vec,"l", lty = "solid", col = "darkgreen", ylim=ylm,
+     xlab = "", ylab ="")
+par(new=TRUE) # new plot in same window
+
+# with the three ns
+
+for (i in 1:length(m_x)){
+  Esota =  expect(n_vec[2], theta, m_x[i])
+  Esota_theta_vec[i] = (1-Esota/n_vec[2]) - theta
+}
+plot(m_x, Esota_theta_vec,"l", lty = "dotted", col = "red", ylim=ylm,
+     xlab = "", ylab ="")
+par(new=TRUE) # new plot in same window
+
+for (i in 1:length(m_x)){
+  Esota =  expect(n_vec[3], theta, m_x[i])
+  Esota_theta_vec[i] = (1-Esota/n_vec[3]) - theta
+}
+plot(m_x, Esota_theta_vec,"l", lty = "longdash", col = "red", ylim=ylm,
+     xlab = "", ylab ="")
+par(new=TRUE) # new plot in same window
+
+# with the three thetas
+
+for (i in 1:length(m_x)){
+  Esota =  expect(n, theta_vec[2], m_x[i])
+  Esota_theta_vec[i] = (1-Esota/n) - theta_vec[2]
+}
+plot(m_x, Esota_theta_vec,"l", lty = "dotted", col = "violet", ylim=ylm, 
+     xlab = "", ylab ="")
+par(new=TRUE) # new plot in same window
+
+for (i in 1:length(m_x)){
+  Esota =  expect(n, theta_vec[3], m_x[i])
+  Esota_theta_vec[i] = (1-Esota/n) - theta_vec[3]
+}
+plot(m_x, Esota_theta_vec,"l", lty = "longdash", col = "violet", ylim=ylm,
+     main = "Bias as a function of number of classifiers", xlab = "m", ylab = TeX(r'($E \hat{theta}_{SOTA} - {theta}_{SOTA}$)'))
+
+legend(3000, 0.035, legend=c(TeX(r'($n=1000$)'),TeX(r'(${theta}=0.85$)'), TeX(r'($n = 1000, {theta}=0.90$)'), 
+                             TeX(r'(${theta}=0.95$)'), TeX(r'($n=10000$)'),TeX(r'($m=1000$)')),
+       col=c("red","violet","darkgreen","violet", "red","grey"), lty=c(3,3,1,5,5,1), cex=0.8)
+
+abline(v=1000, col="gray")
+
+#####################################################################
+# plotting theta ########################################
+################################
+
+ylm = c(0.0,0.035)
+
+theta_x = seq(0.85, 0.95, by=0.0001)
+Esota_theta_vec = numeric(length(theta_x))
+
+for (i in 1:length(theta_x)){
+  Esota =  expect(n, theta_x[i], m)
+  Esota_theta_vec[i] = (1-Esota/n) - theta_x[i]
+}
+plot(theta_x, Esota_theta_vec,"l", lty = "solid", col = "violet", ylim=ylm,
+     xlab = "", ylab ="")
+par(new=TRUE) # new plot in same window
+
+# with the three ns
+
+for (i in 1:length(theta_x)){
+  Esota =  expect(n_vec[2], theta_x[i], m)
+  Esota_theta_vec[i] = (1-Esota/n_vec[2]) - theta_x[i]
+}
+plot(theta_x, Esota_theta_vec,"l", lty = "dotted", col = "red", ylim=ylm,
+     xlab = "", ylab ="")
+par(new=TRUE) # new plot in same window
+
+for (i in 1:length(theta_x)){
+  Esota =  expect(n_vec[3], theta_x[i], m)
+  Esota_theta_vec[i] = (1-Esota/n_vec[3]) - theta_x[i]
+}
+plot(theta_x, Esota_theta_vec,"l", lty = "longdash", col = "red", ylim=ylm,
+     xlab = "", ylab ="")
+par(new=TRUE) # new plot in same window
+
+# with the three ms
+
+for (i in 1:length(theta_x)){
+  Esota =  expect(n, theta_x[i], m_vec[2])
+  Esota_theta_vec[i] = (1-Esota/n) - theta_x[i]
+}
+plot(theta_x, Esota_theta_vec,"l", lty = "dotted", col = "darkgreen", ylim=ylm, 
+     xlab = "", ylab ="")
+par(new=TRUE) # new plot in same window
+
+for (i in 1:length(theta_x)){
+  Esota =  expect(n, theta_x[i], m_vec[3])
+  Esota_theta_vec[i] = (1-Esota/n) - theta_x[i]
+}
+plot(theta_x, Esota_theta_vec,"l", lty = "longdash", col = "darkgreen", ylim=ylm,
+     main = "Bias as a function of number of classifiers", xlab = TeX(r'(${theta}=0.90$)'), ylab = TeX(r'($E \hat{theta}_{SOTA} - {theta}_{SOTA}$)'))
+
+legend(0.905, 0.035, legend=c(TeX(r'($n=1000$)'),TeX(r'($m=5000$)'), TeX(r'($n = 3000, m=1000$)'), 
+                             TeX(r'($m=100$)'), TeX(r'($n=10000$)'),TeX(r'(${theta}=0.90$)')),
+       col=c("red","darkgreen","violet","darkgreen", "red","grey"), lty=c(3,5,1,3,5,1), cex=0.8)
+
+abline(v=0.9, col="gray")
+
 
 
 ##############################################################################################
