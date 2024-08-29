@@ -183,6 +183,38 @@ sprintf("The expected number of failures is %.4f, with a variance of %.4f.",
 sprintf("The expected theta_hat_SOTA is %.6f, with standard deviation of %.6f.",
         (n-Esota)/n, sqrt(Vsota)/n)
 
+###########################################################################
+### Expected value/bias/variance as a function of theta_min ################
+###########################################################################
+
+theta_min_vec = seq(0.5, 0.9, by=0.0025)
+
+ylm = c(0.0,0.02)
+
+Esota_theta_vec = numeric(length(theta_min_vec))
+
+for (j in 1:length(theta_min_vec)){
+  theta_min = theta_min_vec[j] # for the non-identical
+  theta_max = theta 
+  step = (theta_max-theta_min)/(m-1)
+  theta_vec = seq(theta_min, theta_max, step)
+  fz = nonid_pmf(n, theta_vec, m)
+  
+  
+  # Expected value
+  Eterm = numeric(n+1)
+  for (z in 0:n){
+    i = z+1
+    Eterm[i] = z*fz[i]
+  }
+  
+  Esota = sum(Eterm)
+  Esota_theta_vec[j] = (1-Esota/n)-theta
+  print(j)
+}
+plot(theta_min_vec, Esota_theta_vec,"l", lty = "solid", col = "darkgreen", ylim = ylm,
+     main = TeX(r'(Bias as a function of ${theta}_{min}$)'), xlab = TeX(r'(${theta}_{min}$)'), ylab = TeX(r'($E \hat{theta}_{SOTA} - {theta}_{SOTA}$)'))
+abline(v=0.875, col="gray")
 
 
 
