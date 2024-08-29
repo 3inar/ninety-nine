@@ -298,7 +298,7 @@ for (i in 1:length(m_x)){
 plot(m_x, Esota_theta_vec,"l", lty = "longdash", col = "violet", ylim=ylm,
      main = "Bias as a function of number of classifiers", xlab = "m", ylab = TeX(r'($E \hat{theta}_{SOTA} - {theta}_{SOTA}$)'))
 
-legend(3000, 0.035, legend=c(TeX(r'($n=1000$)'),TeX(r'(${theta}=0.85$)'), TeX(r'($n = 1000, {theta}=0.90$)'), 
+legend(3000, 0.035, legend=c(TeX(r'($n=1000$)'),TeX(r'(${theta}=0.85$)'), TeX(r'($n = 3000, {theta}=0.90$)'), 
                              TeX(r'(${theta}=0.95$)'), TeX(r'($n=10000$)'),TeX(r'($m=1000$)')),
        col=c("red","violet","darkgreen","violet", "red","grey"), lty=c(3,3,1,5,5,1), cex=0.8)
 
@@ -354,7 +354,7 @@ for (i in 1:length(theta_x)){
   Esota_theta_vec[i] = (1-Esota/n) - theta_x[i]
 }
 plot(theta_x, Esota_theta_vec,"l", lty = "longdash", col = "darkgreen", ylim=ylm,
-     main = "Bias as a function of number of classifiers", xlab = TeX(r'(${theta}=0.90$)'), ylab = TeX(r'($E \hat{theta}_{SOTA} - {theta}_{SOTA}$)'))
+     main = "Bias as a function of number of classifiers", xlab = TeX(r'(${theta}$)'), ylab = TeX(r'($E \hat{theta}_{SOTA} - {theta}_{SOTA}$)'))
 
 legend(0.905, 0.035, legend=c(TeX(r'($n=1000$)'),TeX(r'($m=5000$)'), TeX(r'($n = 3000, m=1000$)'), 
                              TeX(r'($m=100$)'), TeX(r'($n=10000$)'),TeX(r'(${theta}=0.90$)')),
