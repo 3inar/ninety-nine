@@ -165,3 +165,27 @@ min_indep_alpha2 = sim_ci(alpha, X$min_indep)
 sprintf("The simulated independent upper bound of the %s confidence interval is %.7f, with %s repetitions.",  
         1-alpha, (n-min_indep_alpha2)/n, rep)
 
+###########################################################################
+### Expected value/bias/variance as a function of rho ################
+###########################################################################
+
+rho_vec = seq(0.0, 1.0, by=0.01)
+
+ylm = c(0.0,0.02)
+
+Esota_theta_vec = numeric(length(rho_vec))
+
+for (j in 1:length(rho_vec)){
+  rho = rho_vec[j] # for the correlated
+  
+  X = dep_id_pmf(n, theta, m, rho, rep, fixed = T)
+  
+  # Expected value
+  Esota = sim_mean(X$min_dep)
+  Esota_theta_vec[j] = (1-Esota/n)-theta
+  print(j)
+}
+plot(rho_vec, Esota_theta_vec,"l", lty = "solid", col = "darkgreen", ylim = ylm,
+     main = TeX(r'(Bias as a function of correlation)'), xlab = TeX(r'(${rho}_0$)'), ylab = TeX(r'($E \hat{theta}_{SOTA} - {theta}_{SOTA}$)'))
+abline(v=0.6, col="gray")
+
