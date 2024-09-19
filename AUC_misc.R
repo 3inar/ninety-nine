@@ -1,3 +1,6 @@
+source("Parameters_PublicCompetition.R")
+source("auc_functions.R")
+
 # just need to put this somewhere it won't clutter up main simulations
 aucs = seq(from=.89,to=.915, by=.0001)
 
@@ -43,6 +46,10 @@ sampling_auc <- function(true_auc) {
   
   empirical_auc(predicted)
 }
-sd(replicate(10000, sampling_auc(.9490)))
+
+samp_aucs <- replicate(10000, sampling_auc(.9490))
+alph = 0.05
+quantile(samp_aucs, probs=c(alph/2, 1-alph/2))
+
 sd(replicate(10000, sampling_auc(.9378)))
 sd(replicate(10000, sampling_auc(.9295)))
