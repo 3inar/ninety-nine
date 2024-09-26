@@ -1,3 +1,4 @@
+source("plotting_params.R")
 load("auc_exp_1.rda")
 
 get_aucs <- function(obj) {
@@ -17,10 +18,10 @@ quantile(mxx, prob=c(.025, .975))
 mean(aucc); sd(aucc)
 quantile(aucc, prob=c(.025, .975))
 
-png("auc_figure_1.png", width=6, height=4, units="in", res=300)
+new_png("auc_figure_1.png", n_figures=1)
 hist(mxx, nclass=200, prob=T,
-     main="Simulation distribution of apparent SOTA AUC,\nall models have true AUC of .9",
-     xlab="Observed largest AUC among 1000 models.")
+     main=NULL, col="black",
+     xlab="Sample maximum AUC among 1000 models.")
 dev.off()
 
 
