@@ -97,52 +97,94 @@ trunc_min = ((rho*rho)*theta_0/(1-theta_0))/(1+(rho*rho)*theta_0/(1-theta_0))
 
 rho_vec = seq(0.0, 1.0, by=0.01)
 
-ylm = c(0.0,0.02)
+ylm = c(0.0,0.035)
 
-theta_min_vec = seq(0.8,theta, by=0.025)
+theta_min_vec = seq(0.8,theta, by=0.025) 
 
 
 Esota_theta_vec = matrix(0,length(theta_min_vec),length(rho_vec))
+SDsota_theta_vec = matrix(0,length(theta_min_vec),length(rho_vec))
 
-
+rep = 100000
+theta_max = theta 
 for (i in 1:length(theta_min_vec)){
   theta_min = theta_min_vec[i] # for the non-identical
-  theta_max = theta 
+  
+  # theta_min = max(trunc_min,theta_min_vec[i])
   step = (theta_max-theta_min)/(m-1)
   theta_vec = seq(theta_min, theta_max, step)
-
-  for (j in 1:length(rho_vec)){
+  
+  for (j in 1:length(rho_vec)){ #
     rho = rho_vec[j] # for the correlated
+    # trunc_min = ((rho*rho)*theta_0/(1-theta_0))/(1+(rho*rho)*theta_0/(1-theta_0))
+    
+    
+    
+ #    print(trunc_min)
+#     print(theta_min_vec[i])
   
     X = dep_nonid_pmf(n, m, rho, rep, theta_vec, theta_0 = theta)
+    #X = dep_nonid_pmf(n, m, rho, rep, theta_vec, theta_0 = theta)
   
     # Expected value
     Esota = mean(X$min_fail)
     Esota_theta_vec[i,j] = (1-Esota/n)-theta
+    
+    # Variance
+    Vsota = mean(X$min_fail*X$min_fail) - Esota*Esota
+    SDsota_theta_vec[i,j] = sqrt(Vsota)/n
+    
+    
     print(c(i,j))
   }
 }
 
 # plotting for theta_min = 0.875
-plot(rho_vec, Esota_theta_vec[4,],"l", lty = 1, col = "darkgreen", ylim = ylm,
+plot(rho_vec, Esota_theta_vec[4,],"l", lty = 1, col = "black", ylim = ylm,
      xlab = "", ylab = "")
 par(new=TRUE) # new plot in same window
 
 for (i in 1:3){ 
-  plot(rho_vec, Esota_theta_vec[i,],"l", lty = i+2, col = "darkgreen", ylim = ylm,
+  plot(rho_vec, Esota_theta_vec[i,],"l", lty = i+2, col = "black", ylim = ylm,
        xlab = "", ylab = "")
   par(new=TRUE) # new plot in same window
 }
 
 # plotting for theta_min = theta
 plot(rho_vec, Esota_theta_vec[5,],"l", lty = 1, col = "red", ylim = ylm,
-     main = TeX(r'(Bias as a function of correlation, non-identical ${theta}$s)'), xlab = TeX(r'(${rho}_0$)'), ylab = TeX(r'($E \hat{theta}_{SOTA} - {theta}_{SOTA}$)'))
+     main = '', xlab = '', ylab = '')
 par(new=TRUE) # new plot in same window
-
-legend(0.7, 0.02, legend=c(TeX(r'(${theta}_{min}=0.9$)'),TeX(r'(${theta}_{min}=0.875$)'), TeX(r'(${theta}_{min}=0.850$)'), 
-                           TeX(r'(${theta}_{min}=0.825$)'), TeX(r'(${theta}_{min}=0.800$)')),
-       col=c("red","darkgreen","darkgreen","darkgreen", "darkgreen"), lty=c(1,1,5,4,3), cex=0.8)
+title(ylab = TeX(r'($E \hat{\theta}_{\max} - {theta}_{SOTA}$)'), line=2, cex.lab=1.2, xlab = TeX(r'(${rho}_0$)'))
 
 abline(v=0.6, col="gray")
+
+legend(0.55, 0.035, legend=c(TeX(r'(${min}{(Theta)}=0.9$)'),TeX(r'(${min}{(Theta)}=0.875$)'), TeX(r'(${min}{(Theta)}=0.850$)'), 
+                           TeX(r'(${min}{(Theta)}=0.825$)'), TeX(r'(${min}{(Theta)}=0.800$)')),
+       col=c("red","black","black","black","black"), lty=c(1,1,5,4,3), cex=0.8)
+
+######################################### standard deviation
+# plotting for theta_min = 0.875
+plot(rho_vec, SDsota_theta_vec[4,],"l", lty = 1, col = "black", ylim = c(0,0.0055),
+     xlab = "", ylab = "")
+par(new=TRUE) # new plot in same window
+
+for (i in 1:3){ 
+  plot(rho_vec, SDsota_theta_vec[i,],"l", lty = i+2, col = "black", ylim = c(0,0.0055),
+       xlab = "", ylab = "")
+  par(new=TRUE) # new plot in same window
+}
+
+# plotting for theta_min = theta
+plot(rho_vec, SDsota_theta_vec[5,],"l", lty = 1, col = "red", ylim = c(0,0.0055),
+     main = '', xlab = '', ylab = '')
+par(new=TRUE) # new plot in same window
+title(ylab = TeX(r'($\sigma_{\hat{\theta}_{\max}}$)'), line=2, cex.lab=1.2, xlab = TeX(r'(${rho}_0$)'))
+
+abline(v=0.6, col="gray")
+
+legend(0.55, 0.0026, legend=c(TeX(r'(${min}{(Theta)}=0.9$)'),TeX(r'(${min}{(Theta)}=0.875$)'), TeX(r'(${min}{(Theta)}=0.850$)'), 
+                             TeX(r'(${min}{(Theta)}=0.825$)'), TeX(r'(${min}{(Theta)}=0.800$)')),
+       col=c("red","black","black","black","black"), lty=c(1,1,5,4,3), cex=0.8)
+
 
 

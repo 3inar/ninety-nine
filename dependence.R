@@ -171,7 +171,7 @@ sprintf("The simulated independent upper bound of the %s confidence interval is 
 
 rho_vec = seq(0.0, 1.0, by=0.01)
 
-ylm = c(0.0,0.02)
+ylm = c(0.0,0.035)
 
 Esota_theta_vec = numeric(length(rho_vec))
 

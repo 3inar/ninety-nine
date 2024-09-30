@@ -25,6 +25,13 @@ dep_nonid_pmf <- function(n, m, rho, rep, theta_vec, theta_0){
   p_flip1 = (theta_0 - rho*sqrt(sigma_0*sigma_vec) - theta_0*theta_vec)/theta_0 # P(Y_j = 0|Y_0 = 1)
   p_flip0 = (-rho*sqrt(sigma_0*sigma_vec)+(1-theta_0)*theta_vec)/(1-theta_0) # P(Y_j = 1|Y_0 = 0)
   
+  #if (any(p_flip1<0)){
+  #  print(p_flip1)
+  #  print(rho)
+  #  readline(prompt="Press [enter] to continue")
+  #}
+  
+  
   min_fail = numeric(rep) # min number of failures with dependency
   teamsSOTA = numeric(rep) # number of teams above theta_0
   

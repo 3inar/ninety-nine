@@ -189,7 +189,7 @@ sprintf("The expected theta_hat_SOTA is %.6f, with standard deviation of %.6f.",
 
 theta_min_vec = seq(0.5, 0.9, by=0.0025)
 
-ylm = c(0.0,0.02)
+ylm = c(0.0,0.035)
 
 Esota_theta_vec = numeric(length(theta_min_vec))
 
@@ -212,11 +212,12 @@ for (j in 1:length(theta_min_vec)){
   Esota_theta_vec[j] = (1-Esota/n)-theta
   print(j)
 }
-plot(theta_min_vec, Esota_theta_vec,"l", lty = "solid", col = "darkgreen", ylim = ylm,
-     main = TeX(r'(Bias as a function of ${theta}_{min}$)'), xlab = TeX(r'(${theta}_{min}$)'), ylab = TeX(r'($E \hat{theta}_{SOTA} - {theta}_{SOTA}$)'))
+plot(theta_min_vec, Esota_theta_vec,"l", lty = "solid", col = "black", ylim = ylm,
+     main = TeX(r'(Bias as a function of ${min}{(Theta)}$)'), xlab = TeX(r'(${min}{(Theta)}$)'), ylab = TeX(r'($E \hat{theta}_{SOTA} - {theta}_{SOTA}$)'))
 abline(v=0.875, col="gray")
-
-
+abline(v=0.85, col="gray",lty = 5)
+abline(v=0.825, col="gray",lty = 4)
+abline(v=0.8, col="gray",lty = 3)
 
 
 

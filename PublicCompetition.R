@@ -186,69 +186,104 @@ Std_sota_theta = sqrt(Vsota)/n_vec[i]
 sprintf("The expected theta_sota is %.4f, with a standard deviation of %.6f, for m=%s, n=%s, theta=%s.",
         Esota_theta, Std_sota_theta, m_vec[j], n_vec[i], theta_vec[k])
 
-###############################################################################
-######### plotting n #########################
-###############################
 
-ylm = c(0.0,0.035)
 
-n_x = seq(1000, 10000, by=10)
-Esota_theta_vec = numeric(length(n_x))
+##############################################################################################
+################################### Figures ##################################################
+##############################################################################################
 
-for (i in 1:length(n_x)){
-  Esota =  expect(n_x[i], theta, m)
-  Esota_theta_vec[i] = (1-Esota/n_x[i]) - theta
-}
-plot(n_x, Esota_theta_vec,"l", lty = "solid", col = "red", ylim=ylm,
-     xlab = "", ylab ="")
+################################### Figure multi_ci #################################################
+Esota = expect(n, theta, m)
+
+# let k be the number of successes, = n-x
+
+k = (mu-60):(mu+90) # this is the plot range, adjust to your liking
+kslim = c(k[1],k[length(k)])
+whylim = c(0,0.03)
+
+y = dbinom(k, n, theta) # probability of x successes in n trials
+plot(k, y, type='l', col = "blue", xlab = '', ylab = '', xlim = kslim, ylim = whylim, axes=F)
+par(new=TRUE) # new plot in same window
+plot(c(ci_binom[["lower"]]*n, ci_binom[["upper"]]*n), c( -0.0005,-0.0005), "l", col = "blue",  xlab = '', ylab = '', 
+     xlim = kslim, ylim = whylim, axes=F)
+par(new=TRUE) # new plot in same window
+plot(c(ci_binom[["lower"]]*n, ci_binom[["lower"]]*n), c(-0.002,0.001),"l", col="blue", xlab = '', ylab = '', 
+     xlim = kslim, ylim = whylim, axes=F)
+par(new=TRUE) # new plot in same window
+plot(c(ci_binom[["upper"]]*n, ci_binom[["upper"]]*n), c(-0.002,0.001),"l", col="blue", xlab = '', ylab = '', 
+     xlim = kslim, ylim = whylim, axes=F)
+par(new=TRUE) # new plot in same window
+plot(c(theta*n, theta*n), c(0,max(y)),"l", lty = 5, col=rgb(0, 0, 1,0.25), xlab = '', ylab = '', 
+     xlim = kslim, ylim = whylim, axes=F)
+
 par(new=TRUE) # new plot in same window
 
-# with the three ms
-
-for (i in 1:length(n_x)){
-  Esota =  expect(n_x[i], theta, m_vec[2])
-  Esota_theta_vec[i] = (1-Esota/n_x[i]) - theta
-}
-plot(n_x, Esota_theta_vec,"l", lty = "dotted", col = "darkgreen", ylim=ylm,
-     xlab = "", ylab ="")
+y = dbinom(k, n, ci_binom[["upper"]]) # significantly better classifier
+plot(k, y, type = 'l', col = "red", xlab = '', ylab = '', axes=F, xlim = kslim, ylim = whylim)
 par(new=TRUE) # new plot in same window
+plot(c(ci_binom[["upper"]]*n, ci_binom[["upper"]]*n), c(0,max(y)),"l", lty = 5, col=rgb(1, 0, 0,0.25), xlab = '', ylab = '', 
+     xlim = kslim, ylim = whylim, axes=F)
 
-for (i in 1:length(n_x)){
-  Esota =  expect(n_x[i], theta, m_vec[3])
-  Esota_theta_vec[i] = (1-Esota/n_x[i]) - theta
-}
-plot(n_x, Esota_theta_vec,"l", lty = "longdash", col = "darkgreen", ylim=ylm,
-     xlab = "", ylab ="")
-par(new=TRUE) # new plot in same window
+# area under curve for expected SOTA performance
+polygon(c(n-Esota, k[k>=n-Esota], max(k)), c(0,y[k>=n-Esota], 0), col=rgb(0, 1, 0,0.25)) 
 
-# with the three thetas
+# area under curve for SOTA performance
+k_alpha2 = n-x_alpha2
+polygon(c(k_alpha2, k[k>=k_alpha2], max(k)), c(0,y[k>=k_alpha2], 0), col=rgb(0, 1, 0,0.25)) 
 
-for (i in 1:length(n_x)){
-  Esota =  expect(n_x[i], theta_vec[2], m)
-  Esota_theta_vec[i] = (1-Esota/n_x[i]) - theta_vec[2]
-}
-plot(n_x, Esota_theta_vec,"l", lty = "dotted", col = "violet", ylim=ylm, 
-     xlab = "", ylab ="")
-par(new=TRUE) # new plot in same window
+axis(1 , cex.axis=1.2, las = 2, at=c(kslim[1],ci_binom[["lower"]]*n, n*theta, 
+                       ci_binom[["upper"]]*n, n-Esota, k_alpha2,kslim[2]), 
+     labels=c('',TeX('$\\theta_{alpha/2}$'), TeX('$\\theta$'), TeX('$\\theta_{1-alpha/2}$'), 
+              TeX(r'($E \hat{\theta}_{max}$)'), TeX('$\\theta^m_{1-alpha/2}$'),''))
 
-for (i in 1:length(n_x)){
-  Esota =  expect(n_x[i], theta_vec[3], m)
-  Esota_theta_vec[i] = (1-Esota/n_x[i]) - theta_vec[3]
-}
-plot(n_x, Esota_theta_vec,"l", lty = "longdash", col = "violet", ylim=ylm,
-     main = "Bias as a function of test set size", xlab = "n", ylab = TeX(r'($E \hat{theta}_{SOTA} - {theta}_{SOTA}$)'))
+title(ylab = '', line=2, cex.lab=1.2, xlab = '')
+# # # # # # # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-abline(v=3000, col="gray")
+################################### Figure cumul_fail ##########################################################
+Fz = cdf(n,theta,m)
 
-legend(6000, 0.035, legend=c(TeX(r'(${theta}=0.85$)'),TeX(r'($m = 5000$)'), TeX(r'($n = 1000, {theta}=0.90$)'), 
-                             TeX(r'($m = 100$)'), TeX(r'(${theta}=0.95$)'),TeX(r'($n=1000$)')),
-       col=c("violet","darkgreen","red","darkgreen","violet","grey"), lty=c(3,5,1,3,5,1), cex=0.8)
+# the whole range, not very much information
+plot(0:n,Fz, type = 'l', xlab = 'number of failures', 
+     ylab = 'probability of at least one team')
+
+# zooming in, and it gets more interesting, discreet curve 
+z = 200:300
+plot(z,Fz[z+1], type = 's', xlab ='', 
+     ylab = '', axes = F)
+
+xax = seq(z[1],tail(z,1), 20)
+klab = xax 
+plab = round(1000*(n-xax)/n)/1000
+axis(1, cex.axis=1, las = 2, at=xax, labels = as.character(plab))
+axis(2, cex.axis=1, las = 2)
+axis(3, cex.axis=1, las = 2, at=xax, labels = as.character(klab))
+title(main = list(TeX(r'($z$)'), cex = 1.2,
+                  col = "black"), sub = list(TeX(r'($\hat{\theta}_{max}$)'),cex = 1.2))
+# # # # # # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+################################### Figure pmf_sota ###################################################
+
+fz = pmf(n,theta,m,f0 = T)
+
+plot(0:n,fz, type = 's')
+
+# need to zoom in
+z = 200:300
+plot(z,fz[z], type = 'h', xlab ='', 
+     ylab = '', axes = F)
+# xax = seq(z[1],tail(z,1), 10)
+klab = xax 
+plab = round(1000*(n-xax)/n)/1000
+axis(1, las = 2, at=xax, labels = as.character(plab))
+yax = seq(0,max(fz)+0.01,0.02)
+axis(2, las = 1, at=yax, labels = as.character(yax))
+axis(3, las = 2, at=xax, labels = as.character(klab))
+title(main = list(TeX(r'($z$)'), cex = 1.2,
+                  col = "black"), sub = list(TeX(r'($\hat{\theta}_{max}$)'),cex = 1.2))
+# # # # # # # # # # # # # # # # # end figure 3 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 
-
-#####################################################################
-# plotting m ########################################
-################################
+################################### Figure bias_m ###################################################
 
 ylm = c(0.0,0.035)
 
@@ -259,7 +294,7 @@ for (i in 1:length(m_x)){
   Esota =  expect(n, theta, m_x[i])
   Esota_theta_vec[i] = (1-Esota/n) - theta
 }
-plot(m_x, Esota_theta_vec,"l", lty = "solid", col = "darkgreen", ylim=ylm,
+plot(m_x, Esota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm,
      xlab = "", ylab ="")
 par(new=TRUE) # new plot in same window
 
@@ -287,7 +322,7 @@ for (i in 1:length(m_x)){
   Esota =  expect(n, theta_vec[2], m_x[i])
   Esota_theta_vec[i] = (1-Esota/n) - theta_vec[2]
 }
-plot(m_x, Esota_theta_vec,"l", lty = "dotted", col = "violet", ylim=ylm, 
+plot(m_x, Esota_theta_vec,"l", lty = "dotted", col = "blue", ylim=ylm, 
      xlab = "", ylab ="")
 par(new=TRUE) # new plot in same window
 
@@ -295,18 +330,77 @@ for (i in 1:length(m_x)){
   Esota =  expect(n, theta_vec[3], m_x[i])
   Esota_theta_vec[i] = (1-Esota/n) - theta_vec[3]
 }
-plot(m_x, Esota_theta_vec,"l", lty = "longdash", col = "violet", ylim=ylm,
-     main = "Bias as a function of number of classifiers", xlab = "m", ylab = TeX(r'($E \hat{theta}_{SOTA} - {theta}_{SOTA}$)'))
+plot(m_x, Esota_theta_vec,"l", lty = "longdash", col = "blue", ylim=ylm, ylab = '', xlab = '')
+title(main = "", xlab = "m", ylab = TeX(r'($E \hat{theta}_{\max} - {theta}_{SOTA}$)'), line = 2, cex.lab=1.2)
 
-legend(3000, 0.035, legend=c(TeX(r'($n=1000$)'),TeX(r'(${theta}=0.85$)'), TeX(r'($n = 3000, {theta}=0.90$)'), 
-                             TeX(r'(${theta}=0.95$)'), TeX(r'($n=10000$)'),TeX(r'($m=1000$)')),
-       col=c("red","violet","darkgreen","violet", "red","grey"), lty=c(3,3,1,5,5,1), cex=0.8)
+legend(2900, 0.035, legend=c(TeX(r'($n=1000$)'),TeX(r'(${theta}=0.85$)'), TeX(r'($n = 3000, {theta}=0.90$)'), 
+                             TeX(r'(${theta}=0.95$)'), TeX(r'($n=10000$)')),
+       col=c("red","blue","black","blue", "red"), lty=c(3,3,1,5,5), cex=0.8)
+
 
 abline(v=1000, col="gray")
 
-#####################################################################
-# plotting theta ########################################
-################################
+################################### Figure bias_n ###################################################
+
+ylm = c(0.0,0.035)
+
+n_x = seq(1000, 10000, by=10)
+Esota_theta_vec = numeric(length(n_x))
+
+for (i in 1:length(n_x)){
+  Esota =  expect(n_x[i], theta, m)
+  Esota_theta_vec[i] = (1-Esota/n_x[i]) - theta
+}
+plot(n_x, Esota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm,
+     xlab = "", ylab ="")
+par(new=TRUE) # new plot in same window
+
+# with the three ms
+
+for (i in 1:length(n_x)){
+  Esota =  expect(n_x[i], theta, m_vec[2])
+  Esota_theta_vec[i] = (1-Esota/n_x[i]) - theta
+}
+plot(n_x, Esota_theta_vec,"l", lty = "dotted", col = "green", ylim=ylm,
+     xlab = "", ylab ="")
+par(new=TRUE) # new plot in same window
+
+for (i in 1:length(n_x)){
+  Esota =  expect(n_x[i], theta, m_vec[3])
+  Esota_theta_vec[i] = (1-Esota/n_x[i]) - theta
+}
+plot(n_x, Esota_theta_vec,"l", lty = "longdash", col = "green", ylim=ylm,
+     xlab = "", ylab ="")
+par(new=TRUE) # new plot in same window
+
+# with the three thetas
+
+for (i in 1:length(n_x)){
+  Esota =  expect(n_x[i], theta_vec[2], m)
+  Esota_theta_vec[i] = (1-Esota/n_x[i]) - theta_vec[2]
+}
+plot(n_x, Esota_theta_vec,"l", lty = "dotted", col = "blue", ylim=ylm, 
+     xlab = "", ylab ="")
+par(new=TRUE) # new plot in same window
+
+for (i in 1:length(n_x)){
+  Esota =  expect(n_x[i], theta_vec[3], m)
+  Esota_theta_vec[i] = (1-Esota/n_x[i]) - theta_vec[3]
+}
+plot(n_x, Esota_theta_vec,"l", lty = "longdash", col = "blue", ylim=ylm,ylab = '', xlab = '')
+title(main = "", xlab = "n", ylab = TeX(r'($E \hat{theta}_{\max} - {theta}_{SOTA}$)'), line = 2, cex.lab=1.2)
+     
+
+abline(v=3000, col="gray")
+
+legend(6000, 0.035, legend=c(TeX(r'(${theta}=0.85$)'),TeX(r'($m = 5000$)'), TeX(r'($n = 1000, {theta}=0.90$)'), 
+                             TeX(r'($m = 100$)'), TeX(r'(${theta}=0.95$)')),
+       col=c("blue","green","black","green","blue"), lty=c(3,5,1,3,5), cex=0.8)
+
+
+
+
+################################### Figure bias_theta ###################################################
 
 ylm = c(0.0,0.035)
 
@@ -317,7 +411,7 @@ for (i in 1:length(theta_x)){
   Esota =  expect(n, theta_x[i], m)
   Esota_theta_vec[i] = (1-Esota/n) - theta_x[i]
 }
-plot(theta_x, Esota_theta_vec,"l", lty = "solid", col = "violet", ylim=ylm,
+plot(theta_x, Esota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm,
      xlab = "", ylab ="")
 par(new=TRUE) # new plot in same window
 
@@ -345,7 +439,7 @@ for (i in 1:length(theta_x)){
   Esota =  expect(n, theta_x[i], m_vec[2])
   Esota_theta_vec[i] = (1-Esota/n) - theta_x[i]
 }
-plot(theta_x, Esota_theta_vec,"l", lty = "dotted", col = "darkgreen", ylim=ylm, 
+plot(theta_x, Esota_theta_vec,"l", lty = "dotted", col = "green", ylim=ylm, 
      xlab = "", ylab ="")
 par(new=TRUE) # new plot in same window
 
@@ -353,87 +447,190 @@ for (i in 1:length(theta_x)){
   Esota =  expect(n, theta_x[i], m_vec[3])
   Esota_theta_vec[i] = (1-Esota/n) - theta_x[i]
 }
-plot(theta_x, Esota_theta_vec,"l", lty = "longdash", col = "darkgreen", ylim=ylm,
-     main = "Bias as a function of probability of success", xlab = TeX(r'(${theta}$)'), ylab = TeX(r'($E \hat{theta}_{SOTA} - {theta}_{SOTA}$)'))
+plot(theta_x, Esota_theta_vec,"l", lty = "longdash", col = "green", ylim=ylm,ylab = '', xlab = '')
+title(main = "", xlab = TeX(r'(${theta}$)'), ylab = TeX(r'($E \hat{theta}_{\max} - {theta}_{SOTA}$)'), line = 2, cex.lab=1.2)
 
 legend(0.905, 0.035, legend=c(TeX(r'($n=1000$)'),TeX(r'($m=5000$)'), TeX(r'($n = 3000, m=1000$)'), 
-                             TeX(r'($m=100$)'), TeX(r'($n=10000$)'),TeX(r'(${theta}=0.90$)')),
-       col=c("red","darkgreen","violet","darkgreen", "red","grey"), lty=c(3,5,1,3,5,1), cex=0.8)
+                              TeX(r'($m=100$)'), TeX(r'($n=10000$)')),
+       col=c("red","green","black","green", "red"), lty=c(3,5,1,3,5), cex=0.8)
+
+abline(v=0.9, col="gray")
+
+################################### Figure sd_m ###################################################
+
+ylm = c(0.0,0.005)
+
+m_x = seq(1, 5000, by=10)
+SDsota_theta_vec = numeric(length(m_x))
+
+for (i in 1:length(m_x)){
+  Vsota = variance(n, theta, m_x[i])
+  SDsota_theta_vec[i] = sqrt(Vsota)/n
+}
+plot(m_x, SDsota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm,
+     xlab = "", ylab ="")
+par(new=TRUE) # new plot in same window
+
+# with the three ns
+
+for (i in 1:length(m_x)){
+  Vsota =  variance(n_vec[2], theta, m_x[i])
+  SDsota_theta_vec[i] = sqrt(Vsota)/n
+}
+plot(m_x, SDsota_theta_vec,"l", lty = "dotted", col = "red", ylim=ylm,
+     xlab = "", ylab ="")
+par(new=TRUE) # new plot in same window
+
+for (i in 1:length(m_x)){
+  Vsota =  variance(n_vec[3], theta, m_x[i])
+  SDsota_theta_vec[i] = sqrt(Vsota)/n
+}
+plot(m_x, SDsota_theta_vec,"l", lty = "longdash", col = "red", ylim=ylm,
+     xlab = "", ylab ="")
+par(new=TRUE) # new plot in same window
+
+# with the three thetas
+
+for (i in 1:length(m_x)){
+  Vsota =  variance(n, theta_vec[2], m_x[i])
+  SDsota_theta_vec[i] = sqrt(Vsota)/n
+}
+plot(m_x, SDsota_theta_vec,"l", lty = "dotted", col = "blue", ylim=ylm, 
+     xlab = "", ylab ="")
+par(new=TRUE) # new plot in same window
+
+for (i in 1:length(m_x)){
+  Vsota =  variance(n, theta_vec[3], m_x[i])
+  SDsota_theta_vec[i] = sqrt(Vsota)/n
+}
+plot(m_x, SDsota_theta_vec,"l", lty = "longdash", col = "blue", ylim=ylm, ylab = '', xlab = '')
+title(main = "", xlab = "m", ylab = TeX(r'($\sigma_{\hat{\theta}_{\max}}$)'), line = 2, cex.lab=1.2)
+
+legend(2900, 0.005, legend=c(TeX(r'(${theta}=0.85$)'),TeX(r'($m = 5000$)'), TeX(r'($n = 1000, {theta}=0.90$)'), 
+                             TeX(r'($m = 100$)'), TeX(r'(${theta}=0.95$)')),
+       col=c("blue","green","black","green","blue"), lty=c(3,5,1,3,5), cex=0.8)
+
+
+abline(v=1000, col="gray")
+
+################################### Figure sd_n ###################################################
+
+ylm = c(0.0,0.005)
+
+n_x = seq(1000, 10000, by=10)
+SDsota_theta_vec = numeric(length(n_x))
+
+for (i in 1:length(n_x)){
+  Vsota = variance(n_x[i], theta, m)
+  SDsota_theta_vec[i] = sqrt(Vsota)/n_x[i]
+}
+plot(n_x, SDsota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm,
+     xlab = "", ylab ="")
+par(new=TRUE) # new plot in same window
+
+# with the three ms
+
+for (i in 1:length(n_x)){
+  Vsota =  variance(n_x[i], theta, m_vec[2])
+  SDsota_theta_vec[i] = sqrt(Vsota)/n_x[i]
+}
+plot(n_x, SDsota_theta_vec,"l", lty = "dotted", col = "green", ylim=ylm,
+     xlab = "", ylab ="")
+par(new=TRUE) # new plot in same window
+
+for (i in 1:length(n_x)){
+  Vsota =  variance(n_x[i], theta, m_vec[3])
+  SDsota_theta_vec[i] = sqrt(Vsota)/n_x[i]
+}
+plot(n_x, SDsota_theta_vec,"l", lty = "longdash", col = "green", ylim=ylm,
+     xlab = "", ylab ="")
+par(new=TRUE) # new plot in same window
+
+# with the three thetas
+
+for (i in 1:length(n_x)){
+  Vsota =  variance(n_x[i], theta_vec[2], m)
+  SDsota_theta_vec[i] = sqrt(Vsota)/n_x[i]
+}
+plot(n_x, SDsota_theta_vec,"l", lty = "dotted", col = "blue", ylim=ylm, 
+     xlab = "", ylab ="")
+par(new=TRUE) # new plot in same window
+
+for (i in 1:length(n_x)){
+  Vsota =  variance(n_x[i], theta_vec[3], m)
+  SDsota_theta_vec[i] = sqrt(Vsota)/n_x[i]
+}
+plot(n_x, SDsota_theta_vec,"l", lty = "longdash", col = "blue", ylim=ylm, ylab = '', xlab = '')
+title(main = "", xlab = "n", ylab = TeX(r'($\sigma_{\hat{\theta}_{\max}}$)'), line = 2, cex.lab=1.2)
+
+abline(v=3000, col="gray")
+
+legend(6000, 0.005, legend=c(TeX(r'(${theta}=0.85$)'),TeX(r'($m = 5000$)'), TeX(r'($n = 1000, {theta}=0.90$)'), 
+                             TeX(r'($m = 100$)'), TeX(r'(${theta}=0.95$)')),
+       col=c("blue","green","black","green","blue"), lty=c(3,5,1,3,5), cex=0.8)
+
+
+################################### Figure sd_theta ###################################################
+
+ylm = c(0.0,0.005)
+
+theta_x = seq(0.85, 0.95, by=0.0001)
+SDsota_theta_vec = numeric(length(n_x))
+
+for (i in 1:length(theta_x)){
+  Vsota = variance(n, theta_x[i], m)
+  SDsota_theta_vec[i] = sqrt(Vsota)/n
+}
+plot(theta_x, SDsota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm,
+     xlab = "", ylab ="")
+par(new=TRUE) # new plot in same window
+
+# with the three ms
+
+for (i in 1:length(theta_x)){
+  Vsota =  variance(n, theta_x[i], m_vec[2])
+  SDsota_theta_vec[i] = sqrt(Vsota)/n
+}
+plot(theta_x, SDsota_theta_vec,"l", lty = "dotted", col = "green", ylim=ylm,
+     xlab = "", ylab ="")
+par(new=TRUE) # new plot in same window
+
+for (i in 1:length(theta_x)){
+  Vsota =  variance(n, theta_x[i], m_vec[3])
+  SDsota_theta_vec[i] = sqrt(Vsota)/n
+}
+plot(theta_x, SDsota_theta_vec,"l", lty = "longdash", col = "green", ylim=ylm,
+     xlab = "", ylab ="")
+par(new=TRUE) # new plot in same window
+
+# with the three ns
+
+for (i in 1:length(theta_x)){
+  Vsota =  variance(n_vec[2], theta_x[i], m)
+  SDsota_theta_vec[i] = sqrt(Vsota)/n_vec[2]
+}
+plot(theta_x, SDsota_theta_vec,"l", lty = "dotted", col = "red", ylim=ylm, 
+     xlab = "", ylab ="")
+par(new=TRUE) # new plot in same window
+
+for (i in 1:length(theta_x)){
+  Vsota =  variance(n_vec[3], theta_x[i], m)
+  SDsota_theta_vec[i] = sqrt(Vsota)/n_vec[3]
+}
+plot(theta_x, SDsota_theta_vec,"l", lty = "longdash", col = "red", ylim=ylm, ylab = '', xlab = '')
+title(main = "", xlab = TeX(r'(${theta}$)'), ylab = TeX(r'($\sigma_{\hat{\theta}_{\max}}$)'), line = 2, cex.lab=1.2)
+
+
+legend(0.905, 0.005, legend=c(TeX(r'($n=1000$)'),TeX(r'($m=100$)'), TeX(r'($n = 3000, m=1000$)'), 
+                              TeX(r'($m=5000$)'), TeX(r'($n=10000$)')),
+       col=c("red","green","black","green", "red"), lty=c(3,3,1,5,5), cex=0.8)
 
 abline(v=0.9, col="gray")
 
 
 
-##############################################################################################
-################################### Figures ##################################################
-##############################################################################################
 
-################################### Figure multi_ci #################################################
-Esota = expect(n, theta, m)
 
-# let k be the number of successes, = n-x
-
-k = (mu-60):(mu+90) # this is the plot range, adjust to your liking
-
-y = dbinom(k, n, theta) # probability of x successes in n trials
-plot(k, y, type='h', xlab = '', ylab = '', axes=F) # histogram
-
-par(new=TRUE) # new plot in same window
-
-y = dbinom(k, n, ci_binom[["upper"]]) # significantly better classifier
-plot(k, y, type = 'l', col = "red", xlab = '', ylab = '', axes=F)
-
-# area under curve for expected SOTA performance
-polygon(c(n-Esota, k[k>=n-Esota], max(k)), c(0,y[k>=n-Esota], 0), col="blue")
-
-# area under curve for SOTA performance
-k_alpha2 = n-x_alpha2
-polygon(c(k_alpha2, k[k>=k_alpha2], max(k)), c(0,y[k>=k_alpha2], 0), col="red")
-
-axis(1 , las = 2, at=c(ci_binom[["lower"]]*n, n*theta, 
-                       ci_binom[["upper"]]*n, n-Esota, k_alpha2), 
-     labels=c(TeX('$\\theta_{alpha/2}$'), TeX('$\\theta$'), TeX('$\\theta_{1-alpha/2}$'), 
-              TeX(r'($E \hat{theta}_{SOTA}$)'), TeX('$\\theta^m_{1-alpha/2}$')))
-# # # # # # # # # # # # # # # # # # end figure 1 # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-################################### Figure cumul_fail ##########################################################
-Fz = cdf(n,theta,m)
-
-# the whole range, not very much information
-plot(0:n,Fz, type = 'l', xlab = 'number of failures', 
-     ylab = 'probability of at least one team')
-
-# zooming in, and it gets more interesting, discreet curve 
-z = 200:300
-plot(z,Fz[z+1], type = 's', xlab = 'number of failures/accuracy', 
-     ylab = 'F(z)', axes = F)
-
-xax = seq(z[1],tail(z,1), 10)
-klab = xax 
-plab = round(1000*(n-xax)/n)/1000
-axis(1, las = 2, at=xax, labels = as.character(plab))
-axis(2, las = 2)
-axis(3, las = 2, at=xax, labels = as.character(klab))
-# # # # # # # # # # # # # # # # # end figure 2 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-################################### Figure 3 ###################################################
-
-fz = pmf(n,theta,m,f0 = T)
-
-plot(0:n,fz, type = 's')
-
-# need to zoom in
-z = 200:300
-plot(z,fz[z], type = 'h', xlab = 'number of failures/accuracy', 
-     ylab = 'f(z)', axes = F)
-xax = seq(z[1],tail(z,1), 10)
-klab = xax 
-plab = round(1000*(n-xax)/n)/1000
-axis(1, las = 2, at=xax, labels = as.character(plab))
-yax = seq(0,max(fz)+0.01,0.02)
-axis(2, las = 1, at=yax, labels = as.character(yax))
-axis(3, las = 2, at=xax, labels = as.character(klab))
-# # # # # # # # # # # # # # # # # end figure 3 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 ##############################################################################################
 ################################### Simulations ##############################################
