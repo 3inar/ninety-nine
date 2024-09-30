@@ -68,6 +68,13 @@ X = dep_nonid_pmf(n, m, rho, rep, theta_vec, theta_0 = theta)
 toc()
 
 # Histograms of the minimum number of failures for m classifiers, in rep repetitions.
+source("plotting_params.R")
+
+new_png("test.png", n_figures=1)
+hist(X$x_fail, xlab = 'number of failures', ylab = 'number of classifiers', 
+     ylim = c(0,250), main=NULL)
+dev.off()
+
 
 hist(X$x_fail, xlab = 'number of failures', ylab = 'number of classifiers', 
      ylim = c(0,250))
@@ -105,7 +112,7 @@ theta_min_vec = seq(0.8,theta, by=0.025)
 Esota_theta_vec = matrix(0,length(theta_min_vec),length(rho_vec))
 SDsota_theta_vec = matrix(0,length(theta_min_vec),length(rho_vec))
 
-rep = 100000
+rep = 1000
 theta_max = theta 
 for (i in 1:length(theta_min_vec)){
   theta_min = theta_min_vec[i] # for the non-identical
@@ -139,6 +146,8 @@ for (i in 1:length(theta_min_vec)){
   }
 }
 
+new_png("test2.png", n_figures=2)
+
 # plotting for theta_min = 0.875
 plot(rho_vec, Esota_theta_vec[4,],"l", lty = 1, col = "black", ylim = ylm,
      xlab = "", ylab = "")
@@ -161,6 +170,8 @@ abline(v=0.6, col="gray")
 legend(0.55, 0.035, legend=c(TeX(r'(${min}{(Theta)}=0.9$)'),TeX(r'(${min}{(Theta)}=0.875$)'), TeX(r'(${min}{(Theta)}=0.850$)'), 
                            TeX(r'(${min}{(Theta)}=0.825$)'), TeX(r'(${min}{(Theta)}=0.800$)')),
        col=c("red","black","black","black","black"), lty=c(1,1,5,4,3), cex=0.8)
+
+dev.off()
 
 ######################################### standard deviation
 # plotting for theta_min = 0.875
