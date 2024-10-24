@@ -159,68 +159,80 @@ beat_esota = pbinom(Esota, n, 1-ci_binom[["upper"]])
 sprintf("The probability of achieving an accuracy better than E(SOTA)=%.4f, for a classifier with significantly better proability of correct prediction, %.4f, is %.4f.",
         Esota_theta, ci_binom[["upper"]], beat_esota)
 
-######################### varying m, n, p ####################################
+######################### Expected values and standard deviations for hat theta_max (X) ####################################
+
+# varying m, n, p
 
 n_vec = c(3000,1000,10000)
 m_vec = c(1000,100,5000)
 theta_vec = c(0.9,0.85,0.95)
 
-for (i in 1:3){
-  for (j in 1:3){
-    for (k in 1:3){
+table = matrix(0,27,5)
+t = 1 # counting table rows
+
+for (j in 1:length(m_vec)){
+  for (i in 1:length(n_vec)){
+    for (k in 1:length(theta_vec)){
+      
+      # parameter values
+      table[t,1:3] = c( m_vec[j], n_vec[i], theta_vec[k])
+      
       Esota =  expect(n_vec[i], theta_vec[k], m_vec[j])
       Esota_theta = 1-Esota/n_vec[i]
+      table[t,4] = Esota_theta
       Vsota = variance(n_vec[i], theta_vec[k], m_vec[j])
       Std_sota_theta = sqrt(Vsota)/n_vec[i]
-      sprintf("The expected theta_sota is %.4f, with a standard deviation of %.6f, for m=%s, n=%s, theta=%s.",
-              Esota_theta, Std_sota_theta, m_vec[j], n_vec[i], theta_vec[k])
+      table[t,5] = Std_sota_theta
+      # sprintf("The expected theta_sota is %.4f, with a standard deviation of %.6f, for m=%s, n=%s, theta=%s.", Esota_theta, Std_sota_theta, m_vec[j], n_vec[i], theta_vec[k])
+      
+      t = t+1
     }
   }
 }
 
-j = 1; i = 1; k = 3
-Esota = expect(n_vec[i], theta_vec[k], m_vec[j])
-Esota_theta = 1-Esota/n_vec[i]
-Vsota = variance(n_vec[i], theta_vec[k], m_vec[j])
-Std_sota_theta = sqrt(Vsota)/n_vec[i]
-sprintf("The expected theta_sota is %.4f, with a standard deviation of %.6f, for m=%s, n=%s, theta=%s.",
-        Esota_theta, Std_sota_theta, m_vec[j], n_vec[i], theta_vec[k])
-
-
+table
 
 ##############################################################################################
 ################################### Figures ##################################################
 ##############################################################################################
 
-################################### Figure multi_ci #################################################
-Esota = expect(n, theta, m)
+################################### Figure multi_ci ##########################################
+# The pmfs of two single $\hat{\theta}(X)$ compared to $\hat{\theta}_{\max}$ statistics#######
 
-# let k be the number of successes, = n-x
+Esota = expect(n, theta, m) # updating the value
 
+# let k be the number of successes = n-x
 k = (mu-60):(mu+90) # this is the plot range, adjust to your liking
 kslim = c(k[1],k[length(k)])
 whylim = c(0,0.03)
 
+# the pmf of $hat theta (X)$ with \theta = \theta
 y = dbinom(k, n, theta) # probability of x successes in n trials
 plot(k, y, type='l', col = "blue", xlab = '', ylab = '', xlim = kslim, ylim = whylim, axes=F)
-par(new=TRUE) # new plot in same window
+
+# the confidence interval of $hat theta (x) = \theta$ with bars
+par(new=TRUE) 
 plot(c(ci_binom[["lower"]]*n, ci_binom[["upper"]]*n), c( -0.0005,-0.0005), "l", col = "blue",  xlab = '', ylab = '', 
      xlim = kslim, ylim = whylim, axes=F)
-par(new=TRUE) # new plot in same window
+par(new=TRUE) 
 plot(c(ci_binom[["lower"]]*n, ci_binom[["lower"]]*n), c(-0.002,0.001),"l", col="blue", xlab = '', ylab = '', 
      xlim = kslim, ylim = whylim, axes=F)
-par(new=TRUE) # new plot in same window
+par(new=TRUE) 
 plot(c(ci_binom[["upper"]]*n, ci_binom[["upper"]]*n), c(-0.002,0.001),"l", col="blue", xlab = '', ylab = '', 
      xlim = kslim, ylim = whylim, axes=F)
-par(new=TRUE) # new plot in same window
+
+# dottet vertical line for \theta
+par(new=TRUE)
 plot(c(theta*n, theta*n), c(0,max(y)),"l", lty = 5, col=rgb(0, 0, 1,0.25), xlab = '', ylab = '', 
      xlim = kslim, ylim = whylim, axes=F)
 
-par(new=TRUE) # new plot in same window
-
+# the pmf of $hat theta (X)$ with \theta = upper CI
+par(new=TRUE) 
 y = dbinom(k, n, ci_binom[["upper"]]) # significantly better classifier
 plot(k, y, type = 'l', col = "red", xlab = '', ylab = '', axes=F, xlim = kslim, ylim = whylim)
-par(new=TRUE) # new plot in same window
+
+# dottet vertical line for \theta
+par(new=TRUE) # 
 plot(c(ci_binom[["upper"]]*n, ci_binom[["upper"]]*n), c(0,max(y)),"l", lty = 5, col=rgb(1, 0, 0,0.25), xlab = '', ylab = '', 
      xlim = kslim, ylim = whylim, axes=F)
 
@@ -231,6 +243,7 @@ polygon(c(n-Esota, k[k>=n-Esota], max(k)), c(0,y[k>=n-Esota], 0), col=rgb(0, 1, 
 k_alpha2 = n-x_alpha2
 polygon(c(k_alpha2, k[k>=k_alpha2], max(k)), c(0,y[k>=k_alpha2], 0), col=rgb(0, 1, 0,0.25)) 
 
+# axis, ticks and labels
 axis(1 , cex.axis=1.2, las = 2, at=c(kslim[1],ci_binom[["lower"]]*n, n*theta, 
                        ci_binom[["upper"]]*n, n-Esota, k_alpha2,kslim[2]), 
      labels=c('',TeX('$\\theta_{alpha/2}$'), TeX('$\\theta$'), TeX('$\\theta_{1-alpha/2}$'), 
@@ -240,17 +253,20 @@ title(ylab = '', line=2, cex.lab=1.2, xlab = '')
 # # # # # # # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 ################################### Figure cumul_fail ##########################################################
-Fz = cdf(n,theta,m)
 
-# the whole range, not very much information
+Fz = cdf(n,theta,m) # updating the value
+
+# Plotting the cfd
 plot(0:n,Fz, type = 'l', xlab = 'number of failures', 
      ylab = 'probability of at least one team')
+# the whole range, not very much information
 
-# zooming in, and it gets more interesting, discreet curve 
+# zooming in
 z = 200:300
 plot(z,Fz[z+1], type = 's', xlab ='', 
      ylab = '', axes = F)
 
+# axis, ticks and labels
 xax = seq(z[1],tail(z,1), 20)
 klab = xax 
 plab = round(1000*(n-xax)/n)/1000
@@ -261,19 +277,19 @@ title(main = list(TeX(r'($z$)'), cex = 1.2,
                   col = "black"), sub = list(TeX(r'($\hat{\theta}_{max}$)'),cex = 1.2))
 # # # # # # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-################################### Figure pmf_sota ###################################################
+################################### Figure pmf_fail ###################################################
 
-fz = pmf(n,theta,m,f0 = T)
+fz = pmf(n,theta,m,f0 = T) # updating the value
 
+# Plotting the pmf
 plot(0:n,fz, type = 's')
 
-# need to zoom in
-z = 200:300
+# zooming in, same values z as for the cdf
 plot(z,fz[z], type = 'h', xlab ='', 
      ylab = '', axes = F)
-# xax = seq(z[1],tail(z,1), 10)
-klab = xax 
-plab = round(1000*(n-xax)/n)/1000
+
+# # axis, ticks and labels, same values as for the cdf
+# plab = round(1000*(n-xax)/n)/1000
 axis(1, las = 2, at=xax, labels = as.character(plab))
 yax = seq(0,max(fz)+0.01,0.02)
 axis(2, las = 1, at=yax, labels = as.character(yax))
