@@ -1,50 +1,82 @@
 # ninety-nine
 
-Code for the manuscript *What is the state of the art? Accounting for multiplicity in machine learning benchmark performance* 	
+Code for the manuscript *Accounting for multiplicity in machine learning benchmark performance* 	
 https://doi.org/10.48550/arXiv.2303.07272
 
-Files needed to reproduce numbers/figures:
-
+Files needed to reproduce numbers/figures: \
 `Parameters_PublicCompetition.R` - all parameters used in the manuscript
 
-## Section *Estimating state-of-the-art performance*
+Figures are found locally.
+
+## *Estimating state-of-the-art performance*
 
 Bla-bla-bla
 
-## Section *Related work*
+## *Related work*
 
 Cited bla-bla-bla
 
-## Section *Multiple classifiers and biased state-of-the-art estimation*
+## *Multiple classifiers and biased state-of-the-art estimation*
 
-## Subsection *Notation*
+### *Notation*
 
 Aligns with the (simplified) variable names found here. 
 
-## Subsection *A coin-flip example*
+### *A coin-flip example*
 
-> CoinFlip.R \
-> optional ProbDistr_thetaSOTA.R
+CoinFlip.R 
 
-## Section 'The probability distribution of p_SOTA':
+Produces the numbers found in this subsection. There are two examples, and 
+example b) is used in the manuscript. The output is re-produced by 
+simulation, and then finally the output is re-produced using functions from
+
+ProbDistr_thetaSOTA.R
+
+No figures
+
+### The probability distribution of $ hat theta_{max}(X)$
 
 ProbDistr_thetaSOTA.R with functions:
 
-`cdf`       - cumulative distribution function
-`pmf`       - probability mass function
-`expect`    - expectation
-`variance`  - variance
-`sim_var` - simulated variance
-`sim_mean` - simulated mean
+`cdf`       - cumulative distribution function \
+`pmf`       - probability mass function \
+`expect`    - expectation \
+`variance`  - variance \
+`sim_var` - simulated variance \
+`sim_mean` - simulated mean \
 `sim_ci` - simulated confidence interval
 
-## Section 'A simulated public competition example':
+Does not produce any output. As an option at the end, you can check that the functions 
+produces the correct numbers from the coin-flip example.
 
-PublicCompetition.R
+### A simulated public competition example
+
+PublicCompetition.R \
 calls ProbDistr_thetaSOTA.R and Parameters_PublicCompetition.R
 
+Output: \
+The numbers in the text and some intermediate calculations that we did
+not include in the manuscript. There are check-ups along the way. \
 
-## Section 'Dependent, identical classifiers':
+The entries for table *Expected values and standard deviations for hat theta_max (X)*.
+The output table displays all combinations of m, n, theta.
+
+Figures:\
+
+`multi_ci` *The pmfs of two single $\hat{\theta}(X)$ compared to $\hat{\theta}_{\max}$ statistics*\
+Against a mass of identical classifiers, a single significantly better
+classifier has little chance of beating the observed sample maximum 
+
+`cumul_fail` *Cdf and pmf for at least one classifier having at most z failures* a)\
+Displaying the function `cdf` (ProbDistr_thetaSOTA.R) for the parameters in Parameters_PublicCompetition.R
+
+`pdf_fail` *Cdf and pmf for at least one classifier having at most z failures* b)\
+Displaying the function `pmf` (ProbDistr_thetaSOTA.R) for the parameters in Parameters_PublicCompetition.R
+
+
+
+
+## Dependency and non-identical theta's
 
 dependence.R
 calls ProbDistr_thetaSOTA.R and Parameters_PublicCompetition.R
