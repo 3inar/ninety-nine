@@ -7,9 +7,23 @@ Files needed to reproduce numbers/figures:
 
 `Parameters_PublicCompetition.R` - all parameters used in the manuscript
 
-## Section *Two coin-flip examples*
+## Section *Estimating state-of-the-art performance*
 
-> CoinFlip.R
+Bla-bla-bla
+
+## Section *Related work*
+
+Cited bla-bla-bla
+
+## Section *Multiple classifiers and biased state-of-the-art estimation*
+
+## Subsection *Notation*
+
+Aligns with the (simplified) variable names found here. 
+
+## Subsection *A coin-flip example*
+
+> CoinFlip.R \
 > optional ProbDistr_thetaSOTA.R
 
 ## Section 'The probability distribution of p_SOTA':
