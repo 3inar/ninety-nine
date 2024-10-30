@@ -296,354 +296,275 @@ axis(2, las = 1, at=yax, labels = as.character(yax))
 axis(3, las = 2, at=xax, labels = as.character(klab))
 title(main = list(TeX(r'($z$)'), cex = 1.2,
                   col = "black"), sub = list(TeX(r'($\hat{\theta}_{max}$)'),cex = 1.2))
-# # # # # # # # # # # # # # # # # end figure 3 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 
-################################### Figure bias_m ###################################################
+################################### Figure bias_sd_m_n_theta ###################################################
 
-ylm = c(0.0,0.035)
+# There are six subfigures, each with 5 curves and a vertical line
 
-m_x = seq(1, 5000, by=10)
-Esota_theta_vec = numeric(length(m_x))
+# Three bias subfigures m,n,theta, and corresponding sd figures
 
+col_vec = c("green","red","blue") # param = m,n,theta 
+line_vec = c("solid","dotted","longdash") #subparam
+
+ylab_bias = TeX(r'($E \hat{theta}_{\max} - {theta}_{SOTA}$)')
+ylab_sd = TeX(r'($\sigma_{\hat{\theta}_{\max}}$)')
+
+########################### Figure bias_m and sd_m ##########################################
+
+m_x = seq(1, 5000, by=10) # m is on the x-axis
+
+Esota_theta_vec = numeric(length(m_x)) # pre-allocate for bias 
+SDsota_theta_vec = numeric(length(m_x)) # for standard deviation
 for (i in 1:length(m_x)){
   Esota =  expect(n, theta, m_x[i])
   Esota_theta_vec[i] = (1-Esota/n) - theta
-}
-plot(m_x, Esota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm,
-     xlab = "", ylab ="")
-par(new=TRUE) # new plot in same window
-
-# with the three ns
-
-for (i in 1:length(m_x)){
-  Esota =  expect(n_vec[2], theta, m_x[i])
-  Esota_theta_vec[i] = (1-Esota/n_vec[2]) - theta
-}
-plot(m_x, Esota_theta_vec,"l", lty = "dotted", col = "red", ylim=ylm,
-     xlab = "", ylab ="")
-par(new=TRUE) # new plot in same window
-
-for (i in 1:length(m_x)){
-  Esota =  expect(n_vec[3], theta, m_x[i])
-  Esota_theta_vec[i] = (1-Esota/n_vec[3]) - theta
-}
-plot(m_x, Esota_theta_vec,"l", lty = "longdash", col = "red", ylim=ylm,
-     xlab = "", ylab ="")
-par(new=TRUE) # new plot in same window
-
-# with the three thetas
-
-for (i in 1:length(m_x)){
-  Esota =  expect(n, theta_vec[2], m_x[i])
-  Esota_theta_vec[i] = (1-Esota/n) - theta_vec[2]
-}
-plot(m_x, Esota_theta_vec,"l", lty = "dotted", col = "blue", ylim=ylm, 
-     xlab = "", ylab ="")
-par(new=TRUE) # new plot in same window
-
-for (i in 1:length(m_x)){
-  Esota =  expect(n, theta_vec[3], m_x[i])
-  Esota_theta_vec[i] = (1-Esota/n) - theta_vec[3]
-}
-plot(m_x, Esota_theta_vec,"l", lty = "longdash", col = "blue", ylim=ylm, ylab = '', xlab = '')
-title(main = "", xlab = "m", ylab = TeX(r'($E \hat{theta}_{\max} - {theta}_{SOTA}$)'), line = 2, cex.lab=1.2)
-
-legend(2900, 0.035, legend=c(TeX(r'($n=1000$)'),TeX(r'(${theta}=0.85$)'), TeX(r'($n = 3000, {theta}=0.90$)'), 
-                             TeX(r'(${theta}=0.95$)'), TeX(r'($n=10000$)')),
-       col=c("red","blue","black","blue", "red"), lty=c(3,3,1,5,5), cex=0.8)
-
-
-abline(v=1000, col="gray")
-
-################################### Figure bias_n ###################################################
-
-ylm = c(0.0,0.035)
-
-n_x = seq(1000, 10000, by=10)
-Esota_theta_vec = numeric(length(n_x))
-
-for (i in 1:length(n_x)){
-  Esota =  expect(n_x[i], theta, m)
-  Esota_theta_vec[i] = (1-Esota/n_x[i]) - theta
-}
-plot(n_x, Esota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm,
-     xlab = "", ylab ="")
-par(new=TRUE) # new plot in same window
-
-# with the three ms
-
-for (i in 1:length(n_x)){
-  Esota =  expect(n_x[i], theta, m_vec[2])
-  Esota_theta_vec[i] = (1-Esota/n_x[i]) - theta
-}
-plot(n_x, Esota_theta_vec,"l", lty = "dotted", col = "green", ylim=ylm,
-     xlab = "", ylab ="")
-par(new=TRUE) # new plot in same window
-
-for (i in 1:length(n_x)){
-  Esota =  expect(n_x[i], theta, m_vec[3])
-  Esota_theta_vec[i] = (1-Esota/n_x[i]) - theta
-}
-plot(n_x, Esota_theta_vec,"l", lty = "longdash", col = "green", ylim=ylm,
-     xlab = "", ylab ="")
-par(new=TRUE) # new plot in same window
-
-# with the three thetas
-
-for (i in 1:length(n_x)){
-  Esota =  expect(n_x[i], theta_vec[2], m)
-  Esota_theta_vec[i] = (1-Esota/n_x[i]) - theta_vec[2]
-}
-plot(n_x, Esota_theta_vec,"l", lty = "dotted", col = "blue", ylim=ylm, 
-     xlab = "", ylab ="")
-par(new=TRUE) # new plot in same window
-
-for (i in 1:length(n_x)){
-  Esota =  expect(n_x[i], theta_vec[3], m)
-  Esota_theta_vec[i] = (1-Esota/n_x[i]) - theta_vec[3]
-}
-plot(n_x, Esota_theta_vec,"l", lty = "longdash", col = "blue", ylim=ylm,ylab = '', xlab = '')
-title(main = "", xlab = "n", ylab = TeX(r'($E \hat{theta}_{\max} - {theta}_{SOTA}$)'), line = 2, cex.lab=1.2)
-     
-
-abline(v=3000, col="gray")
-
-legend(6000, 0.035, legend=c(TeX(r'(${theta}=0.85$)'),TeX(r'($m = 5000$)'), TeX(r'($n = 1000, {theta}=0.90$)'), 
-                             TeX(r'($m = 100$)'), TeX(r'(${theta}=0.95$)')),
-       col=c("blue","green","black","green","blue"), lty=c(3,5,1,3,5), cex=0.8)
-
-
-
-
-################################### Figure bias_theta ###################################################
-
-ylm = c(0.0,0.035)
-
-theta_x = seq(0.85, 0.95, by=0.0001)
-Esota_theta_vec = numeric(length(theta_x))
-
-for (i in 1:length(theta_x)){
-  Esota =  expect(n, theta_x[i], m)
-  Esota_theta_vec[i] = (1-Esota/n) - theta_x[i]
-}
-plot(theta_x, Esota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm,
-     xlab = "", ylab ="")
-par(new=TRUE) # new plot in same window
-
-# with the three ns
-
-for (i in 1:length(theta_x)){
-  Esota =  expect(n_vec[2], theta_x[i], m)
-  Esota_theta_vec[i] = (1-Esota/n_vec[2]) - theta_x[i]
-}
-plot(theta_x, Esota_theta_vec,"l", lty = "dotted", col = "red", ylim=ylm,
-     xlab = "", ylab ="")
-par(new=TRUE) # new plot in same window
-
-for (i in 1:length(theta_x)){
-  Esota =  expect(n_vec[3], theta_x[i], m)
-  Esota_theta_vec[i] = (1-Esota/n_vec[3]) - theta_x[i]
-}
-plot(theta_x, Esota_theta_vec,"l", lty = "longdash", col = "red", ylim=ylm,
-     xlab = "", ylab ="")
-par(new=TRUE) # new plot in same window
-
-# with the three ms
-
-for (i in 1:length(theta_x)){
-  Esota =  expect(n, theta_x[i], m_vec[2])
-  Esota_theta_vec[i] = (1-Esota/n) - theta_x[i]
-}
-plot(theta_x, Esota_theta_vec,"l", lty = "dotted", col = "green", ylim=ylm, 
-     xlab = "", ylab ="")
-par(new=TRUE) # new plot in same window
-
-for (i in 1:length(theta_x)){
-  Esota =  expect(n, theta_x[i], m_vec[3])
-  Esota_theta_vec[i] = (1-Esota/n) - theta_x[i]
-}
-plot(theta_x, Esota_theta_vec,"l", lty = "longdash", col = "green", ylim=ylm,ylab = '', xlab = '')
-title(main = "", xlab = TeX(r'(${theta}$)'), ylab = TeX(r'($E \hat{theta}_{\max} - {theta}_{SOTA}$)'), line = 2, cex.lab=1.2)
-
-legend(0.905, 0.035, legend=c(TeX(r'($n=1000$)'),TeX(r'($m=5000$)'), TeX(r'($n = 3000, m=1000$)'), 
-                              TeX(r'($m=100$)'), TeX(r'($n=10000$)')),
-       col=c("red","green","black","green", "red"), lty=c(3,5,1,3,5), cex=0.8)
-
-abline(v=0.9, col="gray")
-
-################################### Figure sd_m ###################################################
-
-ylm = c(0.0,0.005)
-
-m_x = seq(1, 5000, by=10)
-SDsota_theta_vec = numeric(length(m_x))
-
-for (i in 1:length(m_x)){
+  
   Vsota = variance(n, theta, m_x[i])
   SDsota_theta_vec[i] = sqrt(Vsota)/n
 }
-plot(m_x, SDsota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm,
+
+x11()
+plot(m_x, Esota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm_bias,
      xlab = "", ylab ="")
-par(new=TRUE) # new plot in same window
+abline(v=m, col="gray") # intersection corresponding to upper row in table
 
-# with the three ns
-
-for (i in 1:length(m_x)){
-  Vsota =  variance(n_vec[2], theta, m_x[i])
-  SDsota_theta_vec[i] = sqrt(Vsota)/n
-}
-plot(m_x, SDsota_theta_vec,"l", lty = "dotted", col = "red", ylim=ylm,
+x11()
+plot(m_x, SDsota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm_sd,
      xlab = "", ylab ="")
-par(new=TRUE) # new plot in same window
+abline(v=m, col="gray") # intersection corresponding to upper row in table
 
-for (i in 1:length(m_x)){
-  Vsota =  variance(n_vec[3], theta, m_x[i])
-  SDsota_theta_vec[i] = sqrt(Vsota)/n
-}
-plot(m_x, SDsota_theta_vec,"l", lty = "longdash", col = "red", ylim=ylm,
+#################### param = n
+param = 2
+
+for (k in 2:3){
+  for (i in 1:length(m_x)){
+  Esota =  expect(n_vec[k], theta, m_x[i])
+  Esota_theta_vec[i] = (1-Esota/n_vec[k]) - theta
+  
+  Vsota =  variance(n_vec[k], theta, m_x[i])
+  SDsota_theta_vec[i] = sqrt(Vsota)/n_vec[k]
+  }
+  dev.set(dev.prev())
+  par(new=TRUE)   
+  plot(m_x, Esota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], ylim=ylm_bias,
      xlab = "", ylab ="")
-par(new=TRUE) # new plot in same window
-
-# with the three thetas
-
-for (i in 1:length(m_x)){
-  Vsota =  variance(n, theta_vec[2], m_x[i])
-  SDsota_theta_vec[i] = sqrt(Vsota)/n
+  
+  dev.set(dev.next())
+  par(new=TRUE)   
+  plot(m_x, SDsota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], ylim=ylm_sd,
+       xlab = "", ylab ="")
 }
-plot(m_x, SDsota_theta_vec,"l", lty = "dotted", col = "blue", ylim=ylm, 
+
+#################### param = theta
+param = 3
+
+for (k in 2:3){
+  for (i in 1:length(m_x)){
+  Esota =  expect(n, theta_vec[k], m_x[i])
+  Esota_theta_vec[i] = (1-Esota/n) - theta_vec[k]
+  
+  Vsota =  variance(n, theta_vec[k], m_x[i])
+  SDsota_theta_vec[i] = sqrt(Vsota)/n
+  }
+  dev.set(dev.prev())
+  par(new=TRUE) 
+  plot(m_x, Esota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], ylim=ylm_bias, 
      xlab = "", ylab ="")
-par(new=TRUE) # new plot in same window
-
-for (i in 1:length(m_x)){
-  Vsota =  variance(n, theta_vec[3], m_x[i])
-  SDsota_theta_vec[i] = sqrt(Vsota)/n
+  
+  dev.set(dev.next())
+  par(new=TRUE)   
+  plot(m_x, SDsota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], ylim=ylm_sd,
+       xlab = "", ylab ="")
 }
-plot(m_x, SDsota_theta_vec,"l", lty = "longdash", col = "blue", ylim=ylm, ylab = '', xlab = '')
-title(main = "", xlab = "m", ylab = TeX(r'($\sigma_{\hat{\theta}_{\max}}$)'), line = 2, cex.lab=1.2)
 
-legend(2900, 0.005, legend=c(TeX(r'(${theta}=0.85$)'),TeX(r'($m = 5000$)'), TeX(r'($n = 1000, {theta}=0.90$)'), 
-                             TeX(r'($m = 100$)'), TeX(r'(${theta}=0.95$)')),
-       col=c("blue","green","black","green","blue"), lty=c(3,5,1,3,5), cex=0.8)
+# title and legends
+lgnds_bias = c(TeX(r'($n=1000$)'),TeX(r'(${theta}=0.85$)'), TeX(r'($n = 3000, {theta}=0.90$)'), 
+          TeX(r'(${theta}=0.95$)'), TeX(r'($n=10000$)'))
+cls_bias = c("red","blue","black","blue", "red")
+
+dev.set(dev.prev())
+title(main = "", xlab = "m", ylab = ylab_bias, line = 2, cex.lab=1.2)
+legend(2900, 0.035, legend=lgnds_bias, col=cls_bias, lty=c(3,3,1,5,5), cex=0.8)
+
+lgnds_sd = lgnds_bias
+cls_sd = cls_bias
+
+dev.set(dev.next())
+title(main = "", xlab = "m", ylab = ylab_sd, line = 2, cex.lab=1.2)
+legend(2900, 0.005, legend=lgnds_sd, col=cls_sd, lty=c(3,3,1,5,5), cex=0.8)
 
 
-abline(v=1000, col="gray")
+##################### Figure bias_n and sd_n ###################################################
 
-################################### Figure sd_n ###################################################
+n_x = seq(1000, 10000, by=10) # n is on the x-axis
 
-ylm = c(0.0,0.005)
-
-n_x = seq(1000, 10000, by=10)
-SDsota_theta_vec = numeric(length(n_x))
-
+Esota_theta_vec = numeric(length(n_x)) # pre-allocate for bias
+SDsota_theta_vec = numeric(length(n_x)) # for standard deviation
 for (i in 1:length(n_x)){
+  Esota =  expect(n_x[i], theta, m)
+  Esota_theta_vec[i] = (1-Esota/n_x[i]) - theta
+  
   Vsota = variance(n_x[i], theta, m)
   SDsota_theta_vec[i] = sqrt(Vsota)/n_x[i]
 }
-plot(n_x, SDsota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm,
+x11()
+plot(n_x, Esota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm_bias,
      xlab = "", ylab ="")
-par(new=TRUE) # new plot in same window
+abline(v=n, col="gray") # intersection corresponding to upper row in table
 
-# with the three ms
-
-for (i in 1:length(n_x)){
-  Vsota =  variance(n_x[i], theta, m_vec[2])
-  SDsota_theta_vec[i] = sqrt(Vsota)/n_x[i]
-}
-plot(n_x, SDsota_theta_vec,"l", lty = "dotted", col = "green", ylim=ylm,
+x11()
+plot(n_x, SDsota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm_sd,
      xlab = "", ylab ="")
-par(new=TRUE) # new plot in same window
+abline(v=n, col="gray") # intersection corresponding to upper row in table
 
-for (i in 1:length(n_x)){
-  Vsota =  variance(n_x[i], theta, m_vec[3])
-  SDsota_theta_vec[i] = sqrt(Vsota)/n_x[i]
+#################### param = m
+param = 1
+
+for (k in 2:3){
+  for (i in 1:length(n_x)){
+    Esota =  expect(n_x[i], theta, m_vec[k])
+    Esota_theta_vec[i] = (1-Esota/n_x[i]) - theta
+    
+    Vsota =  variance(n_x[i], theta, m_vec[k])
+    SDsota_theta_vec[i] = sqrt(Vsota)/n_x[i]
+  }
+  dev.set(dev.prev())
+  par(new=TRUE)   
+  plot(n_x, Esota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], ylim=ylm_bias,
+       xlab = "", ylab ="")
+  
+  dev.set(dev.next())
+  par(new=TRUE)   
+  plot(n_x, SDsota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], ylim=ylm_sd,
+       xlab = "", ylab ="")
 }
-plot(n_x, SDsota_theta_vec,"l", lty = "longdash", col = "green", ylim=ylm,
-     xlab = "", ylab ="")
-par(new=TRUE) # new plot in same window
 
-# with the three thetas
+#################### param = theta
+param = 3
 
-for (i in 1:length(n_x)){
-  Vsota =  variance(n_x[i], theta_vec[2], m)
-  SDsota_theta_vec[i] = sqrt(Vsota)/n_x[i]
+for (k in 2:3){
+  for (i in 1:length(n_x)){
+    Esota =  expect(n_x[i], theta_vec[k], m)
+    Esota_theta_vec[i] = (1-Esota/n_x[i]) - theta_vec[k]
+    
+    Vsota =  variance(n_x[i], theta_vec[k], m)
+    SDsota_theta_vec[i] = sqrt(Vsota)/n_x[i]
+  }
+  dev.set(dev.prev())
+  par(new=TRUE)
+  plot(n_x, Esota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], 
+       ylim=ylm_bias, xlab = "", ylab ="")
+  
+  dev.set(dev.next())
+  par(new=TRUE)
+  plot(n_x, SDsota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], ylim=ylm_sd,
+       xlab = "", ylab ="")
 }
-plot(n_x, SDsota_theta_vec,"l", lty = "dotted", col = "blue", ylim=ylm, 
-     xlab = "", ylab ="")
-par(new=TRUE) # new plot in same window
 
-for (i in 1:length(n_x)){
-  Vsota =  variance(n_x[i], theta_vec[3], m)
-  SDsota_theta_vec[i] = sqrt(Vsota)/n_x[i]
-}
-plot(n_x, SDsota_theta_vec,"l", lty = "longdash", col = "blue", ylim=ylm, ylab = '', xlab = '')
-title(main = "", xlab = "n", ylab = TeX(r'($\sigma_{\hat{\theta}_{\max}}$)'), line = 2, cex.lab=1.2)
-
-abline(v=3000, col="gray")
-
-legend(6000, 0.005, legend=c(TeX(r'(${theta}=0.85$)'),TeX(r'($m = 5000$)'), TeX(r'($n = 1000, {theta}=0.90$)'), 
-                             TeX(r'($m = 100$)'), TeX(r'(${theta}=0.95$)')),
-       col=c("blue","green","black","green","blue"), lty=c(3,5,1,3,5), cex=0.8)
+# title and legends
+lgnds_bias = c(TeX(r'(${theta}=0.85$)'),TeX(r'($m = 5000$)'), TeX(r'($n = 1000, {theta}=0.90$)'), 
+               TeX(r'($m = 100$)'), TeX(r'(${theta}=0.95$)'))
+cls_bias = c("blue","green","black","green","blue")
 
 
-################################### Figure sd_theta ###################################################
+dev.set(dev.prev())
+title(main = "", xlab = "n", ylab = ylab_bias, line = 2, cex.lab=1.2)
+legend(6000, 0.035, legend=lgnds_bias, col=cls_bias, lty=c(3,5,1,3,5), cex=0.8)
 
-ylm = c(0.0,0.005)
+lgnds_sd = c(TeX(r'($m = 100$)'),TeX(r'(${theta}=0.85$)'),TeX(r'($n = 1000, {theta}=0.90$)'), 
+             TeX(r'($m = 5000$)'), TeX(r'(${theta}=0.95$)'))
+cls_sd = c("green","blue","black","green","blue")
 
-theta_x = seq(0.85, 0.95, by=0.0001)
-SDsota_theta_vec = numeric(length(n_x))
+dev.set(dev.next())
+title(main = "", xlab = "n", ylab = ylab_sd, line = 2, cex.lab=1.2)
+legend(2900, 0.005, legend=lgnds_sd, col=cls_sd, lty=c(3,3,1,5,5), cex=0.8)
 
+
+################################ Figure bias_theta and sd_theta ###################################################
+
+theta_x = seq(0.85, 0.95, by=0.0001) # theta is on the x-axis
+
+Esota_theta_vec = numeric(length(theta_x)) # pre-allocate
+SDsota_theta_vec = numeric(length(theta_x)) # for standard deviation
 for (i in 1:length(theta_x)){
+  Esota =  expect(n, theta_x[i], m)
+  Esota_theta_vec[i] = (1-Esota/n) - theta_x[i]
+  
   Vsota = variance(n, theta_x[i], m)
   SDsota_theta_vec[i] = sqrt(Vsota)/n
 }
-plot(theta_x, SDsota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm,
+x11()
+plot(theta_x, Esota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm_bias,
      xlab = "", ylab ="")
-par(new=TRUE) # new plot in same window
+abline(v=theta, col="gray") #intersection corresponding to upper row in table
 
-# with the three ms
-
-for (i in 1:length(theta_x)){
-  Vsota =  variance(n, theta_x[i], m_vec[2])
-  SDsota_theta_vec[i] = sqrt(Vsota)/n
-}
-plot(theta_x, SDsota_theta_vec,"l", lty = "dotted", col = "green", ylim=ylm,
+x11()
+plot(theta_x, SDsota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm_sd,
      xlab = "", ylab ="")
-par(new=TRUE) # new plot in same window
+abline(v=theta, col="gray") # intersection corresponding to upper row in table
 
-for (i in 1:length(theta_x)){
-  Vsota =  variance(n, theta_x[i], m_vec[3])
-  SDsota_theta_vec[i] = sqrt(Vsota)/n
+########### param = n
+param = 2
+
+for (k in 2:3){
+  for (i in 1:length(theta_x)){
+    Esota =  expect(n_vec[k], theta_x[i], m)
+    Esota_theta_vec[i] = (1-Esota/n_vec[k]) - theta_x[i]
+    
+    Vsota = variance(n_vec[k], theta_x[i], m)
+    SDsota_theta_vec[i] = sqrt(Vsota)/n_vec[k]
+  }
+  dev.set(dev.prev())
+  par(new=TRUE)   
+  plot(theta_x, Esota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], 
+       ylim=ylm_bias,xlab = "", ylab ="")
+  
+  dev.set(dev.next())
+  par(new=TRUE)   
+  plot(theta_x, SDsota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], 
+       ylim=ylm_sd, xlab = "", ylab ="")
 }
-plot(theta_x, SDsota_theta_vec,"l", lty = "longdash", col = "green", ylim=ylm,
-     xlab = "", ylab ="")
-par(new=TRUE) # new plot in same window
 
-# with the three ns
+############## param = m
+param = 1
 
-for (i in 1:length(theta_x)){
-  Vsota =  variance(n_vec[2], theta_x[i], m)
-  SDsota_theta_vec[i] = sqrt(Vsota)/n_vec[2]
+for (k in 2:3){
+  for (i in 1:length(theta_x)){
+    Esota =  expect(n, theta_x[i], m_vec[k])
+    Esota_theta_vec[i] = (1-Esota/n) - theta_x[i]
+    
+    Vsota =  variance(n, theta_x[i], m_vec[k])
+    SDsota_theta_vec[i] = sqrt(Vsota)/n
+  }
+  dev.set(dev.prev())
+  par(new=TRUE) 
+  plot(theta_x, Esota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], 
+       ylim=ylm_bias,xlab = "", ylab ="")
+  
+  dev.set(dev.next())
+  par(new=TRUE)
+  plot(theta_x, SDsota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], 
+       ylim=ylm_sd, xlab = "", ylab ="")
 }
-plot(theta_x, SDsota_theta_vec,"l", lty = "dotted", col = "red", ylim=ylm, 
-     xlab = "", ylab ="")
-par(new=TRUE) # new plot in same window
 
-for (i in 1:length(theta_x)){
-  Vsota =  variance(n_vec[3], theta_x[i], m)
-  SDsota_theta_vec[i] = sqrt(Vsota)/n_vec[3]
-}
-plot(theta_x, SDsota_theta_vec,"l", lty = "longdash", col = "red", ylim=ylm, ylab = '', xlab = '')
-title(main = "", xlab = TeX(r'(${theta}$)'), ylab = TeX(r'($\sigma_{\hat{\theta}_{\max}}$)'), line = 2, cex.lab=1.2)
+# title and legends
+lgnds_bias = c(TeX(r'($n=1000$)'),TeX(r'($m=5000$)'), TeX(r'($n = 3000, m=1000$)'), 
+               TeX(r'($m=100$)'), TeX(r'($n=10000$)'))
+cls_bias = c("red","green","black","green", "red")
 
+dev.set(dev.prev())
+title(main = "", xlab =  TeX(r'(${theta}$)'), ylab = ylab_bias, line = 2, cex.lab=1.2)
+legend(0.905, 0.035, legend=lgnds_bias, col=cls_bias, lty=c(3,5,1,3,5), cex=0.8)
 
-legend(0.905, 0.005, legend=c(TeX(r'($n=1000$)'),TeX(r'($m=100$)'), TeX(r'($n = 3000, m=1000$)'), 
-                              TeX(r'($m=5000$)'), TeX(r'($n=10000$)')),
-       col=c("red","green","black","green", "red"), lty=c(3,3,1,5,5), cex=0.8)
+lgnds_sd = c(TeX(r'($n=1000$)'),TeX(r'($m=100$)'), TeX(r'($n = 3000, m=1000$)'), 
+             TeX(r'($m=5000$)'), TeX(r'($n=10000$)'))
+cls_sd = c("red","green","black","green", "red")
 
-abline(v=0.9, col="gray")
-
-
+dev.set(dev.next())
+title(main = "", xlab =  TeX(r'(${theta}$)'), ylab = ylab_sd, line = 2, cex.lab=1.2)
+legend(0.905, 0.005, legend=lgnds_sd, col=cls_sd, lty=c(3,3,1,5,5), cex=0.8)
 
 
 
@@ -651,6 +572,9 @@ abline(v=0.9, col="gray")
 ##############################################################################################
 ################################### Simulations ##############################################
 ##############################################################################################
+
+simul  = 0
+if (simul){
 
 # I will here recreate the numbers from above. 
 
@@ -783,4 +707,5 @@ plot(z,Fz_sim[z], type = 's', xlab = 'number of failures/accuracy',
      ylab = 'F(z)')
 
 # # # # # # # # # # # # # # # # # ok # # # # # # # # # # # # # # # # # # # # # # # 
+}
 
