@@ -24,41 +24,41 @@ Aligns with the (simplified) variable names found here.
 
 ### *A coin-flip example*
 
-CoinFlip.R 
+`CoinFlip.R` 
 
 Produces the numbers found in this subsection. There are two examples, and 
 example b) is used in the manuscript. The output is re-produced by 
 simulation, and then finally the output is re-produced using functions from
 
-ProbDistr_thetaSOTA.R
+`ProbDistr_thetaSOTA.R`
 
 No figures
 
-### The probability distribution of $ hat theta_{max}(X)$
+### The probability distribution of $\hat{\theta}_{max}(X)$
 
-ProbDistr_thetaSOTA.R with functions:
+`ProbDistr_thetaSOTA.R` with functions:
 
-`cdf`       - cumulative distribution function \
-`pmf`       - probability mass function \
-`expect`    - expectation \
-`variance`  - variance \
-`sim_var` - simulated variance \
-`sim_mean` - simulated mean \
-`sim_ci` - simulated confidence interval
+`cdf()`       - cumulative distribution function \
+`pmf()`       - probability mass function \
+`expect()`    - expectation \
+`variance()`  - variance \
+`sim_var()` - simulated variance \
+`sim_mean()` - simulated mean \
+`sim_ci()` - simulated confidence interval
 
 Does not produce any output. As an option at the end, you can check that the functions 
 produces the correct numbers from the coin-flip example.
 
 ### A simulated public competition example
 
-PublicCompetition.R \
-calls ProbDistr_thetaSOTA.R and Parameters_PublicCompetition.R
+`PublicCompetition.R` \
+calls `ProbDistr_thetaSOTA.R` and `Parameters_PublicCompetition.R`
 
 Output: \
 The numbers in the text and some intermediate calculations that we did
 not include in the manuscript. There are check-ups along the way. \
 
-The entries for table *Expected values and standard deviations for hat theta_max (X)*.
+The entries for table *Expected values and standard deviations for $\hat\theta_{max}(X)$ *.
 The output table displays all combinations of m, n, theta.
 
 Figures:\
@@ -68,12 +68,19 @@ Against a mass of identical classifiers, a single significantly better
 classifier has little chance of beating the observed sample maximum 
 
 `cumul_fail` *Cdf and pmf for at least one classifier having at most z failures* a)\
-Displaying the function `cdf` (ProbDistr_thetaSOTA.R) for the parameters in Parameters_PublicCompetition.R
+Displaying the function `cdf()` (ProbDistr_thetaSOTA.R) for the parameters in Parameters_PublicCompetition.R
 
 `pdf_fail` *Cdf and pmf for at least one classifier having at most z failures* b)\
-Displaying the function `pmf` (ProbDistr_thetaSOTA.R) for the parameters in Parameters_PublicCompetition.R
+Displaying the function `pmf()` (ProbDistr_thetaSOTA.R) for the parameters in Parameters_PublicCompetition.R
 
+`bias_sd_m_n_theta` *The bias and standard deviation of the sample maximum estimator*\
+The bias and standard deviation of $\hat{\theta}_{\max}$ as a function of each of its three parameters; number of classifiers, test set size and probability of success.\
+Consists of six subfigures\
+`bias_m` and `sd_m`\
+`bias_n` and `sd_n`\
+`bias_theta` and `sd_theta`\
 
+There are optional simulations at the end that confirms that the functions are correct. 
 
 
 ## Dependency and non-identical theta's
