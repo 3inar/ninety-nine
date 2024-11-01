@@ -58,7 +58,7 @@ Output: \
 The numbers in the text and some intermediate calculations that we did
 not include in the manuscript. There are check-ups along the way. \
 
-The entries for table *Expected values and standard deviations for $\hat\theta_{max}(X)$ *.
+The entries for table `mnp` *Expected values and standard deviations for $\hat\theta_{max}(X)$ *.
 The output table displays all combinations of m, n, theta.
 
 Figures:\
@@ -83,32 +83,75 @@ Consists of six subfigures\
 There are optional simulations at the end that confirms that the functions are correct. 
 
 
-## Dependency and non-identical theta's
+## Dependency and non-identical $\theta$s
 
-dependence.R
-calls ProbDistr_thetaSOTA.R and Parameters_PublicCompetition.R
-`dep_id_pmf` - simulated pmf for dependent, identical classifiers, fixed or random Y0
+The entries for table `noniid` are found under their respective subsections.
 
-## Section 'Non-identical, independent classifiers':
+Figure:\
+`bias_sd_thetamin_rho` *Bias for non-identical and dependent classifiers*\
+Bias of the sample maximum estimator as a function of $\min (\Theta)$ for non-identical classifiers and of $\rho_0$ for conditional independent classifiers.
 
-nonidentical.R
-calls Parameters_PublicCompetition.R
+Consists of three subfigures\
+`bias_sd_thetamin`: generated in `nonidentical.R`\
+`bias_thetamin_rho` and `sd_thetamin_rho`: generated in `dependent_nonidentical.R`,\
+see the respective subsections below.
 
-indep_nonid_pmf_fun.R with functions
-`indep_nonid_pmf` - simulated pmf for non-identical, independent classifiers
-`nonid_cdf` - cdf for non-identical, independent classifiers
-`nonid_pmf` - pmf based on cdf
+### Non-identical, independent classifiers
 
-## Section 'Non-identical, dependent classifiers':
+`nonidentical.R`\
+calls `Parameters_PublicCompetition.R`\
+calls indep_nonid_pmf_fun.R with functions \ 
+`indep_nonid_pmf` - simulated x for non-identical, independent classifiers \
+`nonid_cdf` - cdf for non-identical, independent classifiers, `eq:noniid_cdf`\
+`nonid_pmf` - pmf based on cdf, `eq:noniid_pmf`
 
-dependent_nonidentical.R
-calls Parameters_PublicCompetition.R and ProbDistr_thetaSOTA.R
+Output:
 
-dep_nonid_pmf_fun.R with function
-`dep_nonid_pmf` - simulated pmf for dependent, nonidentical classifiers
+The entries for table `noniid`.
+
+Figures:
+
+`noniid_cdf`: *Cdf for non-identical classifiers*\
+`noniid_pmf`: *Pmf for non-identical classifiers*\
+Corresponds to figures `cumul_fail` and `pdf_fail` in `PublicCompetition.R`, 
+section *A simulated public competition example*\
+`bias_sd_thetamin`: Bias and standard deviation as a function of $\min (\Theta)$,
+subfigure for `bias_sd_thetamin_rho`
+
+### Identical, dependent classifiers
+
+`dependence.R`\
+calls `Parameters_PublicCompetition.R`\
+calls `ProbDistr_thetaSOTA.R`
+
+Output:
+
+The entries for table `noniid`.
+
+### Non-identical, dependent classifiers
+
+`dependent_nonidentical.R`\
+calls `Parameters_PublicCompetition.R`\
+calls `dep_nonid_pmf_fun.R`\
+calls `ProbDistr_thetaSOTA.R`
+
+Output:
+
+The entries for table `noniid`.
+
+Figures:
+
+`bias_thetamin_rho`: Bias as a function of $\rho$ for various $\min (\Theta)$,
+subfigure for `bias_sd_thetamin_rho`\
+`sd_thetamin_rho`: Standard deviation as a function of $\rho$ for various $\min (\Theta)$,
+subfigure for `bias_sd_thetamin_rho`\
 
 
-## Section 'Real world examples':
+## Real world examples
+
+### Estimating $\theta_{SOTA}$
+
+#### Multi-Class Prediction of Obesity Risk
 
 AUROC.R for quick estimate of AUC_SOTA
 
