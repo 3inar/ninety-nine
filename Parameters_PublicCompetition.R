@@ -25,3 +25,7 @@ theta_0 =  theta
 
 ylm_bias = c(0.0,0.035)
 ylm_sd = c(0.0,0.005)
+z_range = 200:300
+
+ylab_bias = TeX(r'($E \hat{theta}_{\max} - {theta}_{SOTA}$)')
+ylab_sd = TeX(r'($\sigma_{\hat{\theta}_{\max}}$)')
