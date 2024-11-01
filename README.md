@@ -8,7 +8,7 @@ Files needed to reproduce numbers/figures: \
 
 Figures are found locally.
 
-## *Estimating state-of-the-art performance*
+## Estimating state-of-the-art performance
 
 Bla-bla-bla
 
@@ -22,7 +22,7 @@ Cited bla-bla-bla
 
 Aligns with the (simplified) variable names found here. 
 
-### *A coin-flip example*
+### A coin-flip example
 
 `CoinFlip.R` 
 
@@ -155,7 +155,7 @@ subfigure for `bias_sd_thetamin_rho`\
 
 AUROC.R for quick estimate of AUC_SOTA
 
-SOTA_bootstrap.R for better estimate of AUC_SOTA
+
 
 auc_functions.R contains functions for working with and simulating AUCs:
 
@@ -183,11 +183,47 @@ melanoma.R: investigates the Melanoma 2020 kaggle competition
 
 ## Additional files:
 
-SOTA_estimate.R: Creates toy example from the Melanoma 2020 kaggle competition to estimate theta_SOTA from observed performance
+`SOTA_estimate.R`: Creates toy example from the Melanoma 2020 kaggle competition to estimate theta_SOTA from observed performance
 
-closed_form.R: Extra simulations
+`closed_form.R`: Extra simulations
+
+`var_auc.R`: Interesting only for balanced classes
 
 ## Outdated files:
 
-99Club_multiplicity.R: Contains text only
-auc_generator.R: creates AUC curves based on underlying beta distributions
+`99Club_multiplicity.R`: Contains text only\
+`auc_generator.R`: creates AUC curves based on underlying beta distributions
+
+early exploration of different options, treating AUC as accuracy:\
+`AUROC.R`: confidence interval \
+`SOTA_bootstrap.R`: melanoma
+
+## List of files and the section where they are described:
+
+"99Club_multiplicity.R"  			    - Outdated files\
+ "auc_figure_ex_1.R" 		    	        - Einar      \        
+"auc_figure_ex_2.R" 			            - Einar   \
+ "auc_figure_roc_curves.R"        		- Einar    \           
+"auc_functions.R"                		- Einar   \
+"auc_generator.R"               		- Einar   \
+ "AUC_misc.R"                     		- Einar  \ 
+"auc_simulations.R"             		- Einar   \
+"AUROC.R" 					- Outdated files           \          
+"closed_form.R" 				- Additional files      \          
+"CoinFlip.R" 					- A coin-flip example      \              
+"dep_nonid_pmf_fun.R" 		    	- Non-identical, dependent classifiers          \
+"dependence.R" 				            - Identical, dependent classifiers             \     
+"dependent_nonidentical.R" 		    - Non-identical, dependent classifiers       \
+"indep_nonid_pmf_fun.R" 			    - Non-identical, independent classifiers      \  
+"melanoma.R" 				              - Einar   \
+"nonidentical.R" 				          - Non-identical, independent classifiers\
+"Parameters_PublicCompetition.R" 	- ninety-nine\
+"plotting_params.R" 			- Einar   \
+"ProbDistr_thetaSOTA.R" 			- The probability distribution of $\hat{\theta}_{max}(X)$         \
+"PublicCompetition.R" 			- A simulated public competition example           \
+"SOTA_bootstrap_accuracy.R"      	- Kajsa\
+"SOTA_bootstrap.R" 			- Outdated        \      
+"SOTA_estimate.R"               		- Additional files\
+"var_auc.R"                  			- Additional files\
+
+
