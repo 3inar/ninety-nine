@@ -47,7 +47,7 @@ library(e1071)      # skewness
 # simulated pmf - dep_id_pmf
 
 ###############################################################################
-############################ 4.1 Dependent, identical classifiers #############################
+############################ Dependent, identical classifiers #############################
 ###############################################################################
 
 # Consider a classification problem with a test set of size $3,000$, and a 
@@ -110,7 +110,7 @@ dep_id_pmf <- function(n, theta, m, rho, rep, fixed = F){
 }
 
 tic()
-X = dep_id_pmf(n, theta, m, rho, rep, fixed = T)
+X = dep_id_pmf(n, theta, m, rho, rep, fixed = F) # 20 sec, rep = 100,000
 toc()
 
 # Example histogram of the number of failures for m classifiers.
@@ -123,8 +123,12 @@ hist(X$x_dep, xlab = 'number of failures', ylab = 'number of classifiers',
 hist(X$min_dep, xlab = 'minimum number of failures', ylab = 'number of classifiers', 
      breaks = 20, ylim = c(0,rep/3))
 
-source("ProbDistr_thetaSOTA.R")
-# source("Parameters_PublicCompetition.R") # n, theta, m, alpha
+source("ProbDistr_thetaSOTA.R") 
+# for functions 
+# sim_ci()
+# sim_mean()
+# sim_var()
+
 
 # The confidence interval
 min_dep_alpha2 = sim_ci(alpha, X$min_dep)
@@ -142,7 +146,8 @@ sprintf("The simulated standard deviation is %.7f, with %s repetitions.",
         sqrt(Vsota)/n, rep)
 
 ##################### Check-ups  ################
-
+check = 0
+if (check){
 # Example histogram of the number of failures for m classifiers.
 histbreaks = seq(min(c(X$x_dep,X$x_indep)), max(c(X$x_dep,X$x_indep))+8,10)
 hist(X$x_indep, xlab = 'number of failures', ylab = 'number of classifiers', 
@@ -164,14 +169,17 @@ hist(X$min_indep, xlab = 'minimum number of failures', ylab = 'number of classif
 min_indep_alpha2 = sim_ci(alpha, X$min_indep)
 sprintf("The simulated independent upper bound of the %s confidence interval is %.7f, with %s repetitions.",  
         1-alpha, (n-min_indep_alpha2)/n, rep)
+}
 
-###########################################################################
-### Expected value/bias/variance as a function of rho ################
-###########################################################################
 
-rho_vec = seq(0.0, 1.0, by=0.01)
+### Bias  a function of rho ################
 
-ylm = c(0.0,0.035)
+fig = 0
+if (fig){
+# This figure corresponds to the red line in `bias_thetamin_rho`, found in 
+# `dependent_nonidentical.R`
+
+rho_vec = seq(0.0, 1.0, by=0.1) # adjust until smooth
 
 Esota_theta_vec = numeric(length(rho_vec))
 
@@ -183,9 +191,9 @@ for (j in 1:length(rho_vec)){
   # Expected value
   Esota = sim_mean(X$min_dep)
   Esota_theta_vec[j] = (1-Esota/n)-theta
-  print(j)
+  print(c(j,length(rho_vec)-j))
 }
-plot(rho_vec, Esota_theta_vec,"l", lty = "solid", col = "darkgreen", ylim = ylm,
-     main = TeX(r'(Bias as a function of correlation)'), xlab = TeX(r'(${rho}_0$)'), ylab = TeX(r'($E \hat{theta}_{SOTA} - {theta}_{SOTA}$)'))
+plot(rho_vec, Esota_theta_vec,"l", lty = "solid", col = "red", ylim = ylm_bias,
+     main = '', xlab = TeX(r'(${rho}_0$)'), ylab = ylab_bias)
 abline(v=0.6, col="gray")
-
+}
