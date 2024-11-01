@@ -262,7 +262,7 @@ plot(0:n,Fz, type = 'l', xlab = 'number of failures',
 # the whole range, not very much information
 
 # zooming in
-z = 200:300
+z = z_range # parameter
 plot(z,Fz[z+1], type = 's', xlab ='', 
      ylab = '', axes = F)
 
@@ -285,10 +285,10 @@ fz = pmf(n,theta,m,f0 = T) # updating the value
 plot(0:n,fz, type = 's')
 
 # zooming in, same values z as for the cdf
-plot(z,fz[z], type = 'h', xlab ='', 
-     ylab = '', axes = F)
+z = z_range # parameter
+plot(z,fz[z], type = 'h', xlab ='', ylab = '', axes = F)
 
-# # axis, ticks and labels, same values as for the cdf
+# axis, ticks and labels, same values as for the cdf
 # plab = round(1000*(n-xax)/n)/1000
 axis(1, las = 2, at=xax, labels = as.character(plab))
 yax = seq(0,max(fz)+0.01,0.02)
@@ -308,8 +308,7 @@ title(main = list(TeX(r'($z$)'), cex = 1.2,
 col_vec = c("green","red","blue") # param = m,n,theta 
 line_vec = c("solid","dotted","longdash") #subparam
 
-ylab_bias = TeX(r'($E \hat{theta}_{\max} - {theta}_{SOTA}$)')
-ylab_sd = TeX(r'($\sigma_{\hat{\theta}_{\max}}$)')
+
 
 ########################### Figure bias_m and sd_m ##########################################
 
