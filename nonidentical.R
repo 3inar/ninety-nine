@@ -49,7 +49,7 @@ library(latex2exp)  # mathematical notation
 
 
 ###############################################################################
-############################ 4.2 Non-identical aka Poisson Binomial #############################
+################### Non-identical, independent classifiers ####################
 ###############################################################################
 
 # Consider a classification problem with a test set of size $n$, and 
@@ -57,18 +57,21 @@ library(latex2exp)  # mathematical notation
 
 source("Parameters_PublicCompetition.R") # n, theta, m, alpha, theta_min, theta_max, theta_vec
 
-source("indep_nonid_pmf_fun.R") # for the function 'indep_nonid_pmf' - simulated pmf
-# nonid_cdf, nonid_pmf - analytical pmf
+source("indep_nonid_pmf_fun.R") # for the functions 
+# indep_nonid_pmf' - simulated x
+# nonid_pmf - analytical pmf
+# nonid_cdf - analytical cdf
+
 
 tic()
-X = indep_nonid_pmf(n, theta_vec, m, rep)
+X = indep_nonid_pmf(n, theta_vec, m, rep) # 10 sec for rep = 100,000
 toc()
 
 # Histograms of the minimum number of failures for m classifiers, in rep repetitions.
-
-histbreaks = seq(200,300,1)
-hist(X$min_nonid, xlab = 'number of failures', ylab = 'number of classifiers', breaks = 100, xlim = c(200,300)) 
-#  ylim = c(0,300), 
+x11()
+histbreaks = z_range
+hist(X$min_nonid, xlab = 'number of failures', ylab = 'm', breaks = 100, 
+     xlim = c(min(z_range),max(z_range))) 
 
 # The upper bound of the 95% confidence interval
 sort_min_nonid = sort(X$min_nonid) # sort the minimum number of failures
@@ -76,6 +79,10 @@ min_nonid_alpha2 = sort_min_nonid[(alpha/2)*rep] # find the alpha/2 bound
 
 sprintf("The simulated non-identical upper bound of the %s confidence interval is %.5f, with %s repetitions. Distance to SOTA: %s.",  
         1-alpha, (n-min_nonid_alpha2)/n, rep, (n-min_nonid_alpha2)/n-theta_max)
+
+# What would happen if we just took the mean theta value?
+theta_mean = 0
+if (theta_mean){
 
 # If there are $m$ classifiers, what must be the prob, $Palpha2$, of each 
 # classifier having at most $x$ failures, for the probability of at least Cx = 1
@@ -85,10 +92,6 @@ sprintf("The simulated non-identical upper bound of the %s confidence interval i
 Cx = 1
 
 # This is easily calculated:
-# P(Cx > 0) = 1 - P(Cx = 0) = alpha/2
-# binom coeff is 1 since cx = 0, Palpha2^0 = 1
-# and we are left with (1-Palpha2)^m = 1 - alpha\2
-
 Palpha2 = 1 - (1-alpha/2)^(1/m)
 
 sprintf("For the probability of at least %s classifier to achieve at most $x$ failures to be alpha/2=%s, the prob for each classifier achieving at most $x$ failures must be %.8f.",  
@@ -99,64 +102,22 @@ P = pbinom(Cx-1,m,Palpha2, lower.tail = F) # should be 0.025
 # # # # # # # # # # # # # # # # # ok # # # # # # # # # # # # # # # # # # # # # # # 
 
 # If the probability of wrongly predicting at most x out of n data points 
-# is Palpha2. What is x when theta = 0.9?
+# is Palpha2. What is x when theta = (theta_max+theta_min)/2
 
 theta_mean = (theta_max+theta_min)/2
 
 k_alpha2 = qbinom(Palpha2, n, theta_mean, lower.tail = F)
 x_alpha2 = n-k_alpha2
 theta_alpha2 = (n-x_alpha2)/n
-sprintf("With a probablitiy of alpha/2 = %s, at least %s team will achieve an accuracy of at least %.4f.",
-        alpha/2, Cx, theta_alpha2)
+sprintf("With a probablitiy of alpha/2 = %s, at least %s team will achieve an accuracy of at least %.4f for mean theta %.4f.",
+        alpha/2, Cx, theta_alpha2, theta_mean)
+}
 
 # Analytical results:
 
-# # # # # # # # # # # # # # # # # Figure 6 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-Fz = nonid_cdf(n, theta_vec, m)
-# the whole range, not very much information
-plot(0:n,Fz, type = 'l', xlab = 'number of failures', 
-     ylab = 'probability of at least one team')
-
-# zooming in, and it gets more interesting, discreet curve 
-z = 200:300
-plot(z,Fz[z+1], type = 's', xlab = 'number of failures/accuracy', 
-     ylab = 'F(z)', axes = F)
-
-xax = seq(z[1],tail(z,1), 10)
-klab = xax 
-plab = round(1000*(n-xax)/n)/1000
-axis(1, las = 2, at=xax, labels = as.character(plab))
-axis(2, las = 2)
-axis(3, las = 2, at=xax, labels = as.character(klab))
-
-# Does this align with the simulations?
-
-print(c(Fz[min_nonid_alpha2], Fz[min_nonid_alpha2+1])) # ok 
-print(c(which(Fz>alpha/2)[1]-1,min_nonid_alpha2)) # ok
-
-
-################# probability mass function ##########################
-
-# # # # # # # # # # # # # # # # # Figure 7 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-fz = nonid_pmf(n, theta_vec, m)
-
-plot(0:n,fz, type = 's')
-
-# need to zoom in
-z = 200:300
-plot(z,fz[z], type = 'h', xlab = 'number of failures/accuracy', 
-     ylab = 'f(z)', axes = F)
-xax = seq(z[1],tail(z,1), 10)
-klab = xax 
-plab = round(1000*(n-xax)/n)/1000
-axis(1, las = 2, at=xax, labels = as.character(plab))
-yax = seq(0,max(fz)+0.01,0.02)
-axis(2, las = 1, at=yax, labels = as.character(yax))
-axis(3, las = 2, at=xax, labels = as.character(klab))
-# # # # # # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
 ####################### Expected value and variance ###################################
+
+fz = nonid_pmf(n, theta_vec, m)
 
 # Expected value
 Eterm = numeric(n+1)
@@ -183,15 +144,68 @@ sprintf("The expected number of failures is %.4f, with a variance of %.4f.",
 sprintf("The expected theta_hat_SOTA is %.6f, with standard deviation of %.6f.",
         (n-Esota)/n, sqrt(Vsota)/n)
 
-###########################################################################
-### Expected value/bias/variance as a function of theta_min ################
-###########################################################################
+################################################################################
+################################### Figures ####################################
+################################################################################
 
-theta_min_vec = seq(0.5, 0.9, by=0.0025)
+# # # # # # # # # # # # # # # # # Figure noniid_cdf.png # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+x11()
+Fz = nonid_cdf(n, theta_vec, m)
+# the whole range, not very much information
+plot(0:n,Fz, type = 'l', xlab = 'number of failures', 
+     ylab = 'probability of at least one team')
 
-ylm = c(0.0,0.035)
+# zooming in, and it gets more interesting, discreet curve 
+z = z_range
+plot(z,Fz[z+1], type = 's', xlab = '', ylab = '', axes = F)
 
-Esota_theta_vec = numeric(length(theta_min_vec))
+# axis, ticks and labels
+xax = seq(z[1],tail(z,1), 20)
+klab = xax 
+plab = round(1000*(n-xax)/n)/1000
+axis(1, cex.axis=1, las = 2, at=xax, labels = as.character(plab))
+axis(2, cex.axis=1, las = 2)
+axis(3, cex.axis=1, las = 2, at=xax, labels = as.character(klab))
+title(main = list(TeX(r'($z$)'), cex = 1.2,
+                  col = "black"), sub = list(TeX(r'($\hat{\theta}_{max}$)'),cex = 1.2))
+# # # # # # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+# Does this align with the simulations?
+
+print(c(Fz[min_nonid_alpha2], Fz[min_nonid_alpha2+1])) # ok 
+print(c(which(Fz>alpha/2)[1]-1,min_nonid_alpha2)) # ok
+
+
+################# probability mass function ##########################
+
+# # # # # # # # # # # # # # # # # Figure noniid_pmf # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+fz = nonid_pmf(n, theta_vec, m)
+
+plot(0:n,fz, type = 's')
+
+# need to zoom in
+z = z_range
+plot(z,fz[z], type = 'h', xlab = '', ylab = '', axes = F)
+
+# axis, ticks and labels, same values as for the cdf
+# plab = round(1000*(n-xax)/n)/1000
+axis(1, las = 2, at=xax, labels = as.character(plab))
+yax = seq(0,max(fz)+0.01,0.02)
+axis(2, las = 1, at=yax, labels = as.character(yax))
+axis(3, las = 2, at=xax, labels = as.character(klab))
+title(main = list(TeX(r'($z$)'), cex = 1.2,
+                  col = "black"), sub = list(TeX(r'($\hat{\theta}_{max}$)'),cex = 1.2))
+# # # # # # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # #
+
+
+############################ bias_sd_thetamin #################################
+
+
+theta_min_vec = seq(0.5, 0.9, by=0.005) # adjust until smooth
+print(length(theta_min_vec))
+
+Bias_theta_vec = numeric(length(theta_min_vec))
+SD_theta_vec = numeric(length(theta_min_vec))
 
 for (j in 1:length(theta_min_vec)){
   theta_min = theta_min_vec[j] # for the non-identical
@@ -200,24 +214,37 @@ for (j in 1:length(theta_min_vec)){
   theta_vec = seq(theta_min, theta_max, step)
   fz = nonid_pmf(n, theta_vec, m)
   
-  
-  # Expected value
+  # Expected value and variance
   Eterm = numeric(n+1)
+  Vterm = numeric(n+1)
   for (z in 0:n){
     i = z+1
     Eterm[i] = z*fz[i]
+    Vterm[i] = z^2*fz[i]
   }
   
   Esota = sum(Eterm)
-  Esota_theta_vec[j] = (1-Esota/n)-theta
-  print(j)
+  Bias_theta_vec[j] = (1-Esota/n)-theta
+  Vsota = sum(Vterm)-Esota^2
+  SD_theta_vec[j] = sqrt(Vsota)/n
+  
+  print(c(j,length(theta_min_vec)-j))
 }
-plot(theta_min_vec, Esota_theta_vec,"l", lty = "solid", col = "black", ylim = ylm,
-     main = TeX(r'(Bias as a function of ${min}{(Theta)}$)'), xlab = TeX(r'(${min}{(Theta)}$)'), ylab = TeX(r'($E \hat{theta}_{SOTA} - {theta}_{SOTA}$)'))
+cols = c("black","darkgreen")
+plot(theta_min_vec, Bias_theta_vec,"l", lty = "solid", col = cols[1], 
+     ylim = ylm_bias, xlab = "", ylab = "")
+par(new=TRUE)
+plot(theta_min_vec, SD_theta_vec,"l", lty = "solid", col = cols[2], 
+     ylim = ylm_sd,  xlab = "", ylab = "", axes = FALSE)
+axis(4)
+
 abline(v=0.875, col="gray")
 abline(v=0.85, col="gray",lty = 5)
 abline(v=0.825, col="gray",lty = 4)
 abline(v=0.8, col="gray",lty = 3)
+
+title(main = "", xlab = TeX(r'(${min}{(Theta)}$)'), ylab = "", line = 2, cex.lab=1.2)
+legend(0.6, 0.005, legend=c(ylab_bias,ylab_sd), col=cols, lty=c(1,1), cex=0.8)
 
 
 
