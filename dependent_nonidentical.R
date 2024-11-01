@@ -57,18 +57,18 @@ library(latex2exp)  # mathematical notation
 
 source("Parameters_PublicCompetition.R") # n, theta, m, alpha, rho, theta_min, theta_max, theta_vec
 
-length(theta_vec)
-
 source("dep_nonid_pmf_fun.R") # for function dep_nonid_pmf
 # returns X = list(min_fail, x_fail, teamsSOTA)
 
+source("ProbDistr_thetaSOTA.R") # for function sim_ci()
+
 
 tic()
-X = dep_nonid_pmf(n, m, rho, rep, theta_vec, theta_0 = theta)
+X = dep_nonid_pmf(n, m, rho, rep, theta_vec, theta_0 = theta) # 20 sec for rep = 100,000
 toc()
 
 # Histograms of the minimum number of failures for m classifiers, in rep repetitions.
-source("plotting_params.R")
+source("plotting_params.R") # from Einar
 
 new_png("test.png", n_figures=1)
 hist(X$x_fail, xlab = 'number of failures', ylab = 'number of classifiers', 
@@ -80,7 +80,7 @@ hist(X$x_fail, xlab = 'number of failures', ylab = 'number of classifiers',
      ylim = c(0,250))
 
 
-source("ProbDistr_thetaSOTA.R")
+
 # The upper bound of the 95% confidence interval
 min_dep_alpha2 = sim_ci(alpha, X$min_fail)
 sprintf("The simulated dependent upper bound of the %s confidence interval is %.5f, with %s repetitions.",  
@@ -96,24 +96,27 @@ sprintf("The simulated expected value is %.7f and a standard deviation is %.7f, 
         (n-Esota)/n, sqrt(Vsota)/n, rep)
 
 ###########################################################################
-### Expected value/bias/variance as a function of rho ################
+########################### Figures ##################### ################
 ###########################################################################
 
-# theta_min can be only so small
+########################## bias_thetamin_rho and sd_thetamin_rho ############
+
+# theta_min can be only so small, see Eq.`rho_min`
 trunc_min = ((rho*rho)*theta_0/(1-theta_0))/(1+(rho*rho)*theta_0/(1-theta_0))
 
-rho_vec = seq(0.0, 1.0, by=0.01)
+rho_step = 0.01 # adjust for smoothness, x-axis
+rho_vec = seq(0.0, 1.0, by=rho_step) 
 
-ylm = c(0.0,0.035)
+theta_min_vec = seq(0.8,theta, by=0.025) # five curves
 
-theta_min_vec = seq(0.8,theta, by=0.025) 
+#pre-allocate
+Esota_theta_vec = matrix(NA,length(theta_min_vec),length(rho_vec))
+SDsota_theta_vec = matrix(NA,length(theta_min_vec),length(rho_vec))
 
+# rep = 1000 # reduce for speed if necessary
 
-Esota_theta_vec = matrix(0,length(theta_min_vec),length(rho_vec))
-SDsota_theta_vec = matrix(0,length(theta_min_vec),length(rho_vec))
-
-rep = 1000
 theta_max = theta 
+tic()
 for (i in 1:length(theta_min_vec)){
   theta_min = theta_min_vec[i] # for the non-identical
   
@@ -121,18 +124,15 @@ for (i in 1:length(theta_min_vec)){
   step = (theta_max-theta_min)/(m-1)
   theta_vec = seq(theta_min, theta_max, step)
   
+  rho_trunc = sqrt((theta_min*(1-theta))/(theta*(1-theta_min)))
+  # print(c(rho_trunc,theta_min))
+  rho_vec = seq(0.0, rho_trunc, by=rho_step) # truncate rho_vec
+  
   for (j in 1:length(rho_vec)){ #
-    rho = rho_vec[j] # for the correlated
     # trunc_min = ((rho*rho)*theta_0/(1-theta_0))/(1+(rho*rho)*theta_0/(1-theta_0))
+
+    X = dep_nonid_pmf(n, m, rho_vec[j], rep, theta_vec, theta_0 = theta)
     
-    
-    
- #    print(trunc_min)
-#     print(theta_min_vec[i])
-  
-    X = dep_nonid_pmf(n, m, rho, rep, theta_vec, theta_0 = theta)
-    #X = dep_nonid_pmf(n, m, rho, rep, theta_vec, theta_0 = theta)
-  
     # Expected value
     Esota = mean(X$min_fail)
     Esota_theta_vec[i,j] = (1-Esota/n)-theta
@@ -141,61 +141,59 @@ for (i in 1:length(theta_min_vec)){
     Vsota = mean(X$min_fail*X$min_fail) - Esota*Esota
     SDsota_theta_vec[i,j] = sqrt(Vsota)/n
     
-    
     print(c(i,j))
   }
 }
+toc()
+lgnds = c(TeX(r'(${min}{(Theta)}=0.9$)'),TeX(r'(${min}{(Theta)}=0.875$)'), TeX(r'(${min}{(Theta)}=0.850$)'), 
+          TeX(r'(${min}{(Theta)}=0.825$)'), TeX(r'(${min}{(Theta)}=0.800$)'))
 
-new_png("test2.png", n_figures=2)
+# new_png("test2.png", n_figures=2)
 
 # plotting for theta_min = 0.875
-plot(rho_vec, Esota_theta_vec[4,],"l", lty = 1, col = "black", ylim = ylm,
+plot(rho_vec, Esota_theta_vec[4,],"l", lty = 1, col = "black", ylim = ylm_bias,
      xlab = "", ylab = "")
 par(new=TRUE) # new plot in same window
 
 for (i in 1:3){ 
-  plot(rho_vec, Esota_theta_vec[i,],"l", lty = i+2, col = "black", ylim = ylm,
+  plot(rho_vec, Esota_theta_vec[i,],"l", lty = i+2, col = "black", ylim = ylm_bias,
        xlab = "", ylab = "")
   par(new=TRUE) # new plot in same window
 }
 
 # plotting for theta_min = theta
-plot(rho_vec, Esota_theta_vec[5,],"l", lty = 1, col = "red", ylim = ylm,
+plot(rho_vec, Esota_theta_vec[5,],"l", lty = 1, col = "red", ylim = ylm_bias,
      main = '', xlab = '', ylab = '')
-par(new=TRUE) # new plot in same window
-title(ylab = TeX(r'($E \hat{\theta}_{\max} - {theta}_{SOTA}$)'), line=2, cex.lab=1.2, xlab = TeX(r'(${rho}_0$)'))
+abline(v=rho, col="gray")
 
-abline(v=0.6, col="gray")
+title(ylab = ylab_bias, line=2, cex.lab=1.2, xlab = TeX(r'(${rho}_0$)'))
+legend(0.55, 0.035, legend=lgnds, col=c("red","black","black","black","black"),
+       lty=c(1,1,5,4,3), cex=0.8)
 
-legend(0.55, 0.035, legend=c(TeX(r'(${min}{(Theta)}=0.9$)'),TeX(r'(${min}{(Theta)}=0.875$)'), TeX(r'(${min}{(Theta)}=0.850$)'), 
-                           TeX(r'(${min}{(Theta)}=0.825$)'), TeX(r'(${min}{(Theta)}=0.800$)')),
-       col=c("red","black","black","black","black"), lty=c(1,1,5,4,3), cex=0.8)
 
-dev.off()
 
-######################################### standard deviation
+######################################### standard deviation ############################
 # plotting for theta_min = 0.875
-plot(rho_vec, SDsota_theta_vec[4,],"l", lty = 1, col = "black", ylim = c(0,0.0055),
+plot(rho_vec, SDsota_theta_vec[4,],"l", lty = 1, col = "black", ylim = ylm_sd,
      xlab = "", ylab = "")
-par(new=TRUE) # new plot in same window
 
 for (i in 1:3){ 
-  plot(rho_vec, SDsota_theta_vec[i,],"l", lty = i+2, col = "black", ylim = c(0,0.0055),
+  par(new=TRUE) 
+  plot(rho_vec, SDsota_theta_vec[i,],"l", lty = i+2, col = "black", ylim = ylm_sd,
        xlab = "", ylab = "")
-  par(new=TRUE) # new plot in same window
 }
 
 # plotting for theta_min = theta
-plot(rho_vec, SDsota_theta_vec[5,],"l", lty = 1, col = "red", ylim = c(0,0.0055),
+par(new=TRUE)
+plot(rho_vec, SDsota_theta_vec[5,],"l", lty = 1, col = "red", ylim = ylm_sd,
      main = '', xlab = '', ylab = '')
-par(new=TRUE) # new plot in same window
-title(ylab = TeX(r'($\sigma_{\hat{\theta}_{\max}}$)'), line=2, cex.lab=1.2, xlab = TeX(r'(${rho}_0$)'))
 
-abline(v=0.6, col="gray")
+abline(v=rho, col="gray")
 
-legend(0.55, 0.0026, legend=c(TeX(r'(${min}{(Theta)}=0.9$)'),TeX(r'(${min}{(Theta)}=0.875$)'), TeX(r'(${min}{(Theta)}=0.850$)'), 
-                             TeX(r'(${min}{(Theta)}=0.825$)'), TeX(r'(${min}{(Theta)}=0.800$)')),
-       col=c("red","black","black","black","black"), lty=c(1,1,5,4,3), cex=0.8)
+title(ylab = ylab_sd, line=2, cex.lab=1.2, xlab = TeX(r'(${rho}_0$)'))
+
+legend(0.55, 0.0026, legend=lgnds, col=c("red","black","black","black","black"),
+       lty=c(1,1,5,4,3), cex=0.8)
 
 
 
