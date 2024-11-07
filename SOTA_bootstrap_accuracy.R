@@ -44,7 +44,7 @@ breks = c(kslim[1], seq(kslim[1]+step, kslim[2], step))
 
 
 
-casava = F # to distinguish the two data sets
+casava = T # to distinguish the two data sets
 
 # Data comes from this website:
 # https://www.kaggle.com/competitions/cassava-leaf-disease-classification/leaderboard
@@ -240,29 +240,31 @@ theta_SOTA = max(theta_obs)
 theta_0 = theta_SOTA 
 trunc_min = ((rho*rho)*theta_0/(1-theta_0))/(1+(rho*rho)*theta_0/(1-theta_0))
 
-##################### obesity_kaggle ##################################
+##################### obesity_kaggle / casava_kaggle ##################################
 
 hist(theta_obs[theta_obs>kslim[1]], breaks=breks, freq = T,
      main = '', xlab = '',  ylab = '', xlim = kslim, ylim = whylim, 
      col = "gray20", border = "gray20")
+
+clr = 'magenta'
 par(new = T) # plot the confidence interval
 plot(c(ci_binom["lower"][1,1], ci_binom["upper"][1,1]), c( -1,-1), "l", lwd = 2, 
-     col = "red", xlim = kslim, ylim = whylim, ylab = '', xlab = '')
+     col = clr, xlim = kslim, ylim = whylim, ylab = '', xlab = '')
 par(new=TRUE) 
 plot(c(ci_binom[["lower"]], ci_binom[["lower"]]), c(-4,2),"l", lwd = 2, 
-     col="red", xlab = '', ylab = '', xlim = kslim, ylim = whylim, axes=F)
+     col=clr, xlab = '', ylab = '', xlim = kslim, ylim = whylim, axes=F)
 par(new=TRUE) 
 plot(c(ci_binom[["upper"]], ci_binom[["upper"]]), c(-4,2),"l", lwd = 2,
-     col="red", xlab = '', ylab = '', xlim = kslim, ylim = whylim, axes=F)
+     col=clr, xlab = '', ylab = '', xlim = kslim, ylim = whylim, axes=F)
 
 par(new=TRUE) # dottet vertical line for theta_SOTA
-plot(c(theta_SOTA, theta_SOTA), c(0,max(whylim)),"l", lty = 5, col="red", xlab = '', ylab = '', 
+plot(c(theta_SOTA, theta_SOTA), c(0,max(whylim)),"l", lty = 5, col=clr, xlab = '', ylab = '', 
      xlim = kslim, ylim = whylim, axes=F)
 
 title(main = "", xlab = kslab, ylab = 'm', line = 2, cex.lab=1.2)
 ####################### end figure ##########################################
 
-######################## Figure obesity_direct_bootstrap #######################
+############ obesity_direct_bootstrap / casava_direct_bootstrap ###############
 
 # Bootstrapping from the rho-truncated data, once to show a histogram
 trunc_dat = theta_obs[theta_obs>trunc_min]
@@ -292,7 +294,7 @@ plot(c(mean(E_SOTA), mean(E_SOTA)), c(0,max(whylim)),"l", lty = 5, col="blue", x
      xlim = kslim, ylim = whylim, axes=F)
 
 par(new=TRUE) # dottet vertical line for theta_SOTA
-plot(c(theta_SOTA, theta_SOTA), c(0,max(whylim)),"l", lty = 5, col="red", xlab = '', ylab = '', 
+plot(c(theta_SOTA, theta_SOTA), c(0,max(whylim)),"l", lty = 5, col='magenta', xlab = '', ylab = '', 
      xlim = kslim, ylim = whylim, axes=F)
   
 title(main = "", xlab = simlab, ylab = 'm', line = 2, cex.lab=1.2)
@@ -315,7 +317,7 @@ hist(theta_obs[(theta_obs>theta_SOTA)], breaks=breks[breks>=theta_SOTA], freq = 
      main = '', xlab = "", ylab = "", xlim = kslim, ylim = whylim, col = "gray50", border = "gray50")
 
 par(new=TRUE) # dottet vertical line for theta_SOTA
-plot(c(theta_SOTA, theta_SOTA), c(0,max(whylim)),"l", lty = 5, col="red", xlab = '', ylab = '', 
+plot(c(theta_SOTA, theta_SOTA), c(0,max(whylim)),"l", lty = 5, col="green", xlab = '', ylab = '', 
      xlim = kslim, ylim = whylim, axes=F)
 
 title(main = "", xlab = kslab, ylab = 'm', line = 2, cex.lab=1.2)
@@ -340,20 +342,20 @@ hist(theta_real[theta_real>kslim[1]], breaks=breks, xlim = kslim, ylim = whylim,
 
 par(new = T) # plot the confidence interval
 plot(c((n-mean_lowerCI)/n, (n-mean_upperCI)/n), c( -1,-1), "l", lwd = 2, 
-     col = "blue", xlim = kslim, ylim = whylim, ylab = '', xlab = '')
+     col = "red", xlim = kslim, ylim = whylim, ylab = '', xlab = '')
 par(new=TRUE) 
 plot(c((n-mean_lowerCI)/n, (n-mean_lowerCI)/n), c(-4,2),"l", lwd = 2, 
-     col="blue", xlab = '', ylab = '', xlim = kslim, ylim = whylim, axes=F)
+     col="red", xlab = '', ylab = '', xlim = kslim, ylim = whylim, axes=F)
 par(new=TRUE) 
 plot(c((n-mean_upperCI)/n, (n-mean_upperCI)/n), c(-4,2),"l", lwd = 2,
-     col="blue", xlab = '', ylab = '', xlim = kslim, ylim = whylim, axes=F)
+     col="red", xlab = '', ylab = '', xlim = kslim, ylim = whylim, axes=F)
 
 par(new=TRUE) # dottet vertical line for expected value
-plot(c(mean(E_SOTA), mean(E_SOTA)), c(0,max(whylim)),"l", lty = 5, col="blue", xlab = '', ylab = '', 
+plot(c(mean(E_SOTA), mean(E_SOTA)), c(0,max(whylim)),"l", lty = 5, col="magenta", xlab = '', ylab = '', 
      xlim = kslim, ylim = whylim, axes=F)
 
 par(new=TRUE) # dottet vertical line for theta_SOTA
-plot(c(theta_SOTA, theta_SOTA), c(0,max(whylim)),"l", lty = 5, col="red", xlab = '', ylab = '', 
+plot(c(theta_SOTA, theta_SOTA), c(0,max(whylim)),"l", lty = 5, col="green", xlab = '', ylab = '', 
      xlim = kslim, ylim = whylim, axes=F)
   
 title(main = "", xlab = simlab, ylab = 'm', line = 2, cex.lab=1.2)
