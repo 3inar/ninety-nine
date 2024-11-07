@@ -68,18 +68,13 @@ X = dep_nonid_pmf(n, m, rho, rep, theta_vec, theta_0 = theta) # 20 sec for rep =
 toc()
 
 # Histograms of the minimum number of failures for m classifiers, in rep repetitions.
-source("plotting_params.R") # from Einar
 
-new_png("test.png", n_figures=1)
 hist(X$x_fail, xlab = 'number of failures', ylab = 'number of classifiers', 
      ylim = c(0,250), main=NULL)
 dev.off()
 
-
 hist(X$x_fail, xlab = 'number of failures', ylab = 'number of classifiers', 
      ylim = c(0,250))
-
-
 
 # The upper bound of the 95% confidence interval
 min_dep_alpha2 = sim_ci(alpha, X$min_fail)
@@ -113,24 +108,22 @@ theta_min_vec = seq(0.8,theta, by=0.025) # five curves
 Esota_theta_vec = matrix(NA,length(theta_min_vec),length(rho_vec))
 SDsota_theta_vec = matrix(NA,length(theta_min_vec),length(rho_vec))
 
-# rep = 1000 # reduce for speed if necessary
+rep = 200000 # increase for smoothness for the standard deviation
 
 theta_max = theta 
 tic()
-for (i in 1:length(theta_min_vec)){
-  theta_min = theta_min_vec[i] # for the non-identical
-  
-  # theta_min = max(trunc_min,theta_min_vec[i])
+for (i in 1:length(theta_min_vec)){ 
+  # create theta-vector
+  theta_min = theta_min_vec[i] 
   step = (theta_max-theta_min)/(m-1)
   theta_vec = seq(theta_min, theta_max, step)
   
+  # truncate rho
   rho_trunc = sqrt((theta_min*(1-theta))/(theta*(1-theta_min)))
-  # print(c(rho_trunc,theta_min))
-  rho_vec = seq(0.0, rho_trunc, by=rho_step) # truncate rho_vec
+  rho_vec = seq(0.0, rho_trunc, by=rho_step) 
   
-  for (j in 1:length(rho_vec)){ #
-    # trunc_min = ((rho*rho)*theta_0/(1-theta_0))/(1+(rho*rho)*theta_0/(1-theta_0))
-
+  for (j in 1:length(rho_vec)){ 
+    
     X = dep_nonid_pmf(n, m, rho_vec[j], rep, theta_vec, theta_0 = theta)
     
     # Expected value
@@ -145,35 +138,39 @@ for (i in 1:length(theta_min_vec)){
   }
 }
 toc()
+
 lgnds = c(TeX(r'(${min}{(Theta)}=0.9$)'),TeX(r'(${min}{(Theta)}=0.875$)'), TeX(r'(${min}{(Theta)}=0.850$)'), 
           TeX(r'(${min}{(Theta)}=0.825$)'), TeX(r'(${min}{(Theta)}=0.800$)'))
 
-# new_png("test2.png", n_figures=2)
+############# bias_thetamin_rho ##############
 
 # plotting for theta_min = 0.875
 plot(rho_vec, Esota_theta_vec[4,],"l", lty = 1, col = "black", ylim = ylm_bias,
      xlab = "", ylab = "")
-par(new=TRUE) # new plot in same window
 
+# the inbetweens
+par(new=TRUE) 
 for (i in 1:3){ 
   plot(rho_vec, Esota_theta_vec[i,],"l", lty = i+2, col = "black", ylim = ylm_bias,
        xlab = "", ylab = "")
-  par(new=TRUE) # new plot in same window
+  par(new=TRUE) 
 }
 
 # plotting for theta_min = theta
 plot(rho_vec, Esota_theta_vec[5,],"l", lty = 1, col = "red", ylim = ylm_bias,
      main = '', xlab = '', ylab = '')
+
+# intersections correspond to table `noniid` 
 abline(v=rho, col="gray")
 
 title(ylab = ylab_bias, line=2, cex.lab=1.2, xlab = TeX(r'(${rho}_0$)'))
+
 legend(0.55, 0.035, legend=lgnds, col=c("red","black","black","black","black"),
        lty=c(1,1,5,4,3), cex=0.8)
 
+################################### sd_thetamin_rho ############################
+# repeat all, only for standard deviation
 
-
-######################################### standard deviation ############################
-# plotting for theta_min = 0.875
 plot(rho_vec, SDsota_theta_vec[4,],"l", lty = 1, col = "black", ylim = ylm_sd,
      xlab = "", ylab = "")
 
@@ -183,7 +180,6 @@ for (i in 1:3){
        xlab = "", ylab = "")
 }
 
-# plotting for theta_min = theta
 par(new=TRUE)
 plot(rho_vec, SDsota_theta_vec[5,],"l", lty = 1, col = "red", ylim = ylm_sd,
      main = '', xlab = '', ylab = '')
