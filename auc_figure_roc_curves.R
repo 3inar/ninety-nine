@@ -2,6 +2,12 @@ library(pROC)
 source("Parameters_PublicCompetition.R")
 source("auc_functions.R")
 
+################################################################################
+###### Creates two figures: the figure that shows score distributions for
+###### negatives and positives (rocB) , and the one showing 1000 ROC curves
+###### (rocA).
+################################################################################
+
 # row 2 of table 1 (used in fig3) recreated
 ex_auc <- .9
 num_classifiers <- 1000
@@ -15,9 +21,10 @@ ms <- mus(clasr)
 ss <- sds(clasr)
 
 set.seed(2024-05-24)
-png("auc_figure_rocB.png", width=6, height=4, units="in", res=300)
+new_png("auc_figure_rocB.png", n_figures=2)
 curve(dnorm(x, ms[1], ss[1]), xlim=c(-5+ms[2], 5), col="black", lwd=2,
-        main="Density of S- and S+ for AUC = .9",
+        ylim=c(-.01, 0.41),
+        main="",
         xlab="Score",
         ylab="Density")
 curve(dnorm(x, ms[2], ss[2]), add=T, col="grey", lwd=2)
@@ -25,11 +32,11 @@ curve(dnorm(x, ms[2], ss[2]), add=T, col="grey", lwd=2)
 rg_f <- rnorm(nfa, ms[2], ss[2])
 rg_t <- rnorm(ntr, ms[1], ss[2])
 rug(rg_f, col="grey", lwd=1.5)
-rug(rg_t, col="black", lwd=1.5)
+rug(rg_t, col="black", lwd=1.5, side=3)
 dev.off()
 
 set.seed(2024-10-24)
-png("auc_figure_rocA.png", width=6, height=4, units="in", res=300)
+new_png("auc_figure_rocA.png", n_figures=2)
   # simulate 1000 competitors
   lst <- list()
   for (i in 1:1000) {
