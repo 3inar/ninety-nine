@@ -36,7 +36,7 @@ kslim = c(0.88, 0.92)
 whylim = c(0,120)
 kslab = TeX(r'($\theta'$)')
 simlab = TeX(r'($\hat{\theta}'$)')
-whylab = 'm'
+whylab = 'number of classifiers'
 
 n_breks = 175         # adjust for pleasant graphics
 step = (kslim[2]-kslim[1])/n_breks
@@ -44,7 +44,7 @@ breks = c(kslim[1], seq(kslim[1]+step, kslim[2], step))
 
 
 
-casava = T # to distinguish the two data sets
+casava = F # to distinguish the two data sets
 
 # Data comes from this website:
 # https://www.kaggle.com/competitions/cassava-leaf-disease-classification/leaderboard
@@ -103,7 +103,7 @@ print(sprintf("%s teams have accuracies above the lower 95 CI.",
 # upper limit of the 95% CI of the maximum simulated theta is equal to the 
 # maximum kaggle theta. CIs are estimated by bootstrapping
 
-option = 1 # crop or no crop
+option = 2 # crop or no crop
 
 cropped = 0.90615 # parameter adjusted until E(theta_sota) = max(theta_obs). 
 # 0.9067->0.9122, 0.906 -> 0.91148, 0.9063->0.91173, 0.90615-> 0.91156
@@ -151,7 +151,7 @@ hist(trunc_dat, breaks=n_breks, main = paste(m, "theta's truncated from below an
 
 
 rep = 10000 # 10 000 number of repetitions. high number gives low variation. 
-B = 2 #1000 # number of bootstraps. high number gives stable error estimation
+B = 50 #1000 # number of bootstraps. high number gives stable error estimation
 
 lowerCI = numeric(B) # lower limit of confidence interval
 upperCI = numeric(B) # upper limit of confidence interval
@@ -196,9 +196,9 @@ tid = toc()
 print(sprintf("%s repetitions, %s bootstraps took %s",
               rep, B, tid))
 
-# Expected value and its standard deviation
-print(sprintf("The expected value of max(theta_obs) is %.5f. The standard deviations is %.6f.", 
-              mean(E_SOTA), sqrt(var(E_SOTA))))
+# Expected value and the standard deviation
+print(sprintf("The expected value of max(theta_obs) is %.5f. The standard deviations is %.5f. From the expected variance: %.5f", 
+              mean(E_SOTA), sqrt(mean(V_SOTA)+var(E_SOTA)), sqrt(mean(V_SOTA))))
 
 # print(sprintf("The mean number of simulated teams have accuracies above the true sota, %s, is %.1f.", theta_SOTA, mean(teamsSOTA)))
 teamSOTA = length(theta_obs[theta_obs > theta_SOTA])
