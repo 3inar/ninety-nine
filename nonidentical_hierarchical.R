@@ -41,6 +41,10 @@ library(binom)      # confidence interval for binomial distribution
 library(tictoc)     # for timing
 library(latex2exp)  # mathematical notation
 
+library(future)     # paralellisation
+library(furrr)
+
+
 # functions
 
 # simulated pmf - sim_nonid_pmf
@@ -52,27 +56,39 @@ library(latex2exp)  # mathematical notation
 ################### Non-identical, independent classifiers ####################
 ###############################################################################
 
+
+future::plan("multisession", workers=8) # let's engage 6 out of 8 cores
+
+
 # Consider a classification problem with a test set of size $n$, and 
 # $m$ classifiers with varying probability of correct classification 
 
-source("Parameters_PublicCompetition.R") # n, theta, m, alpha, theta_min, theta_max, theta_vec
+source("Parameters_PublicCompetition.R") # n, theta, m, alpha, theta_SOTA, d = b-a
 
 source("indep_nonid_pmf_fun.R") # for the functions 
 # indep_nonid_pmf' - simulated x
 # nonid_pmf - analytical pmf
-# nonid_cdf - analytical cdf
+# nonid_cdf - analytical cdf, Fz = numeric(n+1)
 
 # theta_vec is sampled from uni(theta_min,theta_max)
-theta_vec = runif(m, min=theta_min, max=theta_max)
+theta_max = theta_SOTA + d/(m+1)
+theta_min = theta_max - d
 
-tic()
-X = indep_nonid_pmf(n, theta_vec, m, rep) # 10 sec for rep = 100,000
-toc()
+fzb = matrix(data = NA, nrow = B, ncol = rep) 
+for (b in 1:B){
+  theta_vec = runif(m, min=theta_min, max=theta_max)
+
+  X = indep_nonid_pmf(n, theta_vec, m, rep) # 10 sec for rep = 100,000
+  fzb[b,] = X$min_nonid
+
+  print(c(b,B-b))
+
+}
 
 # Histograms of the minimum number of failures for m classifiers, in rep repetitions.
-x11()
+# x11()
 histbreaks = z_range
-hist(X$min_nonid, xlab = 'number of failures', ylab = 'm', breaks = 100, 
+hist(c(fzb), xlab = 'number of failures', ylab = 'm', breaks = 100, 
      xlim = c(min(z_range),max(z_range))) 
 
 # The upper bound of the 95% confidence interval
@@ -80,47 +96,84 @@ sort_min_nonid = sort(X$min_nonid) # sort the minimum number of failures
 min_nonid_alpha2 = sort_min_nonid[(alpha/2)*rep] # find the alpha/2 bound
 
 sprintf("The simulated non-identical upper bound of the %s confidence interval is %.5f, with %s repetitions. Distance to SOTA: %s.",  
-        1-alpha, (n-min_nonid_alpha2)/n, rep, (n-min_nonid_alpha2)/n-theta_max)
+        1-alpha, (n-min_nonid_alpha2)/n, rep, (n-min_nonid_alpha2)/n-theta_SOTA)
 
 
-# Analytical results:
+# "Analytical" results:
 
 ####################### Expected value and variance ###################################
 
-fz = nonid_pmf(n, theta_vec, m)
+Esotab = numeric(B)
+Vsotab = numeric(B)
+for (b in 1:B){
+  theta_vec = runif(m, min=theta_min, max=theta_max)
 
-# Expected value
-Eterm = numeric(n+1)
-for (z in 0:n){
-  i = z+1
-  Eterm[i] = z*fz[i]
+  fz = nonid_pmf(n, theta_vec, m)
+  
+  
+  # Expected value and variance
+  Eterm = numeric(n+1)
+  Vterm = numeric(n+1)
+  for (z in 0:n){
+    i = z+1
+    Eterm[i] = z*fz[i]
+    Vterm[i] = z^2*fz[i]
+  }
+
+  Esotab[b] = sum(Eterm)
+  Vsotab[b] = sum(Vterm)-Esotab[b]^2
+  
+  print(c(b,B-b))
 }
-
-Esota = sum(Eterm)
-Esota_theta = 1-Esota/n
-
-# Variance
-vterm = numeric(n+1)
-for (z in 0:n){
-  i = z+1
-  vterm[i] = z^2*fz[i]
-}
-esquare = sum(vterm)
-
-Vsota = esquare - Esota^2
+Esota = mean(Esotab)
+Vsota = mean(Vsotab) + var(Esotab)
 
 sprintf("The expected number of failures is %.4f, with a variance of %.4f.",
         Esota, Vsota)
 sprintf("The expected theta_hat_SOTA is %.6f, with standard deviation of %.6f.",
         (n-Esota)/n, sqrt(Vsota)/n)
 
+# theta-vector: 0.9130 0.0021
+# hierarchical: "The expected theta_hat_SOTA is 0.912973, with standard deviation of 0.002134."
+
 ################################################################################
 ################################### Figures ####################################
 ################################################################################
 
 # # # # # # # # # # # # # # # # # Figure noniid_cdf.png # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-x11()
-Fz = nonid_cdf(n, theta_vec, m)
+
+B = 1000
+# Fzb = matrix(data = NA, nrow = B, ncol = n+1) 
+# for (b in 1:B){
+#   theta_vec = runif(m, min=theta_min, max=theta_max)
+#   Fzb[b,] = nonid_cdf(n, theta_vec, m)
+  
+#   print(c(b,B-b))
+# }
+# Fz = colMeans(Fzb)
+
+# paralellised version: takes 5-10 minutes
+
+Fb <- furrr::future_map(1:B, function (x) { 
+  theta_vec = runif(m, min=theta_min, max=theta_max)
+  Fb = nonid_cdf(n, theta_vec, m)
+  
+  return(Fb)
+    
+}, .progress=T, .options= furrr::furrr_options(seed=T))
+
+# Not very elegant with the for-loop, but that's ok for now
+Fzb = matrix(data = NA, nrow = B, ncol = n+1) 
+for (b in 1:B){ 
+  Fzb[b,] = Fb[[b]]
+}
+
+Fz = colMeans(Fzb)
+  
+# saving
+# naming convention: fig name_vector_name
+saveRDS(Fz, file = "noniid_cdf_Fz.rds")
+
 # the whole range, not very much information
 plot(0:n,Fz, type = 'l', xlab = 'number of failures', 
      ylab = 'probability of at least one team')
@@ -149,7 +202,26 @@ print(c(which(Fz>alpha/2)[1]-1,min_nonid_alpha2)) # ok
 ################# probability mass function ##########################
 
 # # # # # # # # # # # # # # # # # Figure noniid_pmf # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-fz = nonid_pmf(n, theta_vec, m)
+
+fb <- furrr::future_map(1:B, function (x) { 
+  theta_vec = runif(m, min=theta_min, max=theta_max)
+  fb = nonid_pmf(n, theta_vec, m)
+  
+  return(fb)
+  
+}, .progress=T, .options= furrr::furrr_options(seed=T))
+
+# Not very elegant with the for-loop, but that's ok for now
+fzb = matrix(data = NA, nrow = B, ncol = n+1) 
+for (b in 1:B){ 
+  fzb[b,] = fb[[b]]
+}
+
+fz = colMeans(fzb)
+
+# saving
+# naming convention: fig name_vector_name
+saveRDS(fz, file = "noniid_pmf_fz.rds")
 
 plot(0:n,fz, type = 's')
 
@@ -168,32 +240,27 @@ title(main = list(TeX(r'($z$)'), cex = 1.2,
 # # # # # # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # #
 
 
-############################ bias_sd_thetamin #################################
+############################ bias_sd_d #################################
+
+d_vec = seq(0, 0.4, by=0.005) # adjust until smooth, d = 0.4 gives \theta = 0.5
+print(length(d_vec))
+
+Bias_theta_vec = numeric(length(d_vec))
+SD_theta_vec = numeric(length(d_vec))
 
 
-theta_min_vec = seq(0.5, 0.9, by=0.005) # adjust until smooth
-print(length(theta_min_vec))
+# paralellised version: this takes several hours, like 12 maybe or more
 
-Bias_theta_vec = numeric(length(theta_min_vec))
-SD_theta_vec = numeric(length(theta_min_vec))
-
-B = 500
-
-fzb = matrix(B,n+1) #fz returns vector of length n+1
-
-
-for (j in 1:length(theta_min_vec)){
-  theta_min = theta_min_vec[j] # for the non-identical
-  theta_max = theta 
-  step = (theta_max-theta_min)/(m-1)
-  theta_vec = seq(theta_min, theta_max, step)
+for (j in 1:length(d_vec)){ 
   
-  Esotab = numeric(B)
-  Vsotab = numeric(B)
-  for (b in 1:B){
+  theta_max = theta_SOTA + d_vec[j]/(m+1)
+  theta_min = theta_max - d_vec[j]
+
+  EVsotab <- furrr::future_map(1:B, function (x) { 
     theta_vec = runif(m, min=theta_min, max=theta_max)
+    #source("indep_nonid_pmf_fun.R") 
     fz = nonid_pmf(n, theta_vec, m)
-  
+    
     # Expected value and variance
     Eterm = numeric(n+1)
     Vterm = numeric(n+1)
@@ -202,33 +269,52 @@ for (j in 1:length(theta_min_vec)){
       Eterm[i] = z*fz[i]
       Vterm[i] = z^2*fz[i]
     }
+    
+    Esotab = sum(Eterm)
+    Vsotab = sum(Vterm)-Esotab^2
+    
+    return(cbind(Esotab, Vsotab))
   
-    Esotab[b] = sum(Eterm)
-    Vsotab[b] = sum(Vterm)-Esotab[b]^2
+  }, .progress=T, .options= furrr::furrr_options(seed=T))
+  
+  # Not very elegant with the for-loop, but that's ok for now
+  
+  Esotab = numeric(B)
+  Vsotab = numeric(B)
+  for (b in 1:B){ 
+    Esotab[b] = EVsotab[[b]][1]
+    Vsotab[b] = EVsotab[[b]][2]
   }
+  
+  
   Esota = mean(Esotab)
   Vsota = mean(Vsotab) + var(Esotab)
   
-  Bias_theta_vec[j] = (1-Esota/n)-theta
+  Bias_theta_vec[j] = (1-Esota/n)-theta_SOTA
   SD_theta_vec[j] = sqrt(Vsota)/n
   
-  print(c(j,length(theta_min_vec)-j))
+  print(c(j,length(d_vec)-j))
+
 }
+
+# saving
+# naming convention: fig name_vector_name
+saveRDS(d_vec, file = "bias_sd_d_d_vec.rds")
+saveRDS(Bias_theta_vec, file = "bias_sd_d_Bias_theta_vec.rds")
+saveRDS(SD_theta_vec, file = "bias_sd_d_SD_theta_vec.rds")
+
 cols = c("black","darkgreen")
-plot(theta_min_vec, Bias_theta_vec,"l", lty = "solid", col = cols[1], 
+plot(d_vec, Bias_theta_vec,"l", lty = "solid", col = cols[1], 
      ylim = ylm_bias, xlab = "", ylab = "")
 par(new=TRUE)
-plot(theta_min_vec, SD_theta_vec,"l", lty = "solid", col = cols[2], 
+plot(d_vec, SD_theta_vec,"l", lty = "solid", col = cols[2], 
      ylim = ylm_sd,  xlab = "", ylab = "", axes = FALSE)
 axis(4)
 
-abline(v=0.875, col="gray")
-abline(v=0.85, col="gray",lty = 5)
-abline(v=0.825, col="gray",lty = 4)
-abline(v=0.8, col="gray",lty = 3)
+abline(v=0.025, col="gray")
+abline(v=0.05, col="gray",lty = 5)
+abline(v=0.075, col="gray",lty = 4)
+abline(v=0.1, col="gray",lty = 3)
 
-title(main = "", xlab = TeX(r'(${min}{(Theta)}$)'), ylab = "", line = 2, cex.lab=1.2)
-legend(0.6, 0.005, legend=c(ylab_bias,ylab_sd), col=cols, lty=c(1,1), cex=0.8)
-
-
-
+title(main = "", xlab = TeX(r'($d = b-a$)'), ylab = "", line = 2, cex.lab=1.2)
+legend(0.125, 0.005, legend=c(ylab_bias,ylab_sd), col=cols, lty=c(1,1), cex=0.8)
