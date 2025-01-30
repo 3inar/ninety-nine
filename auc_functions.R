@@ -35,6 +35,19 @@ predict.classifier <- function(obj, true_size=50, false_size=100) {
   )
 }
 
+auc_ci <- function(auc, conf_level=.95, true_size=50, false_size=100, 
+                   n_sim=1000) {
+  cls <- make_classifier(auc)
+  sms <- numeric(n_sim)
+
+  for (i in 1:n_sim) {
+    sms[i] <- empirical_auc(predict(cls, true_size, false_size))
+  }
+  
+  alpha <- 1-conf_level
+  quantile(sms, prob=c(alpha/2, 1-alpha/2))
+}
+
 # These functions extract the means and standard deviations for the two
 # prediction distributions score|true, score|false
 sds <- function(obj) {
