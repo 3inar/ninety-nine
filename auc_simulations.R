@@ -5,7 +5,8 @@
 # rho - correlation coefficient
 # malignant_rate # proportion of positives in melanoma training set 
 # rep - number of repetitions
-# NB: TODO: the above has same name as the internal function rep and should be changed probably
+# NB: TODO: the above has same name as the internal function rep and should be
+#     changed probably
 source("Parameters_PublicCompetition.R")
 
 ## IMports functions to simulate classifiers w/ given AUCs
@@ -13,7 +14,7 @@ source("auc_functions.R")
 
 # private leaderboard scores of the melanoma challenge
 load("melanoma_private.rda")
-melanoma_scores <- melanoma_private_scores[melanoma_private_scores > .5]
+melanoma_scores <- melanoma_scores[melanoma_scores > .5]
 
 winner_auc = max(melanoma_scores)
 
@@ -39,7 +40,7 @@ nfa <- test_size - ntr
 
 ## TODO:: future package + furrr to make it parallel
 ## I have 8 logical AND 8 physical cores
-future::plan("multisession", workers=4)
+future::plan("multisession", workers=6)
 
 system.time({
   auc_sims <- furrr::future_map(1:10000, function (x) { 
@@ -72,16 +73,39 @@ sd(mxx)/sqrt(length(mxx))
 
 hist(mxx, nclass=100)
 
+# do shrinking instead. target Emax =0 .9490; let's say we're happy w/ error in the following digit
+system.time({
+  auc_sims <- furrr::future_map(1:60000, function (x) { 
+                source("auc_functions.R") 
+                # mean(c(0.8882812, 0.8890625)) # too low at current thresh,
+                # continue from there:
+                weight <- 0.8890625
+                truncated <- weight*melanoma_scores + (1-weight)*0.5
+                max(sim_competition(sample(truncated, length(melanoma_scores), replace=T), ntr, nfa))
+              }, .progress=F, .options= furrr::furrr_options(seed=T))
+}) 
+system2("osascript",
+        args=c("-e", "'display dialog \"dinner is ready\"'"), 
+       stdout = F, stderr = F, wait = F)
+mxx <- unlist(auc_sims)
+mean(mxx); mean(mxx) + c(-1, 1)* sd(mxx)/sqrt(length(mxx))
+#save(mxx, file="exp_auc_09491.rda")  #
 
 # The reference classifier is quite good but it shouldn't actually matter much
-reference_classifier <- make_classifier(.99)
-baby_classifier <- make_classifier(.95)
+# reference_classifier <- make_classifier(.99)
+# baby_classifier <- make_classifier(.95)
+# 
+# reference_predicts <- predict(reference_classifier)
+# corr_predictions <- correlated_predict(baby_classifier, reference_classifier,
+#                                        reference_predicts, 0.6)
+# 
+# plot(reference_predicts$predicted, corr_predictions$predicted, pch=(1 + corr_predictions$truth))
+# empirical_auc(reference_predicts)
 
-reference_predicts <- predict(reference_classifier)
-corr_predictions <- correlated_predict(baby_classifier, reference_classifier,
-                                       reference_predicts, 0.6)
+# simulate
+weight <- 0.8882812
+truncated <- weight*melanoma_scores + (1-weight)*0.5
 
-plot(reference_predicts$predicted, corr_predictions$predicted, pch=(1 + corr_predictions$truth))
-empirical_auc(reference_predicts)
-
-
+hist(truncated, nclass=150)
+hist(sim_competition(sample(truncated, length(melanoma_scores), replace=T), ntr, nfa), nclass=150)
+max(truncated)
