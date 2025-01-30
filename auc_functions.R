@@ -48,6 +48,27 @@ auc_ci <- function(auc, conf_level=.95, true_size=50, false_size=100,
   quantile(sms, prob=c(alpha/2, 1-alpha/2))
 }
 
+# this is a nice idea based on our equation ??? but it seems to be biased
+# downward
+#fast_fast_fast_auc <- function(trues, falses) {
+#  z <- (-mean(falses) + mean(trues))/sqrt(var(falses) + var(trues))
+#  pnorm(z)
+#}
+#
+#cls <- make_classifier(.9)
+#B <- 1000000
+#res_fst <- numeric(B)
+#res_emp <- numeric(B)
+#
+#for (i in 1:B) {
+#  prds <- predict(cls)
+#  res_fst[i] <- fast_fast_fast_auc(prds$predicted[prds$truth==1], 
+#                     prds$predicted[prds$truth!=1])
+#  res_emp[i] <- empirical_auc(prds)
+#}
+#
+#mean(res_fst); mean(res_emp)
+
 # These functions extract the means and standard deviations for the two
 # prediction distributions score|true, score|false
 sds <- function(obj) {
