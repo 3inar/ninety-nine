@@ -57,13 +57,15 @@ library(furrr)
 ###############################################################################
 
 
-future::plan("multisession", workers=8) # let's engage 6 out of 8 cores
+future::plan("multisession", workers=6) # let's engage 6 out of 8 cores
 
 
 # Consider a classification problem with a test set of size $n$, and 
 # $m$ classifiers with varying probability of correct classification 
 
 source("Parameters_PublicCompetition.R") # n, theta, m, alpha, theta_SOTA, d = b-a
+
+source("ProbDistr_thetaSOTA.R") # for function sim_ci()
 
 source("indep_nonid_pmf_fun.R") # for the functions 
 # indep_nonid_pmf' - simulated x
@@ -74,29 +76,52 @@ source("indep_nonid_pmf_fun.R") # for the functions
 theta_max = theta_SOTA + d/(m+1)
 theta_min = theta_max - d
 
-fzb = matrix(data = NA, nrow = B, ncol = rep) 
-for (b in 1:B){
+B = 200
+
+tic()
+fz = furrr::future_map(1:B, function (x) { 
+
   theta_vec = runif(m, min=theta_min, max=theta_max)
-
   X = indep_nonid_pmf(n, theta_vec, m, rep) # 10 sec for rep = 100,000
-  fzb[b,] = X$min_nonid
+  
+  return(X$min_nonid)
+}, .progress=T, .options= furrr::furrr_options(seed=T))
 
-  print(c(b,B-b))
-
+# Not very elegant with the for-loop, but that's ok for now
+fzb = matrix(data = NA, nrow = B, ncol = rep) 
+Esotab = numeric(B)
+Vsotab = numeric(B)
+alpha2b = numeric(B)
+for (b in 1:B){ 
+  fzb[b,] = fz[[b]]
+  Esotab[b] = mean(fz[[b]])
+  Vsotab[b] = mean(fz[[b]]*fz[[b]]) - Esotab[b]*Esotab[b]
+  alpha2b[b] = sim_ci(alpha, fz[[b]])
 }
+toc() # B = 25, loop 256 sec, parallel 70 sec. B = 200, parallel 501 sec
 
-# Histograms of the minimum number of failures for m classifiers, in rep repetitions.
+# An example histograms of the minimum number of failures for m classifiers, in rep repetitions.
 # x11()
 histbreaks = z_range
-hist(c(fzb), xlab = 'number of failures', ylab = 'm', breaks = 100, 
+hist(fz[[1]], xlab = 'number of failures', ylab = 'm', breaks = 100, 
      xlim = c(min(z_range),max(z_range))) 
 
-# The upper bound of the 95% confidence interval
-sort_min_nonid = sort(X$min_nonid) # sort the minimum number of failures
-min_nonid_alpha2 = sort_min_nonid[(alpha/2)*rep] # find the alpha/2 bound
+Esota = mean(Esotab)
+Vsota = mean(Vsotab) + var(Esotab)
+min_dep_alpha2 = mean(alpha2b) # not sure about this one
 
-sprintf("The simulated non-identical upper bound of the %s confidence interval is %.5f, with %s repetitions. Distance to SOTA: %s.",  
-        1-alpha, (n-min_nonid_alpha2)/n, rep, (n-min_nonid_alpha2)/n-theta_SOTA)
+sprintf("The simulated nonidentical upper bound of the %s confidence interval is %.5f, with %s repetitions.",  
+        1-alpha, (n-min_dep_alpha2)/n, rep)
+# B = 100: 0.91781 
+# B = 200: 0.91782 
+# B = 200: 0.91780
+
+sprintf("The simulated expected value is %.7f and a standard deviation is %.7f, with %s repetitions.",  
+        (n-Esota)/n, sqrt(Vsota)/n, rep)
+# B = 100: 0.9129823 and 0.0021333
+# B = 200: 0.9129668 and 0.0021338
+# B = 200: 0.9129637 and 0.0021353
+
 
 
 # "Analytical" results:
@@ -105,12 +130,13 @@ sprintf("The simulated non-identical upper bound of the %s confidence interval i
 
 Esotab = numeric(B)
 Vsotab = numeric(B)
-for (b in 1:B){
+tic()
+EVsotab <- furrr::future_map(1:B, function (x) { 
+  
   theta_vec = runif(m, min=theta_min, max=theta_max)
 
   fz = nonid_pmf(n, theta_vec, m)
-  
-  
+   
   # Expected value and variance
   Eterm = numeric(n+1)
   Vterm = numeric(n+1)
@@ -120,11 +146,22 @@ for (b in 1:B){
     Vterm[i] = z^2*fz[i]
   }
 
-  Esotab[b] = sum(Eterm)
-  Vsotab[b] = sum(Vterm)-Esotab[b]^2
+  Esota = sum(Eterm)
+  Vsota = sum(Vterm)-Esota^2
   
-  print(c(b,B-b))
+  return(cbind(Esota, Vsota))
+  
+}, .progress=T, .options= furrr::furrr_options(seed=T))
+toc()
+
+# Not very elegant with the for-loop, but that's ok for now
+Esotab = numeric(B)
+Vsotab = numeric(B)
+for (b in 1:B){ 
+  Esotab[b] = EVsotab[[b]][1]
+  Vsotab[b] = EVsotab[[b]][2]
 }
+
 Esota = mean(Esotab)
 Vsota = mean(Vsotab) + var(Esotab)
 
@@ -133,8 +170,9 @@ sprintf("The expected number of failures is %.4f, with a variance of %.4f.",
 sprintf("The expected theta_hat_SOTA is %.6f, with standard deviation of %.6f.",
         (n-Esota)/n, sqrt(Vsota)/n)
 
-# theta-vector: 0.9130 0.0021
-# hierarchical: "The expected theta_hat_SOTA is 0.912973, with standard deviation of 0.002134."
+# theta-vector: 0.9130   0.0021
+# hierarchical: 
+# B = 200:      0.912963 0.002135
 
 ################################################################################
 ################################### Figures ####################################
@@ -143,14 +181,6 @@ sprintf("The expected theta_hat_SOTA is %.6f, with standard deviation of %.6f.",
 # # # # # # # # # # # # # # # # # Figure noniid_cdf.png # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 B = 1000
-# Fzb = matrix(data = NA, nrow = B, ncol = n+1) 
-# for (b in 1:B){
-#   theta_vec = runif(m, min=theta_min, max=theta_max)
-#   Fzb[b,] = nonid_cdf(n, theta_vec, m)
-  
-#   print(c(b,B-b))
-# }
-# Fz = colMeans(Fzb)
 
 # paralellised version: takes 5-10 minutes
 
@@ -249,7 +279,7 @@ Bias_theta_vec = numeric(length(d_vec))
 SD_theta_vec = numeric(length(d_vec))
 
 
-# paralellised version: this takes several hours, like 12 maybe or more
+# paralellised version: this takes several hours, like 6 maybe or more
 
 for (j in 1:length(d_vec)){ 
   
@@ -278,7 +308,6 @@ for (j in 1:length(d_vec)){
   }, .progress=T, .options= furrr::furrr_options(seed=T))
   
   # Not very elegant with the for-loop, but that's ok for now
-  
   Esotab = numeric(B)
   Vsotab = numeric(B)
   for (b in 1:B){ 
