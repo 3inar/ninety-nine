@@ -53,16 +53,22 @@ library(furrr)
 # The estimated accuracy, that is, the classifier's performance on the test set, 
 # is denoted by $theta_hat$.
 
-future::plan("multisession", workers=8) # let's engage 6 out of 8 cores
-
-# Functions
-
-# dep_nonid_pmf - simulated pmf
+future::plan("multisession", workers=6) # let's engage 6 out of 8 cores
 
 source("Parameters_PublicCompetition.R") # n, theta, m, alpha, rho, theta_min, theta_max, theta_vec
 
-source("dep_nonid_pmf_fun.R") # for function dep_nonid_pmf
+source("dep_nonid_pmf_fun.R") 
+# for function dep_nonid_pmf
 # returns X = list(min_fail, x_fail, teamsSOTA)
+# parallel version dep_nonid_pmf_parallel
+# returns Xmin_fail
+
+source("dep_id_pmf_fun.R") # for when d = 0
+# for function dep_id_pmf
+# returns X = list(theta_y0, x_dep_hist, min_dep, min_indep, x_dep, x_indep)
+# parallel version dep_id_pmf_parallel
+# returns Xmin_fail
+
 
 source("ProbDistr_thetaSOTA.R") # for function sim_ci()
 
@@ -70,6 +76,28 @@ source("ProbDistr_thetaSOTA.R") # for function sim_ci()
 theta_max = theta_SOTA + d/(m+1)
 theta_min = theta_max - d
 
+# check loop vs parallel
+theta_vec = runif(m, min=theta_min, max=theta_max)
+tic()
+X = dep_nonid_pmf(n, m, rho, rep, theta_vec, theta_0 = theta_SOTA) # 25 sec
+min_dep_alpha2 = sim_ci(alpha, X$min_fail) # The upper bound of the 95% confidence interval
+print(c(mean(X$min_fail), min_dep_alpha2))
+toc()
+
+tic()
+Xmin_fail = dep_nonid_pmf_parallel(n, m, rho, rep, theta_vec, theta_0 = theta_SOTA) # 8 sec
+min_dep_alpha2 = sim_ci(alpha, Xmin_fail) # The upper bound of the 95% confidence interval
+print(c(mean(X$min_fail), min_dep_alpha2))
+toc()
+
+
+###########################
+# # # # # # # # # # # # ## 
+# B = 50
+# # # # # # # # # # # # ## 
+###########################
+
+# These numbers go into the table
 tic()
 EVsotab <- furrr::future_map(1:B, function (x) { 
   
@@ -83,8 +111,7 @@ EVsotab <- furrr::future_map(1:B, function (x) {
   return(cbind(Esota, Vsota, min_dep_alpha2))
   
 }, .progress=T, .options= furrr::furrr_options(seed=T))
-toc() # 4228 sec
-
+toc() # 4228 sec,  B=10: 51 sec
 # Not very elegant with the for-loop, but that's ok for now
 Esotab = numeric(B)
 Vsotab = numeric(B)
@@ -107,9 +134,14 @@ sprintf("The simulated expected value is %.7f and a standard deviation is %.7f, 
         (n-Esota)/n, sqrt(Vsota)/n, rep)
 # "The simulated expected value is 0.9101173 and a standard deviation is 0.0036547, with 1e+05 repetitions."
 
+
+
 ###########################################################################
 ########################### Figures ##################### ################
 ###########################################################################
+
+
+saving = FALSE # are you testing something, maybe? do not overwrite
 
 ########################## bias_thetamin_rho and sd_thetamin_rho ############
 
@@ -120,6 +152,7 @@ rho_step = 0.01 # adjust for smoothness, x-axis
 rho_vec = seq(0.0, 1.0, by=rho_step) 
 
 d_vec = seq(0,0.1,by=0.025) # five curves
+# when d == 0, then we do not sample from a uniform distr, and we can use a simpler version
 
 #pre-allocate
 Esota_theta_vec = matrix(NA,length(d_vec),length(rho_vec))
@@ -128,7 +161,25 @@ SDsota_theta_vec = matrix(NA,length(d_vec),length(rho_vec))
 # rep = 200000 # increase for smoothness for the standard deviation
 
 tic()
-for (i in 1:length(d_vec)){ 
+i = 1 # d = 0
+
+for (j in 1:length(rho_vec)){ 
+  Xmin_fail = dep_id_pmf_parallel(n, theta_SOTA, m, rho_vec[j], rep, fixed = F)
+      
+  # Expected value and variance
+  Esota = mean(Xmin_fail)
+  Vsota = mean(Xmin_fail*Xmin_fail) - Esota*Esota
+    
+  Esota_theta_vec[i,j] = (1-Esota/n)-theta_SOTA
+  SDsota_theta_vec[i,j] = sqrt(Vsota)/n
+    
+  print(c(i,j,length(d_vec),length(rho_vec)))
+}
+toc() # 500 sec
+
+
+tic()
+for (i in 2:length(d_vec)){ 
   # create theta-vector
   theta_max = theta_SOTA + d_vec[i]/(m+1)
   theta_min = theta_max - d_vec[i]
@@ -169,7 +220,17 @@ for (i in 1:length(d_vec)){
     print(c(i,j,length(d_vec),length(rho_vec)))
   }
 }
-toc()
+toc() # B = 10: 15011
+
+# saving
+# naming convention: fig name_vector_name
+
+if (saving){ # plese, do not overwrite
+  saveRDS(rho_vec, file = "bias_thetamin_rho_rho_vec.rds")
+  saveRDS(d_vec, file = "bias_thetamin_rho_d_vec.rds")
+  saveRDS(Esota_theta_vec, file = "bias_thetamin_rho_Esota_theta_vec.rds")
+  saveRDS(SDsota_theta_vec, file = "sd_thetamin_rho_SDsota_theta_vec.rds")
+}
 
 lgnds = c(TeX(r'($d=0$)'),TeX(r'($d=0.025$)'), TeX(r'($d=0.050$)'), 
           TeX(r'($d=0.075$)'), TeX(r'($d=0.100$)'))
@@ -200,13 +261,6 @@ title(ylab = ylab_bias, line=2, cex.lab=1.2, xlab = TeX(r'(${rho}_0$)'))
 
 legend(0.55, 0.035, legend=lgnds, col=c("red","black","black","black","black"),
        lty=c(1,1,5,4,3), cex=0.8)
-
-# saving
-# naming convention: fig name_vector_name
-saveRDS(rho_vec, file = "bias_thetamin_rho_rho_vec.rds")
-saveRDS(d_vec, file = "bias_thetamin_rho_d_vec.rds")
-saveRDS(Esota_theta_vec, file = "bias_thetamin_rho_Esota_theta_vec.rds")
-saveRDS(SDsota_theta_vec, file = "sd_thetamin_rho_SDsota_theta_vec.rds")
 
 ################################### sd_thetamin_rho ############################
 # repeat all, only for standard deviation
