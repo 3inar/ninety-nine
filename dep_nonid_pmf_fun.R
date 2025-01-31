@@ -37,8 +37,6 @@ dep_nonid_pmf <- function(n, m, rho, rep, theta_vec, theta_0){
   
   for (ell in 1:rep){
     
-    x_fail = numeric(m)  # number of failures for m experiments
-    
     y0 = rbinom(n,1,theta_0) # leading classifier outcome
     theta_y0 = sum(y0) # observed theta for leading classifier
     
@@ -56,3 +54,45 @@ dep_nonid_pmf <- function(n, m, rho, rep, theta_vec, theta_0){
   
   return(X)
 }
+
+# parallel version
+
+dep_nonid_pmf_parallel <- function(n, m, rho, rep, theta_vec, theta_0){   
+  
+  # Set-up from Boland et al (1989) 'Modelling dependence in simple and indirect majority systems',
+  # where we have a leading classifier with classifications Y_0, and then the m classifiers with 
+  # correlation rho = corr(Y_0, Y_j). The m classifiers are independent of each other given Y_0.
+  
+  sigma_0 = theta_0*(1-theta_0)
+  sigma_vec = theta_vec*(1-theta_vec)
+  
+  p_flip1 = (theta_0 - rho*sqrt(sigma_0*sigma_vec) - theta_0*theta_vec)/theta_0 # P(Y_j = 0|Y_0 = 1)
+  p_flip0 = (-rho*sqrt(sigma_0*sigma_vec)+(1-theta_0)*theta_vec)/(1-theta_0) # P(Y_j = 1|Y_0 = 0)
+  
+  Xb <- furrr::future_map(1:rep, function (x) { 
+    
+    y0 = rbinom(n,1,theta_0) # leading classifier outcome
+    theta_y0 = sum(y0) # observed theta for leading classifier
+    
+    flip1 = rbinom(m,theta_y0,p_flip1) # flipping correct predictions
+    flip0 = rbinom(m,n-theta_y0,p_flip0) # flipping incorrect predictions
+    
+    x_fail = n-(theta_y0-flip1+flip0) # number of wrong predictions for each classifier
+    
+    min_fail = min(x_fail)
+    
+    return(min_fail)
+  }, .progress=T, .options= furrr::furrr_options(seed=T))
+  
+  # Not very elegant with the for-loop, but that's ok for now
+  Xmin_fail = numeric(rep)
+  for (r in 1:rep){ 
+    Xmin_fail[r] = Xb[[r]]
+  }
+  
+  return(Xmin_fail)
+}
+
+
+
+
