@@ -41,6 +41,8 @@ library(binom)      # confidence interval for binomial distribution
 library(tictoc)     # for timing
 library(latex2exp)  # mathematical notation
 library(e1071)      # skewness
+library(future)     # parallelisation
+library(furrr)
 
 # Contains the function 
 
@@ -55,62 +57,27 @@ library(e1071)      # skewness
 # The estimated accuracy, that is, the classifier's performance on the test set, 
 # is denoted by $theta_hat$.
 
+future::plan("multisession", workers=6) # let's engage 6 out of 8 cores
+
 source("Parameters_PublicCompetition.R") # n, theta, m, alpha
 
-mu = n*theta # the expected number of correct predictions
+source("ProbDistr_thetaSOTA.R") 
+# for functions 
+# sim_ci()
+# sim_mean()
+# sim_var()
 
-# The simulated pmf of dependent, identical classifiers
-# parameters: n, theta, m, rho, rep, fixed = F is a variant
-dep_id_pmf <- function(n, theta, m, rho, rep, fixed = F){   
+source("dep_id_pmf_fun.R") 
+# for function dep_id_pmf
+# returns X = list(theta_y0, x_dep_hist, min_dep, min_indep, x_dep, x_indep)
+# parallel version dep_id_pmf_parallel
+# returns Xmin_fail
 
-  # Set-up from Boland et al (1989) 'Modelling dependence in simple and indirect majority systems',
-  # where we have a leading classifier with classifications Y_0, and then the m classifiers with 
-  # correlation rho = corr(Y_0, Y_j). The m classifiers are independent of each other given Y_0.
+# mu = n*theta_SOTA # the expected number of correct predictions for fixed = T
 
-  # the probabilities of Y_j being the opposite of Y_0
-  p_flip1 = 1-theta - rho*(1-theta) # P(Y_j = 0|Y_0 = 1), same as 1-p_dep
-  p_flip0 = theta - rho*theta# P(Y_j = 1|Y_0 = 0), same as (mu/(n-mu))*(1-p_dep)
-
-  # Simulations is the only way
-  min_dep = numeric(rep) # min number of failures with dependency
-  min_indep = numeric(rep) # for independent, as a check
-
-  theta_y0 = numeric(rep)
-  x_dep_hist = numeric(rep)
-
-  if (fixed){
-    y0 = numeric(n) # vector of zeros of length n
-    y0[1:mu] = 1 # exactly \mu of them are correct classifications
-  } 
-
-  for (ell in 1:rep){
-  
-    x_dep = numeric(m)  # number of failures for m experiments
-    
-    if (!fixed){
-      y0 = rbinom(n,1,theta)
-    }
-    theta_y0[ell] = sum(y0) # keeping this mu #s
-  
-    flip1 = rbinom(m,theta_y0[ell],p_flip1) # flipping correct predictions
-    flip0 = rbinom(m,n-theta_y0[ell],p_flip0) # flipping incorrect predictions
-
-    x_dep = n-(theta_y0[ell]-flip1+flip0) # number of wrong predictions for each classifier
-    x_dep_hist[ell] = x_dep[1] # keeping this as an example
-  
-    min_dep[ell] = min(x_dep) # minimum number of wrong predictions for each rep
-  
-    x_indep = rbinom(m,n,1-theta) # independent classifiers for reference
-    min_indep[ell] = min(x_indep)
-  }
-
-  X = list(theta_y0 = theta_y0, x_dep_hist = x_dep_hist, min_dep = min_dep, min_indep = min_indep, x_dep = x_dep, x_indep = x_indep)
-  
-  return(X)
-}
 
 tic()
-X = dep_id_pmf(n, theta, m, rho, rep, fixed = F) # 20 sec, rep = 100,000
+X = dep_id_pmf(n, theta_SOTA, m, rho, rep, fixed = F) # 20 sec, rep = 100,000
 toc()
 
 # Example histogram of the number of failures for m classifiers.
@@ -122,13 +89,6 @@ hist(X$x_dep, xlab = 'number of failures', ylab = 'number of classifiers',
 # histbreaks = seq(min(c(X$min_dep,X$min_indep)), max(c(X$min_dep,X$min_indep))+8,3)
 hist(X$min_dep, xlab = 'minimum number of failures', ylab = 'number of classifiers', 
      breaks = 20, ylim = c(0,rep/3))
-
-source("ProbDistr_thetaSOTA.R") 
-# for functions 
-# sim_ci()
-# sim_mean()
-# sim_var()
-
 
 # The confidence interval
 min_dep_alpha2 = sim_ci(alpha, X$min_dep)
@@ -144,6 +104,31 @@ sprintf("The simulated expected value is %.7f, with %s repetitions.",
 Vsota = sim_var(X$min_dep)
 sprintf("The simulated standard deviation is %.7f, with %s repetitions.",  
         sqrt(Vsota)/n, rep)
+
+# parallel version
+
+tic()
+Xmin_fail = dep_id_pmf_parallel(n, theta_SOTA, m, rho, rep, fixed = F) # 20 sec, rep = 100,000
+toc()
+
+# The confidence interval
+min_dep_alpha2 = sim_ci(alpha, Xmin_fail)
+sprintf("The simulated dependent upper bound of the %s confidence interval is %.7f, with %s repetitions.",  
+        1-alpha, (n-min_dep_alpha2)/n, rep)
+
+# The expected value
+Esota = sim_mean(Xmin_fail)
+sprintf("The simulated expected value is %.7f, with %s repetitions.",  
+        (n-Esota)/n, rep)
+
+# The variance
+Vsota = sim_var(Xmin_fail)
+sprintf("The simulated standard deviation is %.7f, with %s repetitions.",  
+        sqrt(Vsota)/n, rep)
+
+
+
+
 
 ##################### Check-ups  ################
 check = 0
