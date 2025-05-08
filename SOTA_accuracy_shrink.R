@@ -96,29 +96,24 @@ print(sprintf("%s teams have accuracies above the lower 95 CI.",
               teams_single95))
 
 
-# The SOTA estimation is done by cropping the kagge observations, and then a 
+# The SOTA estimation is done by shrinking the kagge observations, and then a 
 # simulation is performed with correlation. The parameters for cropping are 
 # adjusted according to the wanted outcome: either that the expected value of 
 # the maximum simulated theta is equal to the maximum kaggle theta, or that the 
 # upper limit of the 95% CI of the maximum simulated theta is equal to the 
 # maximum kaggle theta. CIs are estimated by bootstrapping
 
-option = 2 # crop or no crop
+shrink_point = 1/c
+weight <- 0.99 # parameter adjusted until E(theta_sota) = max(theta_obs). 
+theta_shrunk <- weight*theta_obs + (1-weight)*shrink_point
 
-cropped = 0.90615 # parameter adjusted until E(theta_sota) = max(theta_obs). 
-# 0.9067->0.9122, 0.906 -> 0.91148, 0.9063->0.91173, 0.90615-> 0.91156
+# Have a quick look at the shrunk data
+hist(theta_shrunk, breaks=200, main = maintitle, xlab = kslab, ylab = whylab)
 
-if (option == 1){
-  theta_SOTA = max(theta_obs) # Demonstrating that max(theta_obs) is a biased estimate for theta_SOTA 0.91157
-} else if (option == 2){ # crop
-  theta_SOTA = breks[which(breks>cropped)[1]] 
-} else if (option == 3){ # crop
-  if (casava){
-    theta_SOTA = 0.9131
-  } else {
-    theta_SOTA = 0.90275 # parameter until upper limit of 95% CI = max(theta_obs) 0.90 -> 0.90870, 0.905 -> 0.91384, 0.9025 -> 0.91132, 0.903->0.91176, 0.90275 -> 0.91158
-  }
-}
+theta_SOTA = max(theta_shrunk)
+
+option = 2
+
 
 # Simulate dependency
 theta_0 = theta_SOTA # theta_0 is the probability of correct prediction for the leading classifier. adjust to E(theta_SOTA)? 
@@ -136,16 +131,16 @@ trunc_min = ((rho*rho)*theta_0/(1-theta_0))/(1+(rho*rho)*theta_0/(1-theta_0))
 print(sprintf("With an estimated SOTA of %s and a correlation coefficient of %s, the minimum value for theta_j is %.4f.",
               theta_0, rho, trunc_min))
 
-m = length(theta_obs[(theta_obs > trunc_min)]) # number of teams left
+m = length(theta_shrunk[(theta_shrunk > trunc_min)]) # number of teams left
 print(sprintf("The number of teams above the lower threshold is %s.",
               m))
 
 # Have a quick look at the truncated histograms
-trunc_dat = theta_obs[theta_obs>trunc_min]
-hist(trunc_dat, breaks=n_breks, main = c(maintitle, 'truncated'), xlab = kslab, ylab = whylab)
+trunc_dat = theta_shrunk[theta_shrunk>trunc_min]
+hist(trunc_dat, breaks=n_breks, main = c(maintitle, 'min_trunc'), xlab = kslab, ylab = whylab)
 
-# bootstrap sampling from kaggle data lower than theta_SOTA, and higher that the lower cut-off
-trunc_dat = theta_obs[(theta_obs > trunc_min)&(theta_obs <= theta_SOTA)]
+# bootstrap sampling from kaggle data higher that the lower cut-off
+trunc_dat = theta_shrunk[(theta_shrunk > trunc_min)]
 hist(trunc_dat, breaks=n_breks, main = paste(m, "theta's truncated from below and above"), 
      xlab = kslab, ylab = whylab)
 
