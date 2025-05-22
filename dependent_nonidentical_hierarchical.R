@@ -232,60 +232,89 @@ if (saving){ # plese, do not overwrite
   saveRDS(SDsota_theta_vec, file = "sd_thetamin_rho_SDsota_theta_vec.rds")
 }
 
+loading = FALSE
+
+if (loading) {
+  rho_vec <- readRDS("bias_thetamin_rho_rho_vec.rds")
+  d_vec <- readRDS("bias_thetamin_rho_d_vec.rds")
+  Esota_theta_vec <- readRDS("bias_thetamin_rho_Esota_theta_vec.rds")
+  SDsota_theta_vec <- readRDS("sd_thetamin_rho_SDsota_theta_vec.rds")
+}
+
 lgnds = c(TeX(r'($d=0$)'),TeX(r'($d=0.025$)'), TeX(r'($d=0.050$)'), 
           TeX(r'($d=0.075$)'), TeX(r'($d=0.100$)'))
 
 ############# bias_thetamin_rho ##############
 rho_vec = seq(0.0, 1.0, by=rho_step) 
 
+source("plotting_params.R")
+
 # plotting for the d's
-plot(rho_vec, Esota_theta_vec[1,],"l", lty = 1, col = "red", ylim = ylm_bias,
-     main = '', xlab = '', ylab = '')
-par(new=TRUE) 
-plot(rho_vec, Esota_theta_vec[2,],"l", lty = 1, col = "black", ylim = ylm_bias,
-     xlab = "", ylab = "")
-par(new=TRUE) 
-plot(rho_vec, Esota_theta_vec[3,],"l", lty = 5, col = "black", ylim = ylm_bias,
-     xlab = "", ylab = "")
-par(new=TRUE) 
-plot(rho_vec, Esota_theta_vec[4,],"l", lty = 4, col = "black", ylim = ylm_bias,
-     xlab = "", ylab = "")
-par(new=TRUE) 
-plot(rho_vec, Esota_theta_vec[5,],"l", lty = 3, col = "black", ylim = ylm_bias,
-     xlab = "", ylab = "")
+{
+  # new_png("bias_sd_d.png", n_figures=2)
+  new_png("bias_thetamin_rho.png", n_figures=2)
 
-# intersections correspond to table `noniid` 
-abline(v=rho, col="gray")
+  # need to adjust the margin a little 
+  margs <- par("mar")
+  margs[2] = margs[2] + .75   # expand left margin
+  margs = margs
+  par(mar=margs)
 
-title(ylab = ylab_bias, line=2, cex.lab=1.2, xlab = TeX(r'(${rho}_0$)'))
+  plot(rho_vec, Esota_theta_vec[1,],"l", lty = 1, col = "red", ylim = ylm_bias,
+       main = '', xlab = '', ylab = '')
+  lines(rho_vec, Esota_theta_vec[2,],"l", lty = 1, col = "black", 
+        ylim = ylm_bias, xlab = "", ylab = "")
+  lines(rho_vec, Esota_theta_vec[3,],"l", lty = 5, col = "black", 
+        ylim = ylm_bias, xlab = "", ylab = "")
+  lines(rho_vec, Esota_theta_vec[4,],"l", lty = 4, col = "black", 
+        ylim = ylm_bias, xlab = "", ylab = "")
+  lines(rho_vec, Esota_theta_vec[5,],"l", lty = 3, col = "black", 
+        ylim = ylm_bias, xlab = "", ylab = "")
 
-legend(0.55, 0.035, legend=lgnds, col=c("red","black","black","black","black"),
-       lty=c(1,1,5,4,3), cex=0.8)
+  # intersections correspond to table `noniid` 
+  abline(v=rho, col="gray")
+
+  title(ylab = ylab_bias, line=2, cex.lab=1.2, xlab = TeX(r'(${rho}_0$)'))
+  legend(0.65, 0.035, legend=lgnds, col=c("red","black","black","black","black"),
+         lty=c(1,1,5,4,3), cex=0.5)
+
+  dev.off()
+}
 
 ################################### sd_thetamin_rho ############################
 # repeat all, only for standard deviation
 
-plot(rho_vec, SDsota_theta_vec[1,],"l", lty = 1, col = "red", ylim = ylm_sd,
-     main = '', xlab = '', ylab = '')
-par(new=TRUE)
-plot(rho_vec, SDsota_theta_vec[2,],"l", lty = 1, col = "black", ylim = ylm_sd,
-     xlab = "", ylab = "")
-par(new=TRUE) 
-plot(rho_vec, SDsota_theta_vec[3,],"l", lty = 5, col = "black", ylim = ylm_sd,
-     xlab = "", ylab = "")
-par(new=TRUE) 
-plot(rho_vec, SDsota_theta_vec[4,],"l", lty = 4, col = "black", ylim = ylm_sd,
-     xlab = "", ylab = "")
-par(new=TRUE) 
-plot(rho_vec, SDsota_theta_vec[5,],"l", lty = 3, col = "black", ylim = ylm_sd,
-     xlab = "", ylab = "")
+{
+  new_png("sd_thetamin_rho.png", n_figures=2)
 
-abline(v=rho, col="gray")
+  # need to adjust the margin a little 
+  margs <- par("mar")
+  margs[2] = margs[2] + .75   # expand left margin
+  margs = margs
+  par(mar=margs)
+  
+  # otherwise one line is cut slightly off
+  ylm_sd[2] = 0.0055
 
-title(ylab = ylab_sd, line=2, cex.lab=1.2, xlab = TeX(r'(${rho}_0$)'))
+  plot(rho_vec, SDsota_theta_vec[1,],"l", lty = 1, col = "red", ylim = ylm_sd,
+       main = '', xlab = '', ylab = '')
+  lines(rho_vec, SDsota_theta_vec[2,],"l", lty = 1, col = "black", ylim = ylm_sd,
+       xlab = "", ylab = "")
+  lines(rho_vec, SDsota_theta_vec[3,],"l", lty = 5, col = "black", ylim = ylm_sd,
+       xlab = "", ylab = "")
+  lines(rho_vec, SDsota_theta_vec[4,],"l", lty = 4, col = "black", ylim = ylm_sd,
+       xlab = "", ylab = "")
+  lines(rho_vec, SDsota_theta_vec[5,],"l", lty = 3, col = "black", ylim = ylm_sd,
+       xlab = "", ylab = "")
 
-legend(0.55, 0.0026, legend=lgnds, col=c("red","black","black","black","black"),
-       lty=c(1,1,5,4,3), cex=0.8)
+  abline(v=rho, col="gray")
+
+  title(ylab = ylab_sd, line=2, cex.lab=1.2, xlab = TeX(r'(${rho}_0$)'))
+  legend(0.65, 0.0026, legend=lgnds, col=c("red","black","black","black","black"),
+         lty=c(1,1,5,4,3), cex=0.5)
+
+  dev.off()
+}
 
 
 
