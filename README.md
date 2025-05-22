@@ -92,13 +92,13 @@ Figure:\
 Bias of the sample maximum estimator as a function of $\min (\Theta)$ for non-identical classifiers and of $\rho_0$ for conditional independent classifiers.
 
 Consists of three subfigures\
-`bias_sd_thetamin`: generated in `nonidentical.R`\
-`bias_thetamin_rho` and `sd_thetamin_rho`: generated in `dependent_nonidentical.R`,\
+`bias_sd_thetamin`: generated in `nonidentical_hierarchical.R`\
+`bias_thetamin_rho` and `sd_thetamin_rho`: generated in `dependent_nonidentical_hierarchical.R`,\
 see the respective subsections below.
 
 ### Non-identical, independent classifiers
 
-`nonidentical.R`\
+`nonidentical_hierarchical.R`\
 calls `Parameters_PublicCompetition.R`\
 calls indep_nonid_pmf_fun.R with functions \ 
 `indep_nonid_pmf` - simulated x for non-identical, independent classifiers \
@@ -130,7 +130,7 @@ The entries for table `noniid`.
 
 ### Non-identical, dependent classifiers
 
-`dependent_nonidentical.R`\
+`dependent_nonidentical_hierarchical.R`\
 calls `Parameters_PublicCompetition.R`\
 calls `dep_nonid_pmf_fun.R`\
 calls `ProbDistr_thetaSOTA.R`
@@ -247,10 +247,10 @@ early exploration of different options, treating AUC as accuracy:\
 "CoinFlip.R" 					- A coin-flip example      \              
 "dep_nonid_pmf_fun.R" 		    	- Non-identical, dependent classifiers          \
 "dependence.R" 				            - Identical, dependent classifiers             \     
-"dependent_nonidentical.R" 		    - Non-identical, dependent classifiers       \
+"dependent_nonidentical_hierarchical.R" 		    - Non-identical, dependent classifiers       \
 "indep_nonid_pmf_fun.R" 			    - Non-identical, independent classifiers      \  
 "melanoma.R" 				              - Einar   \
-"nonidentical.R" 				          - Non-identical, independent classifiers\
+"nonidentical_hierarchical.R" 				          - Non-identical, independent classifiers\
 "Parameters_PublicCompetition.R" 	- ninety-nine\
 "plotting_params.R" 			- Einar   \
 "ProbDistr_thetaSOTA.R" 			- The probability distribution of $\hat{\theta}_{max}(X)$         \
