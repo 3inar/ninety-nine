@@ -9,6 +9,7 @@ new_png <- function(filename, n_figures=1, w=6, h=w*(9/16)) {
     w=w/2
     h=h*1.3
   } else if (n_figures==3) {
+    warning("n_figures=3 don't do anything")
   } else if (n_figures != 1) {
     stop("Won't allow more than 3 or fewer than 1 figures next to one anohter")
   }
