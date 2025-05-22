@@ -1,6 +1,6 @@
 # Multiple classifiers and biased state-of-the-art estimation
 # https://www.overleaf.com/project/63c8012bf045548a94e2d140
-# by Kajsa Møllersen (kajsa.mollersen@uit.no) May 2024 - mainly copied from SOTA_bootstrap.R
+# by Kajsa Møllersen (kajsa.mollersen@uit.no) May 2025 - copied from SOTA_bootstrap_accuracy.R
 
 # thetas - probabilities of correct prediction
 
@@ -15,6 +15,10 @@ library(plotly)
 library(binom)      # confidence interval for binomial distribution
 library(tictoc)     # for timing
 library(latex2exp)  # mathematical notation
+library(future)     # parallelisation
+library(furrr)
+
+future::plan("multisession", workers=6) # let's engage 6 out of 8 cores
 
 ###############################################################################
 ############################ Estimating $\theta_{SOTA}$ #############################
@@ -28,6 +32,12 @@ source("dep_nonid_pmf_fun.R") # for the function 'dep_nonid_pmf' - simulated pmf
 
 
 # We have two examples from Kaggle; Multi-Class Prediction of Obesity Risk and Cassava Leaf Disease Classification
+# The file SOTA_bootstrap_accuracy.R gives estimates for theta_SOTA by cropping. 
+# It turned out quite ugly, so here we do shrinking instead, after we decided on 
+# an 'intuitive' shrinking point: 1/c, where c is the number of classes. The 
+# results are, as expected, more or less the same; for cropping we had 
+# theta_SOTA=0.9063, for shrinking we have 0.9070 for Obesity
+
 
 # Figures for the manuscipt at the end
 
@@ -41,8 +51,6 @@ whylab = 'number of classifiers'
 n_breks = 175         # adjust for pleasant graphics
 step = (kslim[2]-kslim[1])/n_breks
 breks = c(kslim[1], seq(kslim[1]+step, kslim[2], step))
-
-
 
 casava = F # to distinguish the two data sets
 
@@ -68,8 +76,8 @@ head(comb_data) # have a look
 # Only interested in the private scores, i.e., the independent test set results
 dat <- data.frame(theta = comb_data$prv_score, dataset = "test")
 
-theta_obs = dat$theta 
-m_tot = length(theta_obs)
+theta_obs = dat$theta # the sample estimates (observed) probability of success
+m_tot = length(theta_obs) # total number of participating teams
 theta_obs = theta_obs[theta_obs>1/c] # exclude performance below chance
 m = length(theta_obs)
 
@@ -96,15 +104,38 @@ print(sprintf("%s teams have accuracies above the lower 95 CI.",
               teams_single95))
 
 
-# The SOTA estimation is done by shrinking the kagge observations, and then a 
-# simulation is performed with correlation. The parameters for cropping are 
+shrink = F # shrink or not
+
+
+# The SOTA estimation is done by shrinking the kaggle observations, and then a 
+# simulation is performed with correlation. The parameters for shrinking are 
 # adjusted according to the wanted outcome: either that the expected value of 
 # the maximum simulated theta is equal to the maximum kaggle theta, or that the 
 # upper limit of the 95% CI of the maximum simulated theta is equal to the 
-# maximum kaggle theta. CIs are estimated by bootstrapping
+# maximum kaggle theta. 
+# search is done with lower B and rep, and intermediate numbers are not accurate
 
 shrink_point = 1/c
-weight <- 0.99 # parameter adjusted until E(theta_sota) = max(theta_obs). 
+weight <- 0.9941 # parameter adjusted until E(theta_sota) = max(theta_obs). 
+# 0.99  -> 0.90847
+# 0.9925-> 0.91034
+# 0.9935-> 0.91109
+# 0.994 -> 0.91146
+# 0.9942-> 0.91161
+# 0.9945-> 0.91183
+# 0.995 -> 0.91220 
+
+# for upper CI:
+# weight <- 0.9896 # parameter adjusted until upper CI = max(theta_obs). 
+# 0.99  -> 0.91179
+# 0.9896-> 0.91150 
+# 0.9895-> 0.91142
+# 0.9875-> 0.90996
+# 0.9885-> 0.91069
+# 0.985 -> 0.90811
+
+# max(theta_obs) = 0.91157 # the aim
+
 theta_shrunk <- weight*theta_obs + (1-weight)*shrink_point
 
 # Have a quick look at the shrunk data
@@ -112,13 +143,12 @@ hist(theta_shrunk, breaks=200, main = maintitle, xlab = kslab, ylab = whylab)
 
 theta_SOTA = max(theta_shrunk)
 
-option = 2
-
 
 # Simulate dependency
 theta_0 = theta_SOTA # theta_0 is the probability of correct prediction for the leading classifier. adjust to E(theta_SOTA)? 
 
-# The theta_obs must be truncated with a dependency of rho, the minimum theta_j is 
+# The theta_obs must be truncated from below because of the a dependency 
+# the minimum theta_j is 
 trunc_min = ((rho*rho)*theta_0/(1-theta_0))/(1+(rho*rho)*theta_0/(1-theta_0))
 
 # the two solutions for the quadratic equation (does not influence the lower cut-off)
@@ -128,72 +158,99 @@ trunc_min = ((rho*rho)*theta_0/(1-theta_0))/(1+(rho*rho)*theta_0/(1-theta_0))
 # x1 = (-b+sqrt(b^2-4*a*c))/(2*a)
 # x2 = (-b-sqrt(b^2-4*a*c))/(2*a)
 
-print(sprintf("With an estimated SOTA of %s and a correlation coefficient of %s, the minimum value for theta_j is %.4f.",
+print(sprintf("With an estimated SOTA of %.4f and a correlation coefficient of %s, the minimum value for theta_j is %.4f.",
               theta_0, rho, trunc_min))
 
-m = length(theta_shrunk[(theta_shrunk > trunc_min)]) # number of teams left
+shrunk_dat = theta_shrunk[theta_shrunk>trunc_min]
+m = length(shrunk_dat) # number of teams left
 print(sprintf("The number of teams above the lower threshold is %s.",
-              m))
+              m)) 
 
-# Have a quick look at the truncated histograms
-trunc_dat = theta_shrunk[theta_shrunk>trunc_min]
-hist(trunc_dat, breaks=n_breks, main = c(maintitle, 'min_trunc'), xlab = kslab, ylab = whylab)
+# Have a quick look at the shrunk histograms
+hist(shrunk_dat, breaks=n_breks, main = c(maintitle, 'shrunk > min_trunc'), xlab = kslab, ylab = whylab)
 
-# bootstrap sampling from kaggle data higher that the lower cut-off
-trunc_dat = theta_shrunk[(theta_shrunk > trunc_min)]
-hist(trunc_dat, breaks=n_breks, main = paste(m, "theta's truncated from below and above"), 
-     xlab = kslab, ylab = whylab)
+rep = 1000# 0 # 10 000 number of repetitions. high number gives low variation. 
+B = 50 #1000 # number of parameter samples. high number gives stable error estimation
 
+if (B < 50){
+  samp_x = matrix(nrow = B, ncol = rep) # keep for illustration
+}
 
-rep = 10000 # 10 000 number of repetitions. high number gives low variation. 
-B = 50 #1000 # number of bootstraps. high number gives stable error estimation
+tic()
+if (shrink){
+  EVsotab <- furrr::future_map(1:B, function (x) { 
+    theta_vec = sample(x=shrunk_dat, size=m, replace=TRUE) # sample from shrunk kaggle observations
+  
+    # minimum number of wrong classifications among all classifiers, vectors of length rep
+    X = dep_nonid_pmf(n, m, rho, rep, theta_vec, theta_0 = theta_0) 
+  
+    # The bounds of the 95% confidence interval
+    sort_min_dep = sort(X$min_fail) # sort the minimum number of failures
+    lowerCI = sort_min_dep[(1-alpha/2)*rep] # find the alpha/2 lower bound
+    upperCI = sort_min_dep[(alpha/2)*rep] # find the alpha/2 upper bound
+  
+    E_SOTA = mean(X$min_fail) # The expected value
+    V_SOTA = mean(X$min_fail*X$min_fail) - mean(X$min_fail)*mean(X$min_fail) # The variance
+  
+    teamsSOTA = mean(X$teamsSOTA)
+  
+    return(cbind(lowerCI, upperCI, E_SOTA, V_SOTA, teamsSOTA))
+  
+  }, .progress=T, .options= furrr::furrr_options(seed=T))
+}else{ # not shrinking
+  theta_SOTA = max(theta_obs)
+  theta_0 = theta_SOTA
+  trunc_min = ((rho*rho)*theta_0/(1-theta_0))/(1+(rho*rho)*theta_0/(1-theta_0))
+  obs_dat = theta_obs[theta_obs>trunc_min]
+  m = length(obs_dat) # number of teams left
+  
+  EVsotab <- furrr::future_map(1:B, function (x) { 
+    theta_vec = sample(x=obs_dat, size=m, replace=TRUE) # sample from shrunk kaggle observations
+    
+    # minimum number of wrong classifications among all classifiers, vectors of length rep
+    X = dep_nonid_pmf(n, m, rho, rep, theta_vec, theta_0 = theta_0) 
+    
+    # The bounds of the 95% confidence interval
+    sort_min_dep = sort(X$min_fail) # sort the minimum number of failures
+    lowerCI = sort_min_dep[(1-alpha/2)*rep] # find the alpha/2 lower bound
+    upperCI = sort_min_dep[(alpha/2)*rep] # find the alpha/2 upper bound
+    
+    E_SOTA = mean(X$min_fail) # The expected value
+    V_SOTA = mean(X$min_fail*X$min_fail) - mean(X$min_fail)*mean(X$min_fail) # The variance
+    
+    teamsSOTA = mean(X$teamsSOTA)
+    
+    return(cbind(lowerCI, upperCI, E_SOTA, V_SOTA, teamsSOTA))
+    
+  }, .progress=T, .options= furrr::furrr_options(seed=T))
+}
 
+tid = toc()
+print(sprintf("%s repetitions, %s param samples took %s",
+              rep, B, tid))
+
+# Not very elegant with the for-loop, but that's ok for now
 lowerCI = numeric(B) # lower limit of confidence interval
 upperCI = numeric(B) # upper limit of confidence interval
-
 E_SOTA = numeric(B) # the mean (over rep) minimum number of failures among all classifiers
 V_SOTA = numeric(B) # the variance of the expected value of minimum number of failures among all classifiers
 teamsSOTA = numeric(B) # mean number of teams above SOTA
 
-if (B < 50){
-  boot_x = matrix(nrow = B, ncol = rep) # keep for bootstrap illustration
-}
-tic()
-for (b in 1:B){
-  theta_vec = sample(x=trunc_dat, size=m, replace=TRUE) # bootstrap from truncated kaggle observations
-  
-  # minimum number of wrong classifications among all classifiers, vectors of length rep
-  X = dep_nonid_pmf(n, m, rho, rep, theta_vec, theta_0 = theta_0) 
-  
-  # The bounds of the 95% confidence interval
-  sort_min_dep = sort(X$min_fail) # sort the minimum number of failures
-  lowerCI[b] = sort_min_dep[(1-alpha/2)*rep] # find the alpha/2 lower bound
-  upperCI[b] = sort_min_dep[(alpha/2)*rep] # find the alpha/2 upper bound
-  
-  E_SOTA[b] = (n-mean(X$min_fail))/n # The expected value
-  V_SOTA[b] = mean(X$min_fail*X$min_fail) - mean(X$min_fail)*mean(X$min_fail) # The variance
-  
-  teamsSOTA[b] = mean(X$teamsSOTA)
-  
-  if (B<50){
-    boot_x[b,] = X$min_fail  
-  }
-  print(b)
-  
+for (b in 1:B){ 
+  lowerCI[b] = EVsotab[[b]][1]
+  upperCI[b] = EVsotab[[b]][2]
+  E_SOTA[b] = EVsotab[[b]][3]
+  V_SOTA[b] = EVsotab[[b]][4]
+  teamsSOTA[b] = EVsotab[[b]][5]
 }
 
 if (B>1){
-  hist(V_SOTA)
+  hist(sqrt(V_SOTA)/n)
 }
-
-
-tid = toc()
-print(sprintf("%s repetitions, %s bootstraps took %s",
-              rep, B, tid))
 
 # Expected value and the standard deviation
 print(sprintf("The expected value of max(theta_obs) is %.5f. The standard deviations is %.5f. From the expected variance: %.5f", 
-              mean(E_SOTA), sqrt(mean(V_SOTA)+var(E_SOTA)), sqrt(mean(V_SOTA))))
+              (n-mean(E_SOTA))/n, sqrt(mean(V_SOTA)+var(E_SOTA))/n, sqrt(mean(V_SOTA))/n))
 
 # print(sprintf("The mean number of simulated teams have accuracies above the true sota, %s, is %.1f.", theta_SOTA, mean(teamsSOTA)))
 teamSOTA = length(theta_obs[theta_obs > theta_SOTA])
@@ -205,7 +262,7 @@ mean_lowerCI = mean(lowerCI)
 mean_upperCI = mean(upperCI)
 V_CI = mean(upperCI*upperCI) - mean_upperCI*mean_upperCI
 
-print(sprintf("The mean bootstrapped simulated %s confidence interval is (%.5f,%.5f) with %s repetitions and %s bootstraps. The standard deviation of the upper CI is %.7f  %.7f",  
+print(sprintf("The mean simulated %s confidence interval is (%.5f,%.5f) with %s repetitions and %s param samples. The standard deviation of the upper CI is %.7f  %.7f",  
               1-alpha, (n-mean_lowerCI)/n, (n-mean_upperCI)/n, rep, B,  sqrt(V_CI)/n, sqrt(var(upperCI))/n))
 teams95CI = length(theta_obs[theta_obs > ((n-mean_lowerCI)/n)])
 print(sprintf("%s teams have accuracies above the lower 95 CI.", 
@@ -213,27 +270,20 @@ print(sprintf("%s teams have accuracies above the lower 95 CI.",
 
 
 # the distribution of SOTA
+theta_vec = sample(x=shrunk_dat, size=m, replace=TRUE) # bootstrap from truncated kaggle observations
+# minimum number of wrong classifications among all classifiers, vectors of length rep
+X = dep_nonid_pmf(n, m, rho, rep, theta_vec, theta_0 = theta_0) 
 hist((n-X$min_fail)/n, breaks = 30, xlim=c((n-mean_lowerCI)/n-0.01, (n-mean_upperCI)/n+0.01), 
-     freq = F, main = 'max accuracies one bootstrap')
-if (B<50){
-  boot_x = as.vector(boot_x)
-  hist((n-boot_x)/n, breaks = 50, xlim=c((n-mean_lowerCI)/n-0.01, (n-mean_upperCI)/n+0.01), freq = F, main = paste('max accuracies', B,'bootstraps'))
-}
-# checking if this corresponds to mean CI
-sort_min_dep = sort((n-boot_x[-1])/n)
-lowerCIboot = sort_min_dep[(1-alpha/2)*rep*B] # find the alpha/2 lower bound
-upperCIboot = sort_min_dep[(alpha/2)*rep*B] # find the alpha/2 upper bound
-# it does
+     freq = F, main = 'max accuracies one param sample')
+
 
 ################################################################################
 ####################### Figures ################################################
 ################################################################################
 
-if (option == 1){
-  
-  theta_SOTA = max(theta_obs)
-  theta_0 = theta_SOTA 
-  trunc_min = ((rho*rho)*theta_0/(1-theta_0))/(1+(rho*rho)*theta_0/(1-theta_0))
+
+
+if (shrink == F){
   
   ##################### obesity_kaggle / casava_kaggle ##################################
   
@@ -261,13 +311,13 @@ if (option == 1){
   
   ############ obesity_direct_bootstrap / casava_direct_bootstrap ###############
   
-  # Bootstrapping from the rho-truncated data, once to show a histogram
+  # Sampling from the rho-truncated data, once to show a histogram
   trunc_dat = theta_obs[theta_obs>trunc_min]
   theta_vec = sample(x=trunc_dat, size=m, replace=TRUE) # bootstrap from truncated kaggle observations
   
   # minimum number of wrong classifications among all classifiers, vectors of length rep
   tic()
-  X = dep_nonid_pmf(n, m, rho, rep, theta_vec, theta_0 = theta_0) # one realisation
+  X = dep_nonid_pmf(n, m, rho, rep, theta_vec, theta_0 = theta_SOTA) # one realisation
   toc() # 110 sec for rep = 100,000
   
   theta_real = (n-X$x_fail)/n
@@ -285,7 +335,7 @@ if (option == 1){
        col="blue", xlab = '', ylab = '', xlim = kslim, ylim = whylim, axes=F)
   
   par(new=TRUE) # dottet vertical line for expected value
-  plot(c(mean(E_SOTA), mean(E_SOTA)), c(0,max(whylim)),"l", lty = 5, col="blue", xlab = '', ylab = '', 
+  plot(c((n-mean(E_SOTA))/n, (n-mean(E_SOTA))/n), c(0,max(whylim)),"l", lty = 5, col="blue", xlab = '', ylab = '', 
        xlim = kslim, ylim = whylim, axes=F)
   
   par(new=TRUE) # dottet vertical line for theta_SOTA
@@ -296,20 +346,21 @@ if (option == 1){
   # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # # # # # # # #
 }
 
-if (option ==2){
+if (shrink==T){
   
-  theta_SOTA = breks[which(breks>cropped)[1]] 
-  theta_0 = theta_SOTA 
-  # The theta_obs must be truncated with a dependency of rho, the minimum theta_j is 
-  trunc_min = ((rho*rho)*theta_0/(1-theta_0))/(1+(rho*rho)*theta_0/(1-theta_0))
-  trunc_dat = theta_obs[(theta_obs > trunc_min)&(theta_obs <= theta_SOTA)]
+  ##################### obesity_shrunk_for_expect ##################################
+  hist(theta_obs[theta_obs>kslim[1]], breaks=breks, freq = T,
+       main = '', xlab = '',  ylab = '', xlim = kslim, ylim = whylim, 
+       col = "lightgray", border = "lightgray")
   
-  ##################### obesity_cropped_for_expect ##################################
-  hist(theta_obs[(theta_obs>kslim[1])&(theta_obs<=theta_SOTA)], breaks=breks[breks<=theta_SOTA], freq = T,
-       main = "", xlab = "", ylab = "", xlim = kslim, ylim = whylim, col = "gray20", border = "gray20")
+  
+  #hist(theta_obs[(theta_obs>kslim[1])&(theta_obs<=theta_SOTA)], breaks=breks[breks<=theta_SOTA], freq = T,
+  #     main = "", xlab = "", ylab = "", xlim = kslim, ylim = whylim, col = "gray20", border = "gray20")
   par(new = T)
-  hist(theta_obs[(theta_obs>theta_SOTA)], breaks=breks[breks>=theta_SOTA], freq = T,
-       main = '', xlab = "", ylab = "", xlim = kslim, ylim = whylim, col = "gray50", border = "gray50")
+  
+  hist(theta_shrunk[theta_shrunk>kslim[1]], breaks=breks, freq = T,
+       main = '', xlab = "", ylab = "", xlim = kslim, ylim = whylim, 
+       col = "gray20", border = "gray20")
   
   par(new=TRUE) # dottet vertical line for theta_SOTA
   plot(c(theta_SOTA, theta_SOTA), c(0,max(whylim)),"l", lty = 5, col="green", xlab = '', ylab = '', 
@@ -320,10 +371,11 @@ if (option ==2){
   ##################### end figure ########################################
   
   
-  ######################## obesity_cropped_for_expect_realisation #######################
+  ######################## obesity_shrunk_for_expect_realisation #######################
   
-  # Bootstrapping from the theta-truncated data, once to show a histogram
-  theta_vec = sample(x=trunc_dat, size=m, replace=TRUE) # bootstrap from truncated kaggle observations
+  # Sampling from the shrunk data, once to show a histogram
+  
+  theta_vec = sample(x=shrunk_dat, size=m, replace=TRUE) # bootstrap from shrunk kaggle observations
   
   # minimum number of wrong classifications among all classifiers, vectors of length rep
   tic()
@@ -346,7 +398,7 @@ if (option ==2){
        col="red", xlab = '', ylab = '', xlim = kslim, ylim = whylim, axes=F)
   
   par(new=TRUE) # dottet vertical line for expected value
-  plot(c(mean(E_SOTA), mean(E_SOTA)), c(0,max(whylim)),"l", lty = 5, col="magenta", xlab = '', ylab = '', 
+  plot(c((n-mean(E_SOTA))/n,(n-mean(E_SOTA))/n), c(0,max(whylim)),"l", lty = 5, col="magenta", xlab = '', ylab = '', 
        xlim = kslim, ylim = whylim, axes=F)
   
   par(new=TRUE) # dottet vertical line for theta_SOTA
