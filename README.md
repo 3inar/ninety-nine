@@ -115,10 +115,7 @@ Figures:
 `noniid_pmf`: *Pmf for non-identical classifiers*\
 Corresponds to figures `cumul_fail` and `pdf_fail` in `PublicCompetition.R`, 
 section *A simulated public competition example*\
-
-**TODO for Kajsa: the description below isn't right**
-
-`bias_sd_d`: Bias and standard deviation as a function of $\min (\Theta)$,
+`bias_sd_d`: Bias and standard deviation as a function of $d = b-a$ in $\mathcal{U}(a,b)$,
 subfigure for `bias_sd_thetamin_rho`
 
 ### Identical, dependent classifiers
