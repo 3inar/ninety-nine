@@ -83,7 +83,7 @@ Consists of six subfigures\
 There are optional simulations at the end that confirms that the functions are correct. 
 
 
-## Dependency and non-identical $\theta$s
+## Non-identical $\theta$s and classifier dependency
 
 The entries for table `noniid` are found under their respective subsections.
 
