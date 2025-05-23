@@ -141,9 +141,9 @@ The entries for table `noniid`.
 
 Figures:
 
-`bias_thetamin_rho`: Bias as a function of $\rho$ for various $\min (\Theta)$,
+`bias_thetamin_rho`: Bias as a function of $\rho$ for various $d = b-a$ in $\mathcal{U}(a,b)$,
 subfigure for `bias_sd_thetamin_rho`\
-`sd_thetamin_rho`: Standard deviation as a function of $\rho$ for various $\min (\Theta)$,
+`sd_thetamin_rho`: Standard deviation as a function of $\rho$ for various $d = b-a$ in $\mathcal{U}(a,b)$,
 subfigure for `bias_sd_thetamin_rho`\
 
 
