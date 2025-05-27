@@ -72,6 +72,8 @@ source("indep_nonid_pmf_fun.R") # for the functions
 # nonid_pmf - analytical pmf
 # nonid_cdf - analytical cdf, Fz = numeric(n+1)
 
+source("plotting_params.R")  # for the f'n new_png
+
 # theta_vec is sampled from uni(theta_min,theta_max)
 theta_max = theta_SOTA + d/(m+1)
 theta_min = theta_max - d
@@ -332,18 +334,36 @@ saveRDS(d_vec, file = "bias_sd_d_d_vec.rds")
 saveRDS(Bias_theta_vec, file = "bias_sd_d_Bias_theta_vec.rds")
 saveRDS(SD_theta_vec, file = "bias_sd_d_SD_theta_vec.rds")
 
-cols = c("black","darkgreen")
-plot(d_vec, Bias_theta_vec,"l", lty = "solid", col = cols[1], 
-     ylim = ylm_bias, xlab = "", ylab = "")
-par(new=TRUE)
-plot(d_vec, SD_theta_vec,"l", lty = "solid", col = cols[2], 
-     ylim = ylm_sd,  xlab = "", ylab = "", axes = FALSE)
-axis(4)
+#
+d_vec <- readRDS("bias_sd_d_d_vec.rds")
+Bias_theta_vec <- readRDS("bias_sd_d_Bias_theta_vec.rds")
+SD_theta_vec <- readRDS("bias_sd_d_SD_theta_vec.rds")
 
-abline(v=0.025, col="gray")
-abline(v=0.05, col="gray",lty = 5)
-abline(v=0.075, col="gray",lty = 4)
-abline(v=0.1, col="gray",lty = 3)
+{
+  new_png("bias_sd_d.png", n_figures=2)
 
-title(main = "", xlab = TeX(r'($d = b-a$)'), ylab = "", line = 2, cex.lab=1.2)
-legend(0.125, 0.005, legend=c(ylab_bias,ylab_sd), col=cols, lty=c(1,1), cex=0.8)
+  # need to adjust the margin a little 
+  margs <- par("mar")
+  margs[2] = margs[2] - .75   # contract left margin
+  margs[4] = margs[4] + 1.5   # expand right margin
+  margs = margs
+  par(mar=margs)
+
+  cols = c("black","red")
+  plot(d_vec, Bias_theta_vec,"l", lty = "solid", col = cols[1], 
+       ylim = ylm_bias, xlab = "", ylab = "")
+  par(new=TRUE)
+  plot(d_vec, SD_theta_vec,"l", lty = "solid", col = cols[2], 
+       ylim = ylm_sd,  xlab = "", ylab = "", axes = FALSE)
+  axis(4, col=cols[2])
+
+  abline(v=0.025, col="gray")
+  abline(v=0.05, col="gray",lty = 5)
+  abline(v=0.075, col="gray",lty = 4)
+  abline(v=0.1, col="gray",lty = 3)
+
+  title(main = "", xlab = TeX(r'($d = b-a$)'), ylab = "", line = 2)
+  legend(0.183, 0.0052, legend=c(ylab_bias,ylab_sd), col=cols, lty=c(1,1), cex=0.65, bty="n")
+  
+  dev.off()
+}
