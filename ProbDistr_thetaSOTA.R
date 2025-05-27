@@ -48,10 +48,10 @@
 # SOTA - state-of-the-art
 
 ###############################################################################
-########### 3.3 The probability distribution of p_SOTA ########################
+##### 3.3 The probability distribution of \hat{\theta}_{\max}(\mathbf{X}) #####
 ###############################################################################
 
-################################# Cumulative distribution function SOTA ############################################
+#### Cumulative distribution function SOTA ############################################
 
 # Z is the most failures in at least one classifier.
 # If Z <= z in at least one classifier, then \hat{\theta}_j = (n-x_j)/n >= (n-z)/n,
