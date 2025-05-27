@@ -197,10 +197,12 @@ table
 ################################### Figures ##################################################
 ##############################################################################################
 
+source("plotting_params.R")
+
 ################################### Figure multi_ci ##########################################
 # The pmfs of two single $\hat{\theta}(X)$ compared to $\hat{\theta}_{\max}$ statistics#######
 
-Esota = expect(n, theta, m) # updating the value
+Esota = expect(n, theta_SOTA, m) # updating the value
 
 # let k be the number of successes = n-x
 k = (mu-60):(mu+90) # this is the plot range, adjust to your liking
@@ -208,49 +210,76 @@ kslim = c(k[1],k[length(k)])
 whylim = c(0,0.03)
 
 # the pmf of $hat theta (X)$ with \theta = \theta
-y = dbinom(k, n, theta) # probability of x successes in n trials
-plot(k, y, type='l', col = "blue", xlab = '', ylab = '', xlim = kslim, ylim = whylim, axes=F)
 
-# the confidence interval of $hat theta (x) = \theta$ with bars
-par(new=TRUE) 
-plot(c(ci_binom[["lower"]]*n, ci_binom[["upper"]]*n), c( -0.0005,-0.0005), "l", col = "blue",  xlab = '', ylab = '', 
-     xlim = kslim, ylim = whylim, axes=F)
-par(new=TRUE) 
-plot(c(ci_binom[["lower"]]*n, ci_binom[["lower"]]*n), c(-0.002,0.001),"l", col="blue", xlab = '', ylab = '', 
-     xlim = kslim, ylim = whylim, axes=F)
-par(new=TRUE) 
-plot(c(ci_binom[["upper"]]*n, ci_binom[["upper"]]*n), c(-0.002,0.001),"l", col="blue", xlab = '', ylab = '', 
-     xlim = kslim, ylim = whylim, axes=F)
+{
+  new_png("multi_ci.png", n_figures=1)
 
-# dottet vertical line for \theta
-par(new=TRUE)
-plot(c(theta*n, theta*n), c(0,max(y)),"l", lty = 5, col=rgb(0, 0, 1,0.25), xlab = '', ylab = '', 
-     xlim = kslim, ylim = whylim, axes=F)
+  mars <- par()$mar
+  mars[2] <- mars[2] - 1 # shrinks margin a litte, nothing there anyway
+  mars[1] <- mars[1] + .25  # need some room for the long labels
+  par(mar=mars)
 
-# the pmf of $hat theta (X)$ with \theta = upper CI
-par(new=TRUE) 
-y = dbinom(k, n, ci_binom[["upper"]]) # significantly better classifier
-plot(k, y, type = 'l', col = "red", xlab = '', ylab = '', axes=F, xlim = kslim, ylim = whylim)
+  y = dbinom(k, n, theta_SOTA) # probability of x successes in n trials
+  plot(k, y, type='l', col = "blue", xlab = '', ylab = '', xlim = kslim, ylim =
+       whylim, axes=F)
 
-# dottet vertical line for \theta
-par(new=TRUE) # 
-plot(c(ci_binom[["upper"]]*n, ci_binom[["upper"]]*n), c(0,max(y)),"l", lty = 5, col=rgb(1, 0, 0,0.25), xlab = '', ylab = '', 
-     xlim = kslim, ylim = whylim, axes=F)
+  # the confidence interval of $hat theta (x) = \theta$ with bars
+  par(new=TRUE) 
+  plot(c(ci_binom[["lower"]]*n, ci_binom[["upper"]]*n), c( -0.0005,-0.0005),
+       "l", col = "blue",  xlab = '', ylab = '', xlim = kslim, ylim = whylim,
+       axes=F)
 
-# area under curve for expected SOTA performance
-polygon(c(n-Esota, k[k>=n-Esota], max(k)), c(0,y[k>=n-Esota], 0), col=rgb(0, 1, 0,0.25)) 
+  par(new=TRUE) 
+  plot(c(ci_binom[["lower"]]*n, ci_binom[["lower"]]*n), c(-0.002,0.001),"l",
+       col="blue", xlab = '', ylab = '', xlim = kslim, ylim = whylim, axes=F)
 
-# area under curve for SOTA performance
-k_alpha2 = n-x_alpha2
-polygon(c(k_alpha2, k[k>=k_alpha2], max(k)), c(0,y[k>=k_alpha2], 0), col=rgb(0, 1, 0,0.25)) 
+  par(new=TRUE) 
+  plot(c(ci_binom[["upper"]]*n, ci_binom[["upper"]]*n), c(-0.002,0.001),"l",
+       col="blue", xlab = '', ylab = '', xlim = kslim, ylim = whylim, axes=F)
 
-# axis, ticks and labels
-axis(1 , cex.axis=1.2, las = 2, at=c(kslim[1],ci_binom[["lower"]]*n, n*theta, 
-                       ci_binom[["upper"]]*n, n-Esota, k_alpha2,kslim[2]), 
-     labels=c('',TeX('$\\theta_{alpha/2}$'), TeX('$\\theta$'), TeX('$\\theta_{1-alpha/2}$'), 
-              TeX(r'($E \hat{\theta}_{max}$)'), TeX('$\\theta^m_{1-alpha/2}$'),''))
+  # dottet vertical line for \theta
+  par(new=TRUE)
+  plot(c(theta_SOTA*n, theta_SOTA*n), c(0,max(y)),"l", lty = 5,
+       col=rgb(0,0,1,0.25), xlab = '', ylab = '', xlim = kslim, ylim = whylim,
+       axes=F)
 
-title(ylab = '', line=2, cex.lab=1.2, xlab = '')
+  # the pmf of $hat theta (X)$ with \theta = upper CI
+  par(new=TRUE) 
+  y = dbinom(k, n, ci_binom[["upper"]]) # significantly better classifier
+  plot(k, y, type = 'l', col = "red", xlab = '', ylab = '', axes=F, xlim =
+       kslim, ylim = whylim)
+
+  # dottet vertical line for \theta
+  par(new=TRUE) # 
+  plot(c(ci_binom[["upper"]]*n, ci_binom[["upper"]]*n), c(0,max(y)),"l", lty =
+       5, col=rgb(1, 0, 0,0.25), xlab = '', ylab = '', xlim = kslim, ylim =
+       whylim, axes=F)
+
+  # area under curve for expected SOTA performance
+  polygon(c(n-Esota, k[k>=n-Esota], max(k)), c(0,y[k>=n-Esota], 0),
+          col=rgb(0,1,0,0.25)) 
+
+  # area under curve for SOTA performance
+  k_alpha2 = n-x_alpha2 
+  polygon(c(k_alpha2, k[k>=k_alpha2], max(k)),
+                                c(0,y[k>=k_alpha2], 0), col=rgb(0,1,0,0.25)) 
+
+  # axis, ticks and labels
+  axis(1, las = 3, at = c(kslim[1], ci_binom[["lower"]] * n,
+                        n * theta_SOTA, ci_binom[["upper"]] * n,
+                        n - Esota, k_alpha2, kslim[2]),
+     labels = FALSE) 
+
+  mtext(c('', TeX('$\\theta_{alpha/2}$'), TeX('$\\theta$'),
+        TeX('$\\theta_{1-alpha/2}$'), TeX(r'($E \hat{\theta}_{max}$)'),
+        TeX('$\\theta^m_{1-alpha/2}$'), ''),
+      side = 1, at = c(kslim[1], ci_binom[["lower"]] * n,
+                       n * theta_SOTA, ci_binom[["upper"]] * n,
+                       n - Esota, k_alpha2, kslim[2]),
+      line = 1, las = 2) # Adjust 'line' to move labels up or down
+
+  dev.off()
+}
 # # # # # # # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 ################################### Figure cumul_fail ##########################################################
