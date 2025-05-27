@@ -157,7 +157,7 @@ blah
 
 #### Multi-Class Prediction of Obesity Risk
 
-`SOTA_bootstrap_accuracy.R`\
+`SOTA_accuracy_shrink.R`\
 calls `Parameters_PublicCompetition.R`\
 calls `dep_nonid_pmf_fun.R`
 
