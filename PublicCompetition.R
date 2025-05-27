@@ -35,8 +35,9 @@ library(latex2exp)  # mathematical notation
 # SOTA - state-of-the-art
 
 
-# comes with the functions 'cdf', 'pmf', 'expect' and 'variance'
+
 source("ProbDistr_thetaSOTA.R") 
+# for functions 'cdf', 'pmf', 'expect' and 'variance'
 
 # figures at the end
 
