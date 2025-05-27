@@ -251,7 +251,6 @@ source("plotting_params.R")
 
 # plotting for the d's
 {
-  # new_png("bias_sd_d.png", n_figures=2)
   new_png("bias_thetamin_rho.png", n_figures=2)
 
   # need to adjust the margin a little 
@@ -275,8 +274,8 @@ source("plotting_params.R")
   abline(v=rho, col="gray")
 
   title(ylab = ylab_bias, line=2, cex.lab=1.2, xlab = TeX(r'(${rho}_0$)'))
-  legend(0.65, 0.035, legend=lgnds, col=c("red","black","black","black","black"),
-         lty=c(1,1,5,4,3), cex=0.5)
+  legend(0.61, 0.037, legend=lgnds, col=c("red","black","black","black","black"),
+         lty=c(1,1,5,4,3), cex=0.6, bty="n")
 
   dev.off()
 }
@@ -293,9 +292,6 @@ source("plotting_params.R")
   margs = margs
   par(mar=margs)
   
-  # otherwise one line is cut slightly off
-  ylm_sd[2] = 0.0055
-
   plot(rho_vec, SDsota_theta_vec[1,],"l", lty = 1, col = "red", ylim = ylm_sd,
        main = '', xlab = '', ylab = '')
   lines(rho_vec, SDsota_theta_vec[2,],"l", lty = 1, col = "black", ylim = ylm_sd,
@@ -310,8 +306,8 @@ source("plotting_params.R")
   abline(v=rho, col="gray")
 
   title(ylab = ylab_sd, line=2, cex.lab=1.2, xlab = TeX(r'(${rho}_0$)'))
-  legend(0.65, 0.0026, legend=lgnds, col=c("red","black","black","black","black"),
-         lty=c(1,1,5,4,3), cex=0.5)
+  legend(0.61, 0.0026, legend=lgnds, col=c("red","black","black","black","black"),
+         lty=c(1,1,5,4,3), cex=0.6, bty="n")
 
   dev.off()
 }
