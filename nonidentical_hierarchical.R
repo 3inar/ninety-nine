@@ -327,7 +327,7 @@ for (j in 1:length(d_vec)){
 }
 
 # saving
-# naming convention: fig name_vector_name
+# naming convention: fig_name_vector_name
 saveRDS(d_vec, file = "bias_sd_d_d_vec.rds")
 saveRDS(Bias_theta_vec, file = "bias_sd_d_Bias_theta_vec.rds")
 saveRDS(SD_theta_vec, file = "bias_sd_d_SD_theta_vec.rds")
