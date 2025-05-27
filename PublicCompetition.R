@@ -58,13 +58,13 @@ source("Parameters_PublicCompetition.R") # n, theta, m, alpha, mu = n*theta, rep
 ci_binom = binom.confint(mu,n,conf.level=1-alpha, methods = "exact") # CI for binomial
 
 sprintf("The %s confidence interval for an estimated accuracy of %s is (%.4f,%.4f).",  
-        (1-alpha)*100, theta, ci_binom["lower"], ci_binom["upper"])
+        (1-alpha)*100, theta_SOTA, ci_binom["lower"], ci_binom["upper"])
 
 # # # # # # # # # # # # # # # # # Check-up # # # # # # # # # # # # # # # # # # # # # # # 
 # The probability of exceeding the upper limit of the CI should be close to alpha/2 = 0.025 
 k_up = floor(ci_binom[["upper"]]*n) # number of successes exceeding the CI
 # flooring the CI bound, so P_up > alpha/2
-P_up = pbinom(k_up,n,theta, lower.tail = F) # P[X>x]
+P_up = pbinom(k_up,n,theta_SOTA, lower.tail = F) # P[X>x]
 # # # # # # # # # # # # # # # # # P_up = 0.02619 OK # # # # # # # # # # # # # # # # # # # # # # # 
 
 # If there are $m=1,000$ teams, each with a classifier with $\theta$, what is
@@ -108,13 +108,13 @@ P = 1-pbinom(Cx-1,m,Px) # should be 0.025
 
 #"The quantile is defined as the smallest value x such that F(x)≥Px, where F is the distribution function."
 
-x_alpha2 = qbinom(Px, n, 1-theta) 
+x_alpha2 = qbinom(Px, n, 1-theta_SOTA) 
 theta_alpha2 = (n-x_alpha2)/n
 sprintf("With a probablitiy of alpha/2 = %s, at least %s team will achieve an accuracy of at least %.4f, corresponding to x = %s failures.",
         alpha/2, Cx, theta_alpha2, x_alpha2)
 
 # # # # # # # # # # # # # # # # # check-up # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-Fz = cdf(n,theta,m) # the cdf
+Fz = cdf(n,theta_SOTA,m) # the cdf
 x = which(Fz>alpha/2)[1]-1 # should be same as x_alpha2 = 236
 # # # # # # # # # # # # # # # # # ok # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -122,18 +122,18 @@ x = which(Fz>alpha/2)[1]-1 # should be same as x_alpha2 = 236
 # Since x_alpha2 is discreet, but Px is not, we'll calculate for x_alpha2 and x_alpha2-1, 
 # and then the two results should be on each side of alpha/2
 
-Palpha2_discr = pbinom(x_alpha2-1,n,1-theta) # 
+Palpha2_discr = pbinom(x_alpha2-1,n,1-theta_SOTA) # 
 P_low = 1-pbinom(Cx-1,m,Palpha2_discr) #
 
-Palpha2_discr = pbinom(x_alpha2,n,1-theta) # 
+Palpha2_discr = pbinom(x_alpha2,n,1-theta_SOTA) # 
 P_up = 1-pbinom(Cx-1,m,Palpha2_discr) #
 # # # # # # # # # # # # # # # # # ok 0.02475 0.03243# # # # # # # # # # # # # # # # # # # # # # # 
 
 sprintf("In summary, if there are %s teams, each with %s probability of correct prediction, and a test set of size %s, there is a probability of %s that at least %s team will have at most %s incorrect predictions, corresponding to an estimated accuracy of %.4f.",  
-        m, theta, n, alpha/2, Cx, x_alpha2, theta_alpha2)
+        m, theta_SOTA, n, alpha/2, Cx, x_alpha2, theta_alpha2)
 
 # Expected value
-Esota = expect(n,theta,m)
+Esota = expect(n,theta_SOTA,m)
 Esota_theta = 1-Esota/n
 sprintf("The expected value is %.4f",
         Esota_theta)
@@ -255,7 +255,7 @@ title(ylab = '', line=2, cex.lab=1.2, xlab = '')
 
 ################################### Figure cumul_fail ##########################################################
 
-Fz = cdf(n,theta,m) # updating the value
+Fz = cdf(n,theta_SOTA,m) # updating the value
 
 # Plotting the cfd
 plot(0:n,Fz, type = 'l', xlab = 'number of failures', 
@@ -280,7 +280,7 @@ title(main = list(TeX(r'($z$)'), cex = 1.2,
 
 ################################### Figure pmf_fail ###################################################
 
-fz = pmf(n,theta,m,f0 = T) # updating the value
+fz = pmf(n,theta_SOTA,m,f0 = T) # updating the value
 
 # Plotting the pmf
 plot(0:n,fz, type = 's')
@@ -347,10 +347,10 @@ param = 2
 
 for (k in 2:3){
   for (i in 1:length(m_x)){
-  Esota =  expect(n_vec[k], theta, m_x[i])
-  Esota_theta_vec[i] = (1-Esota/n_vec[k]) - theta
+  Esota =  expect(n_vec[k], theta_SOTA, m_x[i])
+  Esota_theta_vec[i] = (1-Esota/n_vec[k]) - theta_SOTA
   
-  Vsota =  variance(n_vec[k], theta, m_x[i])
+  Vsota =  variance(n_vec[k], theta_SOTA, m_x[i])
   SDsota_theta_vec[i] = sqrt(Vsota)/n_vec[k]
   }
   
@@ -413,10 +413,10 @@ n_x = seq(1000, 10000, by=10) # n is on the x-axis
 Esota_theta_vec = numeric(length(n_x)) # pre-allocate for bias
 SDsota_theta_vec = numeric(length(n_x)) # for standard deviation
 for (i in 1:length(n_x)){
-  Esota =  expect(n_x[i], theta, m)
-  Esota_theta_vec[i] = (1-Esota/n_x[i]) - theta
+  Esota =  expect(n_x[i], theta_SOTA, m)
+  Esota_theta_vec[i] = (1-Esota/n_x[i]) - theta_SOTA
   
-  Vsota = variance(n_x[i], theta, m)
+  Vsota = variance(n_x[i], theta_SOTA, m)
   SDsota_theta_vec[i] = sqrt(Vsota)/n_x[i]
 }
 
@@ -437,10 +437,10 @@ param = 1
 
 for (k in 2:3){
   for (i in 1:length(n_x)){
-    Esota =  expect(n_x[i], theta, m_vec[k])
-    Esota_theta_vec[i] = (1-Esota/n_x[i]) - theta
+    Esota =  expect(n_x[i], theta_SOTA, m_vec[k])
+    Esota_theta_vec[i] = (1-Esota/n_x[i]) - theta_SOTA
     
-    Vsota =  variance(n_x[i], theta, m_vec[k])
+    Vsota =  variance(n_x[i], theta_SOTA, m_vec[k])
     SDsota_theta_vec[i] = sqrt(Vsota)/n_x[i]
   }
   if (bias){
@@ -517,12 +517,12 @@ if (bias){
 #x11()
 plot(theta_x, Esota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm_bias,
      xlab = "", ylab ="")
-abline(v=theta, col="gray") #intersection corresponding to upper row in table
+abline(v=theta_SOTA, col="gray") #intersection corresponding to upper row in table
 } else {
 #x11()
 plot(theta_x, SDsota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm_sd,
      xlab = "", ylab ="")
-abline(v=theta, col="gray") # intersection corresponding to upper row in table
+abline(v=theta_SOTA, col="gray") # intersection corresponding to upper row in table
 }
 ########### param = n
 param = 2
@@ -611,7 +611,7 @@ sprintf('Simulate the multiplicity adjusted upper limit of the (1-alpha) confide
         x_alpha2)
 
 # Draw at random the number of failures in $m$ independent experiments, each having $n$ trials and probability $theta$
-x_vec = rbinom(m, n, 1-theta)
+x_vec = rbinom(m, n, 1-theta_SOTA)
 
 # Have a quick look
 hist(x_vec, xlab = mean(x_vec))
@@ -622,7 +622,7 @@ fz_sim = numeric(n+1)
 tic()
 for (ell in 1: rep){
   fz_rep = numeric(n+1) # clear this for each repetition
-  x_vec = rbinom(m, n, 1-theta) # the number of failures in each of the m classifiers
+  x_vec = rbinom(m, n, 1-theta_SOTA) # the number of failures in each of the m classifiers
   
   # Here, we want to find out for how many repetitions did at least one classifier have i failures, 
   # but none had fewer than i failures
@@ -648,10 +648,10 @@ plot(z,fz_sim[z], type = 'h', xlab = 'number of failures/accuracy',
      ylab = 'f(z)')
 
 # Let's see if these add up
-Palpha2_discr = pbinom(x_alpha2-1,n,1-theta) # 
+Palpha2_discr = pbinom(x_alpha2-1,n,1-theta_SOTA) # 
 P_low = 1-pbinom(Cx-1,m,Palpha2_discr) #
 
-Palpha2_discr = pbinom(x_alpha2,n,1-theta) # 
+Palpha2_discr = pbinom(x_alpha2,n,1-theta_SOTA) # 
 P_up = 1-pbinom(Cx-1,m,Palpha2_discr) #
 print(c(P_low,P_up))
 
@@ -671,7 +671,7 @@ for (z in 0:n){
 Esota_s = sum(Eterm)
 Esota_sim = 1-Esota_s/n
 
-Esota = expect(n, theta, m)
+Esota = expect(n, theta_SOTA, m)
 Esota_theta = 1-Esota/n
 
 print(c(Esota_sim,Esota_theta))
@@ -687,7 +687,7 @@ esquare = sum(vterm)
 
 Vsota_sim = esquare - Esota_s^2
 
-Vsota = variance(n, theta, m)
+Vsota = variance(n, theta_SOTA, m)
 
 print(c(Vsota_sim,Vsota))
 print(c(sqrt(Vsota_sim)/n, sqrt(Vsota)/n))
@@ -708,7 +708,7 @@ Fz_sim = numeric(n+1)
 tic()
 for (ell in 1: rep){
   Fz_rep = numeric(n+1)
-  x_vec = rbinom(m, n, 1-theta) # the number of failures in each of the m classifiers
+  x_vec = rbinom(m, n, 1-theta_SOTA) # the number of failures in each of the m classifiers
   
   # Here, we want to find out for how many repetitions did at least one classifier have i or fewer failures, 
   
