@@ -44,9 +44,9 @@ source("dep_nonid_pmf_fun.R") # for the function 'dep_nonid_pmf' - simulated pmf
 # Figure settings - these might need to be adjusted manually
 kslim = c(0.88, 0.92)
 whylim = c(0,120)
-kslab = TeX(r'($\theta'$)')
-simlab = TeX(r'($\hat{\theta}'$)')
-whylab = 'number of classifiers'
+kslab = TeX(r'($\theta$)')
+# simlab = TeX(r'($\hat{\theta}'$)')
+whylab = '          m'
 
 n_breks = 175         # adjust for pleasant graphics
 step = (kslim[2]-kslim[1])/n_breks
@@ -80,6 +80,7 @@ theta_obs = dat$theta # the sample estimates (observed) probability of success
 m_tot = length(theta_obs) # total number of participating teams
 theta_obs = theta_obs[theta_obs>1/c] # exclude performance below chance
 m = length(theta_obs)
+max_theta_hat = max(theta_obs)
 
 # The size of the test set. This information comes from the website, or the test data set. 
 if (casava){
@@ -93,18 +94,18 @@ hist(theta_obs, breaks=200, main = maintitle, xlab = kslab, ylab = whylab)
 
 # Calculating the CI for hat{\theta}^max without multiplicity correction
 alpha = 0.05
-mu = floor(n*max(theta_obs))
+mu = floor(n*max_theta_hat)
 ci_binom = binom.confint(mu,n,conf.level=1-alpha, methods = "exact") # CI for binomial
 
 print(sprintf("The %s confidence interval for an estimated accuracy of %.4f with n = %s is (%.4f,%.4f), width = %.4f.",  
-              (1-alpha)*100, max(theta_obs), n, ci_binom["lower"], ci_binom["upper"],ci_binom["upper"]-ci_binom["lower"] ))
+              (1-alpha)*100, max_theta_hat, n, ci_binom["lower"], ci_binom["upper"],ci_binom["upper"]-ci_binom["lower"] ))
 
 teams_single95 = length(theta_obs[theta_obs > ci_binom["lower"][1,1]])
 print(sprintf("%s teams have accuracies above the lower 95 CI.", 
               teams_single95))
 
 
-shrink = F # shrink or not. not shrinking is to produce figures
+shrink = T # shrink or not. not shrinking is to produce figures
 
 # The SOTA estimation is done by shrinking the kaggle observations, and then a 
 # simulation is performed with correlation. The parameters for shrinking are 
@@ -115,7 +116,7 @@ shrink = F # shrink or not. not shrinking is to produce figures
 # search is done with lower B and rep, and intermediate numbers are not accurate
 
 shrink_point = 1/c
-weight <- 0.9941 # parameter adjusted until E(theta_sota) = max(theta_obs). 
+weight <- 0.9941 # parameter adjusted until E(theta_sota) = max_theta_hat. 
 # 0.99  -> 0.90847
 # 0.9925-> 0.91034
 # 0.9935-> 0.91109
@@ -125,7 +126,7 @@ weight <- 0.9941 # parameter adjusted until E(theta_sota) = max(theta_obs).
 # 0.995 -> 0.91220 
 
 # for upper CI:
-# weight <- 0.9896 # parameter adjusted until upper CI = max(theta_obs). 
+# weight <- 0.9896 # parameter adjusted until upper CI = max_theta_hat. 
 # 0.99  -> 0.91179
 # 0.9896-> 0.91150 
 # 0.9895-> 0.91142
@@ -133,7 +134,7 @@ weight <- 0.9941 # parameter adjusted until E(theta_sota) = max(theta_obs).
 # 0.9885-> 0.91069
 # 0.985 -> 0.90811
 
-# max(theta_obs) = 0.91157 # the aim
+# max_theta_hat = 0.91157 # the aim
 
 theta_shrunk <- weight*theta_obs + (1-weight)*shrink_point
 
@@ -197,7 +198,7 @@ if (shrink){
   
   }, .progress=T, .options= furrr::furrr_options(seed=T))
 }else{ # not shrinking
-  theta_SOTA = max(theta_obs)
+  theta_SOTA = max_theta_hat
   theta_0 = theta_SOTA
   trunc_min = ((rho*rho)*theta_0/(1-theta_0))/(1+(rho*rho)*theta_0/(1-theta_0))
   obs_dat = theta_obs[theta_obs>trunc_min]
@@ -248,7 +249,7 @@ if (B>1){
 }
 
 # Expected value and the standard deviation
-print(sprintf("The expected value of max(theta_obs) is %.5f. The standard deviations is %.5f. From the expected variance: %.5f", 
+print(sprintf("The expected value of max_theta_hat is %.5f. The standard deviations is %.5f. From the expected variance: %.5f", 
               (n-mean(E_SOTA))/n, sqrt(mean(V_SOTA)+var(E_SOTA))/n, sqrt(mean(V_SOTA))/n))
 
 # print(sprintf("The mean number of simulated teams have accuracies above the true sota, %s, is %.1f.", theta_SOTA, mean(teamsSOTA)))
@@ -288,12 +289,12 @@ if (shrink == F){
   
   hist(theta_obs[theta_obs>kslim[1]], breaks=breks, freq = T,
        main = '', xlab = '',  ylab = '', xlim = kslim, ylim = whylim, 
-       col = "gray20", border = "gray20")
+       col = "lightgray", border = "lightgray",axes=F)
   
   clr = 'magenta'
   par(new = T) # plot the confidence interval
   plot(c(ci_binom["lower"][1,1], ci_binom["upper"][1,1]), c( -1,-1), "l", lwd = 2, 
-       col = clr, xlim = kslim, ylim = whylim, ylab = '', xlab = '')
+       col = clr, xlim = kslim, ylim = whylim, ylab = '', xlab = '', axes=F)
   par(new=TRUE) 
   plot(c(ci_binom[["lower"]], ci_binom[["lower"]]), c(-4,2),"l", lwd = 2, 
        col=clr, xlab = '', ylab = '', xlim = kslim, ylim = whylim, axes=F)
@@ -301,31 +302,44 @@ if (shrink == F){
   plot(c(ci_binom[["upper"]], ci_binom[["upper"]]), c(-4,2),"l", lwd = 2,
        col=clr, xlab = '', ylab = '', xlim = kslim, ylim = whylim, axes=F)
   
-  par(new=TRUE) # dottet vertical line for theta_SOTA
-  plot(c(theta_SOTA, theta_SOTA), c(0,max(whylim)),"l", lty = 5, col=clr, xlab = '', ylab = '', 
+  par(new=TRUE) # dottet vertical line for max_theta_hat
+  plot(c(max_theta_hat, max_theta_hat), c(0,max(whylim)),"l", lty = 5, col='magenta', xlab = '', ylab = '', 
        xlim = kslim, ylim = whylim, axes=F)
   
-  title(main = "", xlab = kslab, ylab = 'm', line = 2, cex.lab=1.2)
+  # axis, ticks and labels
+  axis(1 , cex.axis=1.2, las = 2, at=c(kslim[1],max_theta_hat,kslim[2]), 
+       labels=c(kslim[1], TeX(r'($\hat{\theta}_{max}$)'), kslim[2]))
+  axis(2 , cex.axis=1.2, las = 2)
+  
+  title(main = "", xlab = kslab, ylab = whylab, line = 2, cex.lab=1.2)
+  legend(0.88, 100, legend=c(TeX(r'($\hat{\Theta}$)')), col=c("lightgray"), pch=c(15), cex=0.8, bty="n")
+  
   ####################### end figure ##########################################
   
-  ############ obesity_direct_bootstrap / casava_direct_bootstrap ###############
+  ############ obesity_direct_sampling / casava_direct_sampling ###############
   
   # Sampling from the rho-truncated data, once to show a histogram
   trunc_dat = theta_obs[theta_obs>trunc_min]
-  theta_vec = sample(x=trunc_dat, size=m, replace=TRUE) # bootstrap from truncated kaggle observations
+  theta_vec = sample(x=trunc_dat, size=m, replace=TRUE) # sample from truncated kaggle observations
   
   # minimum number of wrong classifications among all classifiers, vectors of length rep
   tic()
+  rep = 10000 
   X = dep_nonid_pmf(n, m, rho, rep, theta_vec, theta_0 = theta_SOTA) # one realisation
   toc() # 110 sec for rep = 100,000
   
   theta_real = (n-X$x_fail)/n
   hist(theta_real[theta_real>kslim[1]], breaks=breks, xlim = kslim, ylim = whylim, freq = T,
-       main = '', xlab = '', ylab = '', col="gray20", border = "gray20")
+       main = '', xlab = '', ylab = '', col="gray20", border = "gray20",axes=F)
+  
+  par(new = T) #
+  hist(theta_obs[theta_obs>kslim[1]], breaks=breks, freq = T,
+       main = '', xlab = '',  ylab = '', xlim = kslim, ylim = whylim, 
+       col = NULL, border = "lightgray",axes=F)
   
   par(new = T) # plot the confidence interval
   plot(c((n-mean_lowerCI)/n, (n-mean_upperCI)/n), c( -1,-1), "l", lwd = 2, 
-       col = "blue", xlim = kslim, ylim = whylim, ylab = '', xlab = '')
+       col = "blue", xlim = kslim, ylim = whylim, ylab = '', xlab = '', axes=F)
   par(new=TRUE) 
   plot(c((n-mean_lowerCI)/n, (n-mean_lowerCI)/n), c(-4,2),"l", lwd = 2, 
        col="blue", xlab = '', ylab = '', xlim = kslim, ylim = whylim, axes=F)
@@ -337,11 +351,17 @@ if (shrink == F){
   plot(c((n-mean(E_SOTA))/n, (n-mean(E_SOTA))/n), c(0,max(whylim)),"l", lty = 5, col="blue", xlab = '', ylab = '', 
        xlim = kslim, ylim = whylim, axes=F)
   
-  par(new=TRUE) # dottet vertical line for theta_SOTA
-  plot(c(theta_SOTA, theta_SOTA), c(0,max(whylim)),"l", lty = 5, col='magenta', xlab = '', ylab = '', 
+  par(new=TRUE) # dottet vertical line for max_theta_hat
+  plot(c(max_theta_hat, max_theta_hat), c(0,max(whylim)),"l", lty = 5, col='magenta', xlab = '', ylab = '', 
        xlim = kslim, ylim = whylim, axes=F)
   
-  title(main = "", xlab = simlab, ylab = 'm', line = 2, cex.lab=1.2)
+  # axis, ticks and labels
+  axis(1 , cex.axis=1.2, las = 2, at=c(kslim[1],(n-mean(E_SOTA))/n,kslim[2]), 
+       labels=c(kslim[1], TeX(r'($E \max \hat{\Theta}'$)'), kslim[2]))
+  axis(2 , cex.axis=1.2, las = 2)
+  
+  title(main = "", xlab = kslab, ylab = whylab, line = 2, cex.lab=1.2)
+  legend(0.88, 100, legend=c(TeX(r'($\hat{\Theta}$)'), TeX(r'($\hat{\theta}|{\Theta}' = \hat{\Theta}$)')), col=c("lightgray", "gray20"), pch=c(0,15), cex=0.8, bty="n")
   # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # # # # # # # #
 }
 
@@ -350,7 +370,7 @@ if (shrink==T){
   ##################### obesity_shrunk_for_expect ##################################
   hist(theta_obs[theta_obs>kslim[1]], breaks=breks, freq = T,
        main = '', xlab = '',  ylab = '', xlim = kslim, ylim = whylim, 
-       col = "lightgray", border = "lightgray")
+       col = NULL, border = "lightgray", axes=F)
   
   
   #hist(theta_obs[(theta_obs>kslim[1])&(theta_obs<=theta_SOTA)], breaks=breks[breks<=theta_SOTA], freq = T,
@@ -359,36 +379,51 @@ if (shrink==T){
   
   hist(theta_shrunk[theta_shrunk>kslim[1]], breaks=breks, freq = T,
        main = '', xlab = "", ylab = "", xlim = kslim, ylim = whylim, 
-       col = "gray20", border = "gray20")
+       col = "gray20", border = "gray20", axes=F)
   
   par(new=TRUE) # dottet vertical line for theta_SOTA
   plot(c(theta_SOTA, theta_SOTA), c(0,max(whylim)),"l", lty = 5, col="green", xlab = '', ylab = '', 
        xlim = kslim, ylim = whylim, axes=F)
+  par(new=TRUE) # dottet vertical line for max_theta_hat
+  plot(c(max_theta_hat, max_theta_hat), c(0,max(whylim)),"l", lty = 5, col='magenta', xlab = '', ylab = '', 
+       xlim = kslim, ylim = whylim, axes=F)
   
-  title(main = "", xlab = kslab, ylab = 'm', line = 2, cex.lab=1.2)
+  # axis, ticks and labels
+  axis(1 , cex.axis=1.2, las = 2, at=c(kslim[1],theta_SOTA, max_theta_hat,kslim[2]), 
+       labels=c(kslim[1], TeX(r'(${\theta_{SOTA}}$)'), TeX(r'($\hat{\theta}_{max}$)'), kslim[2]))
+  axis(2 , cex.axis=1.2, las = 2)
+  
+  title(main = "", xlab = kslab, ylab = whylab, line = 2, cex.lab=1.2)
+  legend(0.88, 100, legend=c(TeX(r'($\hat{\Theta}$)'), TeX(r'(${\Theta}'$)')), col=c("lightgray", "gray20"), pch=c(0,15), cex=0.8, bty="n")
   
   ##################### end figure ########################################
   
   
   ######################## obesity_shrunk_for_expect_realisation #######################
   
+  hist(theta_obs[theta_obs>kslim[1]], breaks=breks, freq = T,
+       main = '', xlab = '',  ylab = '', xlim = kslim, ylim = whylim, 
+       col = NULL, border = "lightgray", axes=F)
+  
   # Sampling from the shrunk data, once to show a histogram
   
-  theta_vec = sample(x=shrunk_dat, size=m, replace=TRUE) # bootstrap from shrunk kaggle observations
+  theta_vec = sample(x=shrunk_dat, size=m, replace=TRUE) # sample from shrunk kaggle observations
   
   # minimum number of wrong classifications among all classifiers, vectors of length rep
   tic()
+  rep = 10000
   X = dep_nonid_pmf(n, m, rho, rep, theta_vec, theta_0 = theta_0) 
   toc()
   
   # one realisation 
+  par(new = T)
   theta_real = (n-X$x_fail)/n
   hist(theta_real[theta_real>kslim[1]], breaks=breks, xlim = kslim, ylim = whylim, freq = T,
-       main = '', xlab = '', ylab = '', col="gray20", border = "gray20")
+       main = '', xlab = '', ylab = '', col="gray20", border = "gray20", axes=F)
   
   par(new = T) # plot the confidence interval
   plot(c((n-mean_lowerCI)/n, (n-mean_upperCI)/n), c( -1,-1), "l", lwd = 2, 
-       col = "red", xlim = kslim, ylim = whylim, ylab = '', xlab = '')
+       col = "red", xlim = kslim, ylim = whylim, ylab = '', xlab = '', axes=F)
   par(new=TRUE) 
   plot(c((n-mean_lowerCI)/n, (n-mean_lowerCI)/n), c(-4,2),"l", lwd = 2, 
        col="red", xlab = '', ylab = '', xlim = kslim, ylim = whylim, axes=F)
@@ -397,14 +432,24 @@ if (shrink==T){
        col="red", xlab = '', ylab = '', xlim = kslim, ylim = whylim, axes=F)
   
   par(new=TRUE) # dottet vertical line for expected value
-  plot(c((n-mean(E_SOTA))/n,(n-mean(E_SOTA))/n), c(0,max(whylim)),"l", lty = 5, col="magenta", xlab = '', ylab = '', 
+  plot(c((n-mean(E_SOTA))/n,(n-mean(E_SOTA))/n), c(0,max(whylim)),"l", lty = 5, col="red", xlab = '', ylab = '', 
        xlim = kslim, ylim = whylim, axes=F)
   
   par(new=TRUE) # dottet vertical line for theta_SOTA
   plot(c(theta_SOTA, theta_SOTA), c(0,max(whylim)),"l", lty = 5, col="green", xlab = '', ylab = '', 
        xlim = kslim, ylim = whylim, axes=F)
   
-  title(main = "", xlab = simlab, ylab = 'm', line = 2, cex.lab=1.2)
+  par(new=TRUE) # dottet vertical line for max_theta_hat
+  plot(c(max_theta_hat, max_theta_hat), c(0,max(whylim)),"l", lty = 5, col='magenta', xlab = '', ylab = '', 
+       xlim = kslim, ylim = whylim, axes=F)
+  
+  # axis, ticks and labels
+  axis(1 , cex.axis=1.2, las = 2, at=c(kslim[1],theta_SOTA, max_theta_hat,kslim[2]), 
+       labels=c(kslim[1], TeX(r'(${\theta_{SOTA}}$)'), TeX(r'($E \max \hat{\Theta}'$)'), kslim[2]))
+  axis(2 , cex.axis=1.2, las = 2)
+  
+  title(main = "", xlab = kslab, ylab = whylab, line = 2, cex.lab=1.2)
+  legend(0.88, 100, legend=c(TeX(r'($\hat{\Theta}$)'), TeX(r'($\hat{\theta}|\Theta'$)')), col=c("lightgray", "gray20"), pch=c(0,15), cex=0.8, bty="n")
   
 }
 
