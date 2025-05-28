@@ -171,7 +171,7 @@ Figures:
 with subfigures. Exact numbers in Table `obesity`
 
 `obesity_kaggle` Sample estimates and single CI for $\hat{\theta}_{\max}$ \
-`obesity_direct_bootstrap` A simulated realisation from `obesity_kaggle`, the expected sample maximum and its CI\
+`obesity_direct_sampling` A simulated realisation from `obesity_kaggle`, the expected sample maximum and its CI\
 `obesity_cropped_for_expect` Sample estimates cropped at $0.9063$, the proposed $\theta_{SOTA}$\
 `obesity_cropped_for_expect_realisation` A simulated realisation from c), the expected sample maximum and its CI
 
