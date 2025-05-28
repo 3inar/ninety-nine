@@ -70,7 +70,7 @@ classifier has little chance of beating the observed sample maximum
 `cumul_fail` *Cdf and pmf for at least one classifier having at most z failures* a)\
 Displaying the function `cdf()` (ProbDistr_thetaSOTA.R) for the parameters in Parameters_PublicCompetition.R
 
-`pdf_fail` *Cdf and pmf for at least one classifier having at most z failures* b)\
+`pmf_fail` *Cdf and pmf for at least one classifier having at most z failures* b)\
 Displaying the function `pmf()` (ProbDistr_thetaSOTA.R) for the parameters in Parameters_PublicCompetition.R
 
 `bias_sd_m_n_theta` *The bias and standard deviation of the sample maximum estimator*\
@@ -113,7 +113,7 @@ Figures:
 
 `noniid_cdf`: *Cdf for non-identical classifiers*\
 `noniid_pmf`: *Pmf for non-identical classifiers*\
-Corresponds to figures `cumul_fail` and `pdf_fail` in `PublicCompetition.R`, 
+Corresponds to figures `cumul_fail` and `pmf_fail` in `PublicCompetition.R`, 
 section *A simulated public competition example*\
 `bias_sd_d`: Bias and standard deviation as a function of $d = b-a$ in $\mathcal{U}(a,b)$,
 subfigure for `bias_sd_thetamin_rho`
