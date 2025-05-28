@@ -45,7 +45,6 @@ source("dep_nonid_pmf_fun.R") # for the function 'dep_nonid_pmf' - simulated pmf
 kslim = c(0.88, 0.92)
 whylim = c(0,120)
 kslab = TeX(r'($\theta$)')
-# simlab = TeX(r'($\hat{\theta}'$)')
 whylab = '          m'
 
 n_breks = 175         # adjust for pleasant graphics
@@ -107,42 +106,44 @@ print(sprintf("%s teams have accuracies above the lower 95 CI.",
 
 shrink = T # shrink or not. not shrinking is to produce figures
 
-# The SOTA estimation is done by shrinking the kaggle observations, and then a 
-# simulation is performed with correlation. The parameters for shrinking are 
-# adjusted according to the wanted outcome: either that the expected value of 
-# the maximum simulated theta is equal to the maximum kaggle theta, or that the 
-# upper limit of the 95% CI of the maximum simulated theta is equal to the 
-# maximum kaggle theta. 
-# search is done with lower B and rep, and intermediate numbers are not accurate
+if (shrink){
+  # The SOTA estimation is done by shrinking the kaggle observations, and then a 
+  # simulation is performed with correlation. The parameters for shrinking are 
+  # adjusted according to the wanted outcome: either that the expected value of 
+  # the maximum simulated theta is equal to the maximum kaggle theta, or that the 
+  # upper limit of the 95% CI of the maximum simulated theta is equal to the 
+  # maximum kaggle theta. 
+  # search is done with lower B and rep, and intermediate numbers are not accurate
 
-shrink_point = 1/c
-weight <- 0.9941 # parameter adjusted until E(theta_sota) = max_theta_hat. 
-# 0.99  -> 0.90847
-# 0.9925-> 0.91034
-# 0.9935-> 0.91109
-# 0.994 -> 0.91146
-# 0.9942-> 0.91161
-# 0.9945-> 0.91183
-# 0.995 -> 0.91220 
+  shrink_point = 1/c
+  # for expected value:
+  weight <- 0.9941 # parameter adjusted until E(theta_sota) = max_theta_hat. 
+  # 0.99  -> 0.90847
+  # 0.9925-> 0.91034
+  # 0.9935-> 0.91109
+  # 0.994 -> 0.91146
+  # 0.9942-> 0.91161
+  # 0.9945-> 0.91183
+  # 0.995 -> 0.91220 
 
-# for upper CI:
-# weight <- 0.9896 # parameter adjusted until upper CI = max_theta_hat. 
-# 0.99  -> 0.91179
-# 0.9896-> 0.91150 
-# 0.9895-> 0.91142
-# 0.9875-> 0.90996
-# 0.9885-> 0.91069
-# 0.985 -> 0.90811
+  # for upper CI:
+  # weight <- 0.9896 # parameter adjusted until upper CI = max_theta_hat. 
+  # 0.99  -> 0.91179
+  # 0.9896-> 0.91150 
+  # 0.9895-> 0.91142
+  # 0.9875-> 0.90996
+  # 0.9885-> 0.91069
+  # 0.985 -> 0.90811
 
-# max_theta_hat = 0.91157 # the aim
+  # max_theta_hat = 0.91157 # the aim
 
-theta_shrunk <- weight*theta_obs + (1-weight)*shrink_point
+  theta_shrunk <- weight*theta_obs + (1-weight)*shrink_point
 
-# Have a quick look at the shrunk data
-hist(theta_shrunk, breaks=200, main = maintitle, xlab = kslab, ylab = whylab)
+  # Have a quick look at the shrunk data
+  hist(theta_shrunk, breaks=200, main = maintitle, xlab = kslab, ylab = whylab)
 
-theta_SOTA = max(theta_shrunk)
-
+  theta_SOTA = max(theta_shrunk)
+}
 
 # Simulate dependency
 theta_0 = theta_SOTA # theta_0 is the probability of correct prediction for the leading classifier. adjust to E(theta_SOTA)? 
@@ -161,13 +162,15 @@ trunc_min = ((rho*rho)*theta_0/(1-theta_0))/(1+(rho*rho)*theta_0/(1-theta_0))
 print(sprintf("With an estimated SOTA of %.4f and a correlation coefficient of %s, the minimum value for theta_j is %.4f.",
               theta_0, rho, trunc_min))
 
-shrunk_dat = theta_shrunk[theta_shrunk>trunc_min]
-m = length(shrunk_dat) # number of teams left
-print(sprintf("The number of teams above the lower threshold is %s.",
+if (shrink){
+  shrunk_dat = theta_shrunk[theta_shrunk>trunc_min]
+  m = length(shrunk_dat) # number of teams left
+  print(sprintf("The number of teams above the lower threshold is %s.",
               m)) 
 
-# Have a quick look at the shrunk histograms
-hist(shrunk_dat, breaks=n_breks, main = c(maintitle, 'shrunk > min_trunc'), xlab = kslab, ylab = whylab)
+  # Have a quick look at the shrunk histograms
+  hist(shrunk_dat, breaks=n_breks, main = c(maintitle, 'shrunk > min_trunc'), xlab = kslab, ylab = whylab)
+}
 
 rep = 1000# 0 # 10 000 number of repetitions. high number gives low variation. 
 B = 50 #1000 # number of parameter samples. high number gives stable error estimation
@@ -268,13 +271,21 @@ teams95CI = length(theta_obs[theta_obs > ((n-mean_lowerCI)/n)])
 print(sprintf("%s teams have accuracies above the lower 95 CI.", 
               teams95CI))
 
+# the distribution of SOTA, just to have a look
+if (shrink){
+  theta_vec = sample(x=shrunk_dat, size=m, replace=TRUE) # sample from shrunk kaggle observations
+  # minimum number of wrong classifications among all classifiers, vectors of length rep
+  X = dep_nonid_pmf(n, m, rho, rep, theta_vec, theta_0 = theta_0) 
+  hist((n-X$min_fail)/n, breaks = 30, xlim=c((n-mean_lowerCI)/n-0.01, (n-mean_upperCI)/n+0.01), 
+       freq = F, main = 'max accuracies one param sample')
+}else{
+  theta_vec = sample(x=obs_dat, size=m, replace=TRUE) # sample from the kaggle observations
+  # minimum number of wrong classifications among all classifiers, vectors of length rep
+  X = dep_nonid_pmf(n, m, rho, rep, theta_vec, theta_0 = theta_0) 
+  hist((n-X$min_fail)/n, breaks = 30, xlim=c((n-mean_lowerCI)/n-0.01, (n-mean_upperCI)/n+0.01), 
+       freq = F, main = 'max accuracies one param sample')
+}
 
-# the distribution of SOTA
-theta_vec = sample(x=shrunk_dat, size=m, replace=TRUE) # bootstrap from truncated kaggle observations
-# minimum number of wrong classifications among all classifiers, vectors of length rep
-X = dep_nonid_pmf(n, m, rho, rep, theta_vec, theta_0 = theta_0) 
-hist((n-X$min_fail)/n, breaks = 30, xlim=c((n-mean_lowerCI)/n-0.01, (n-mean_upperCI)/n+0.01), 
-     freq = F, main = 'max accuracies one param sample')
 
 
 ################################################################################
