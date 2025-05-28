@@ -284,27 +284,38 @@ whylim = c(0,0.03)
 
 ################################### Figure cumul_fail ##########################################################
 
-Fz = cdf(n,theta_SOTA,m) # updating the value
+{
+  new_png("cumul_fail.png", n_figures=2)
 
-# Plotting the cfd
-plot(0:n,Fz, type = 'l', xlab = 'number of failures', 
-     ylab = 'probability of at least one team')
-# the whole range, not very much information
+  mars <- par()$mar
+  mars[3] = mars[3] + 1.75
+  par(mar=mars)
 
-# zooming in
-z = z_range # parameter
-plot(z,Fz[z+1], type = 's', xlab ='', 
-     ylab = '', axes = F)
+  Fz = cdf(n,theta_SOTA,m) # updating the value
 
-# axis, ticks and labels
-xax = seq(z[1],tail(z,1), 20)
-klab = xax 
-plab = round(1000*(n-xax)/n)/1000
-axis(1, cex.axis=1, las = 2, at=xax, labels = as.character(plab))
-axis(2, cex.axis=1, las = 2)
-axis(3, cex.axis=1, las = 2, at=xax, labels = as.character(klab))
-title(main = list(TeX(r'($z$)'), cex = 1.2,
-                  col = "black"), sub = list(TeX(r'($\hat{\theta}_{max}$)'),cex = 1.2))
+  # Plotting the cfd
+  #  plot(0:n,Fz, type = 'l', xlab = 'number of failures', 
+  #       ylab = 'probability of at least one team')
+  # the whole range, not very much information
+
+  # zooming in
+  z = z_range # parameter
+  plot(z,Fz[z+1], type = 's', xlab ='', 
+       ylab = '', axes = F)
+
+  # axis, ticks and labels
+  xax = seq(z[1],tail(z,1), 20)
+  klab = xax 
+  plab = round(1000*(n-xax)/n)/1000
+  axis(1, cex.axis=1, las = 1, at=xax, labels = as.character(plab))
+  axis(2, cex.axis=1, las = 2)
+  axis(3, cex.axis=1, las = 1, at=xax, labels = as.character(klab))
+
+  mtext(TeX(r'($z$)'), side=3, line=1.5) 
+  mtext(TeX(r'($\hat{\theta}_{max}$)'), side=1, line=2)
+
+  dev.off()
+}
 # # # # # # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 ################################### Figure pmf_fail ###################################################
