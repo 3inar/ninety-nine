@@ -51,7 +51,7 @@ source("ProbDistr_thetaSOTA.R")
 # to as the accuracy is $(n-x_j)/n$, where $x_j$ is the observed number of failures
 # for classifier $j$.
 
-source("Parameters_PublicCompetition.R") # n, theta, m, alpha, mu = n*theta, rep
+source("Parameters_PublicCompetition.R") # n, theta_SOTA, m, alpha, mu = n*theta, rep
 
 # 95% confidence interval for hat{theta} = mu, single classifier
 
@@ -348,27 +348,27 @@ m_x = seq(1, 5000, by=10) # m is on the x-axis
 Esota_theta_vec = numeric(length(m_x)) # pre-allocate for bias 
 SDsota_theta_vec = numeric(length(m_x)) # for standard deviation
 for (i in 1:length(m_x)){
-  Esota =  expect(n, theta, m_x[i])
-  Esota_theta_vec[i] = (1-Esota/n) - theta
+  Esota =  expect(n, theta_SOTA, m_x[i])
+  Esota_theta_vec[i] = (1-Esota/n) - theta_SOTA
   
-  Vsota = variance(n, theta, m_x[i])
+  Vsota = variance(n, theta_SOTA, m_x[i])
   SDsota_theta_vec[i] = sqrt(Vsota)/n
 }
 w = 2
 h = w*(9/16)
-bias = 0
+bias = 1
 if (bias){ #x11()
   # Error in plot.new() : figure margins too large
 # png("bias_m0.png", width=w, height = h, units="in", res=300)
 
 plot(m_x, Esota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm_bias,
-     xlab = "", ylab ="")
+     xlab = "", ylab ="", axes=F)
 abline(v=m, col="gray") # intersection corresponding to upper row in table
 } else { #x11()
 #png("sd_m0.png", width=w, height = w*(9/16), units="in", res=300)
 
 plot(m_x, SDsota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm_sd,
-     xlab = "", ylab ="")
+     xlab = "", ylab ="", axes=F)
 abline(v=m, col="gray") # intersection corresponding to upper row in table
 }
 #################### param = n
@@ -386,11 +386,11 @@ for (k in 2:3){
   if (bias){ #dev.set(dev.prev())
   par(new=TRUE)   
   plot(m_x, Esota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], ylim=ylm_bias,
-     xlab = "", ylab ="")
+     xlab = "", ylab ="", axes=F)
   } else { # dev.set(dev.next())
   par(new=TRUE)   
   plot(m_x, SDsota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], ylim=ylm_sd,
-       xlab = "", ylab ="")
+       xlab = "", ylab ="", axes=F)
   }
 }
 
@@ -408,11 +408,11 @@ for (k in 2:3){
   if (bias){ #dev.set(dev.prev())
   par(new=TRUE) 
   plot(m_x, Esota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], ylim=ylm_bias, 
-     xlab = "", ylab ="")
+     xlab = "", ylab ="", axes=F)
   } else { #dev.set(dev.next())
   par(new=TRUE)   
   plot(m_x, SDsota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], ylim=ylm_sd,
-       xlab = "", ylab ="")
+       xlab = "", ylab ="", axes=F)
   }
 }
 
@@ -420,6 +420,9 @@ for (k in 2:3){
 lgnds_bias = c(TeX(r'($n=1000$)'),TeX(r'(${theta}=0.85$)'), TeX(r'($n = 3000, {theta}=0.90$)'), 
           TeX(r'(${theta}=0.95$)'), TeX(r'($n=10000$)'))
 cls_bias = c("red","blue","black","blue", "red")
+
+axis(1 , cex.axis=1.2, las = 1, at=c(1, 1000, 2000, 3000, 4000, 5000), # ticks
+     labels=c('1','1000','2000', '3000', '4000', '5000'))
 
 if (bias) { #dev.set(dev.prev())
 title(main = "", xlab = "m", ylab = ylab_bias, line = 2, cex.lab=1.2)
@@ -429,7 +432,10 @@ lgnds_sd = lgnds_bias
 cls_sd = cls_bias
 
 # dev.set(dev.next())
+
+
 title(main = "", xlab = "m", ylab = ylab_sd, line = 2, cex.lab=1.2)
+      
 legend(2900, 0.005, legend=lgnds_sd, col=cls_sd, lty=c(3,3,1,5,5), cex=0.8)
 
 # dev.off()
@@ -449,7 +455,7 @@ for (i in 1:length(n_x)){
   SDsota_theta_vec[i] = sqrt(Vsota)/n_x[i]
 }
 
-bias = 0
+bias = 1
 if (bias){
 # x11()
 plot(n_x, Esota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm_bias,
