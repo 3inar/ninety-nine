@@ -104,7 +104,7 @@ print(sprintf("%s teams have accuracies above the lower 95 CI.",
               teams_single95))
 
 
-shrink = T # shrink or not. not shrinking is to produce figures
+shrink = F # shrink or not. not shrinking is to produce figures
 
 if (shrink){
   # The SOTA estimation is done by shrinking the kaggle observations, and then a 
