@@ -359,17 +359,17 @@ h = w*(9/16)
 bias = 1
 if (bias){ #x11()
   # Error in plot.new() : figure margins too large
-# png("bias_m0.png", width=w, height = h, units="in", res=300)
+  # png("bias_m0.png", width=w, height = h, units="in", res=300)
 
-plot(m_x, Esota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm_bias,
-     xlab = "", ylab ="", axes=F)
-abline(v=m, col="gray") # intersection corresponding to upper row in table
+  plot(m_x, Esota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm_bias,
+       xlab = "", ylab ="", axes=F)
+  abline(v=m, col="gray") # intersection corresponding to upper row in table
 } else { #x11()
-#png("sd_m0.png", width=w, height = w*(9/16), units="in", res=300)
+  #png("sd_m0.png", width=w, height = w*(9/16), units="in", res=300)
 
-plot(m_x, SDsota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm_sd,
-     xlab = "", ylab ="", axes=F)
-abline(v=m, col="gray") # intersection corresponding to upper row in table
+  plot(m_x, SDsota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm_sd,
+       xlab = "", ylab ="", axes=F)
+  abline(v=m, col="gray") # intersection corresponding to upper row in table
 }
 #################### param = n
 param = 2
@@ -383,14 +383,13 @@ for (k in 2:3){
   SDsota_theta_vec[i] = sqrt(Vsota)/n_vec[k]
   }
   
+  par(new=TRUE)   
   if (bias){ #dev.set(dev.prev())
-  par(new=TRUE)   
-  plot(m_x, Esota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], ylim=ylm_bias,
-     xlab = "", ylab ="", axes=F)
-  } else { # dev.set(dev.next())
-  par(new=TRUE)   
-  plot(m_x, SDsota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], ylim=ylm_sd,
+    plot(m_x, Esota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], ylim=ylm_bias,
        xlab = "", ylab ="", axes=F)
+  } else { # dev.set(dev.next())
+    plot(m_x, SDsota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], ylim=ylm_sd,
+         xlab = "", ylab ="", axes=F)
   }
 }
 
@@ -399,20 +398,20 @@ param = 3
 
 for (k in 2:3){
   for (i in 1:length(m_x)){
-  Esota =  expect(n, theta_vec[k], m_x[i])
-  Esota_theta_vec[i] = (1-Esota/n) - theta_vec[k]
+    Esota =  expect(n, theta_vec[k], m_x[i])
+    Esota_theta_vec[i] = (1-Esota/n) - theta_vec[k]
   
-  Vsota =  variance(n, theta_vec[k], m_x[i])
-  SDsota_theta_vec[i] = sqrt(Vsota)/n
-  }
-  if (bias){ #dev.set(dev.prev())
+    Vsota =  variance(n, theta_vec[k], m_x[i])
+    SDsota_theta_vec[i] = sqrt(Vsota)/n
+    }
+    
   par(new=TRUE) 
-  plot(m_x, Esota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], ylim=ylm_bias, 
-     xlab = "", ylab ="", axes=F)
-  } else { #dev.set(dev.next())
-  par(new=TRUE)   
-  plot(m_x, SDsota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], ylim=ylm_sd,
+  if (bias){ #dev.set(dev.prev())
+    plot(m_x, Esota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], ylim=ylm_bias, 
        xlab = "", ylab ="", axes=F)
+  } else { #dev.set(dev.next())
+    plot(m_x, SDsota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], ylim=ylm_sd,
+         xlab = "", ylab ="", axes=F)
   }
 }
 
@@ -421,24 +420,21 @@ lgnds_bias = c(TeX(r'($n=1000$)'),TeX(r'(${theta}=0.85$)'), TeX(r'($n = 3000, {t
           TeX(r'(${theta}=0.95$)'), TeX(r'($n=10000$)'))
 cls_bias = c("red","blue","black","blue", "red")
 
-axis(1 , cex.axis=1.2, las = 1, at=c(1, 1000, 2000, 3000, 4000, 5000), # ticks
+axis(1, cex.axis=1.2, las = 1, at=c(1, 1000, 2000, 3000, 4000, 5000), # ticks
      labels=c('1','1000','2000', '3000', '4000', '5000'))
+axis(2, cex.axis=1.2, las = 1)
 
 if (bias) { #dev.set(dev.prev())
-title(main = "", xlab = "m", ylab = ylab_bias, line = 2, cex.lab=1.2)
-legend(2900, 0.035, legend=lgnds_bias, col=cls_bias, lty=c(3,3,1,5,5), cex=0.8)
+  title(main = "", xlab = "m", ylab = ylab_bias, line = 2, cex.lab=1.2)
+  legend(2900, 0.035, legend=lgnds_bias, col=cls_bias, lty=c(3,3,1,5,5), cex=0.8)
 } else {
-lgnds_sd = lgnds_bias
-cls_sd = cls_bias
+  lgnds_sd = lgnds_bias
+  cls_sd = cls_bias
 
-# dev.set(dev.next())
-
-
-title(main = "", xlab = "m", ylab = ylab_sd, line = 2, cex.lab=1.2)
-      
-legend(2900, 0.005, legend=lgnds_sd, col=cls_sd, lty=c(3,3,1,5,5), cex=0.8)
-
-# dev.off()
+  # dev.set(dev.next())
+  title(main = "", xlab = "m", ylab = ylab_sd, line = 2, cex.lab=1.2)
+  legend(2900, 0.005, legend=lgnds_sd, col=cls_sd, lty=c(3,3,1,5,5), cex=0.8)
+  # dev.off()
 }
 
 ##################### Figure bias_n and sd_n ###################################################
