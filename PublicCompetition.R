@@ -320,24 +320,36 @@ whylim = c(0,0.03)
 
 ################################### Figure pmf_fail ###################################################
 
-fz = pmf(n,theta_SOTA,m,f0 = T) # updating the value
+{
+  new_png("pmf_fail.png", n_figures=2)
 
-# Plotting the pmf
-plot(0:n,fz, type = 's')
+  mars <- par()$mar
+  mars[3] = mars[3] + 1.75
+  par(mar=mars)
 
-# zooming in, same values z as for the cdf
-z = z_range # parameter
-plot(z,fz[z], type = 'h', xlab ='', ylab = '', axes = F)
+  fz = pmf(n,theta_SOTA,m,f0 = T) # updating the value
 
-# axis, ticks and labels, same values as for the cdf
-# plab = round(1000*(n-xax)/n)/1000
-axis(1, las = 2, at=xax, labels = as.character(plab))
-yax = seq(0,max(fz)+0.01,0.02)
-axis(2, las = 1, at=yax, labels = as.character(yax))
-axis(3, las = 2, at=xax, labels = as.character(klab))
-title(main = list(TeX(r'($z$)'), cex = 1.2,
-                  col = "black"), sub = list(TeX(r'($\hat{\theta}_{max}$)'),cex = 1.2))
-# # # # # # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # Plotting the pmf
+  plot(0:n,fz, type = 's')
+
+  # zooming in, same values z as for the cdf
+  z = z_range # parameter
+  plot(z,fz[z], type = 'h', xlab ='', ylab = '', axes = F)
+
+  xax = seq(z[1],tail(z,1), 20)
+  klab = xax 
+  plab = round(1000*(n-xax)/n)/1000
+
+  # axis, ticks and labels, same values as for the cdf
+  axis(1, cex.axis=1, las = 1, at=xax, labels = as.character(plab))
+  axis(2, cex.axis=1, las = 2)
+  axis(3, cex.axis=1, las = 1, at=xax, labels = as.character(klab))
+
+  mtext(TeX(r'($z$)'), side=3, line=1.5) 
+  mtext(TeX(r'($\hat{\theta}_{max}$)'), side=1, line=2)
+  dev.off()
+}
+# # # # # # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #! open 
 
 
 ################################### Figure bias_sd_m_n_theta ###################################################
