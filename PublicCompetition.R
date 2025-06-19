@@ -369,7 +369,7 @@ Esth <- function(n,theta,m) {
 
 SDsth <- function(n,theta,m) {
   Vsota = variance(n, theta, m)
-  SDsota_theta_vec[i] = sqrt(Vsota)/n
+  sqrt(Vsota)/n
 }
 
 # I coudn't figure out how to switch between graphics and save them at the end,
