@@ -379,17 +379,12 @@ SDsth <- function(n,theta,m) {
 
 m_x = seq(1, 5000, by=10) # m is on the x-axis
 
-Esota_theta_vec = numeric(length(m_x)) # pre-allocate for bias 
-SDsota_theta_vec = numeric(length(m_x)) # for standard deviation
-
-for (i in 1:length(m_x)){
-  Esota_theta_vec[i] = Esth(n, theta_SOTA, m_x[i])
-  SDsota_theta_vec[i] = SDsth(n, theta_SOTA, m_x[i])
-}
-
-bias = 1
+bias = F  # T if plotting bias F if plotting SD
 
 # middle black line
+Esota_theta_vec = sapply(m_x, \(xx) Esth(n, theta_SOTA, xx))
+SDsota_theta_vec = sapply(m_x, \(xx) SDsth(n, theta_SOTA, xx))
+
 if (bias){ 
   plot(m_x, Esota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm_bias,
        xlab = "", ylab ="", axes=F)
@@ -404,11 +399,8 @@ if (bias){
 #################### param = n -- means that n is changed from the black line
 param = 2
 for (k in 2:3){
-  # makes the line for a given set of parameters
-  for (i in 1:length(m_x)){
-    Esota_theta_vec[i] = Esth(n_vec[k], theta_SOTA, m_x[i])
-    SDsota_theta_vec[i] =  SDsth(n_vec[k], theta_SOTA, m_x[i])
-  }
+  Esota_theta_vec = sapply(m_x, \(xx) Esth(n_vec[k], theta_SOTA, xx))
+  SDsota_theta_vec = sapply(m_x, \(xx) SDsth(n_vec[k], theta_SOTA, xx))
   
   # add the line to plot
   par(new=TRUE)   
@@ -425,11 +417,8 @@ for (k in 2:3){
 #################### param = theta
 param = 3
 for (k in 2:3){
-  # makes the line for a given set of parameters
-  for (i in 1:length(m_x)){
-    Esota_theta_vec[i] = Esth(n, theta_vec[k], m_x[i])
-    SDsota_theta_vec[i] = SDsth(n, theta_vec[k], m_x[i])
-  }
+  Esota_theta_vec = sapply(m_x, \(xx) Esth(n, theta_vec[k], xx))
+  SDsota_theta_vec = sapply(m_x, \(xx) SDsth(n, theta_vec[k], xx))
     
   # add line to plot 
   par(new=TRUE) 
