@@ -377,79 +377,66 @@ SDsth <- function(n,theta,m) {
 
 ########################### Figure bias_m and sd_m ##########################################
 
+# plots the "identical" curve parts of the bias and the SD plot
+bsm_curve <- function(bias) {
+  if (bias) {
+    stat_fn = Esth
+    ylm = ylm_bias
+  } else {
+    stat_fn = SDsth
+    ylm = ylm_sd
+  }
+
+  # middle black line
+  stat_curve = sapply(m_x, \(xx) stat_fn(n, theta_SOTA, xx))
+
+  plot(m_x, stat_curve, "l", lty = "solid", col = "black", ylim=ylm,
+       xlab = "", ylab ="", axes=F)
+  abline(v=m, col="gray") # intersection corresponding to upper row in table
+
+  # two red lines
+  #################### param = n -- means that n is changed from the black line
+  param = 2
+  for (k in 2:3){
+    stat_curve = sapply(m_x, \(xx) stat_fn(n_vec[k], theta_SOTA, xx))
+    lines(m_x, stat_curve, lty = line_vec[k], col = col_vec[param])
+  }
+
+  # two blue lines
+  #################### param = theta
+  param = 3
+  for (k in 2:3){
+    stat_curve = sapply(m_x, \(xx) stat_fn(n, theta_vec[k], xx))
+    lines(m_x, stat_curve, lty = line_vec[k], col = col_vec[param])
+  }
+}
+
+# common for both figures
+lgnds = c(TeX(r'($n=1000$)'),TeX(r'(${theta}=0.85$)'), TeX(r'($n = 3000, {theta}=0.90$)'), 
+          TeX(r'(${theta}=0.95$)'), TeX(r'($n=10000$)'))
+cls = c("red","blue","black","blue", "red")
 m_x = seq(1, 5000, by=10) # m is on the x-axis
 
-bias = F  # T if plotting bias F if plotting SD
-
-# middle black line
-Esota_theta_vec = sapply(m_x, \(xx) Esth(n, theta_SOTA, xx))
-SDsota_theta_vec = sapply(m_x, \(xx) SDsth(n, theta_SOTA, xx))
-
-if (bias){ 
-  plot(m_x, Esota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm_bias,
-       xlab = "", ylab ="", axes=F)
-  abline(v=m, col="gray") # intersection corresponding to upper row in table
-} else { 
-  plot(m_x, SDsota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm_sd,
-       xlab = "", ylab ="", axes=F)
-  abline(v=m, col="gray") # intersection corresponding to upper row in table
-}
-
-# two red lines
-#################### param = n -- means that n is changed from the black line
-param = 2
-for (k in 2:3){
-  Esota_theta_vec = sapply(m_x, \(xx) Esth(n_vec[k], theta_SOTA, xx))
-  SDsota_theta_vec = sapply(m_x, \(xx) SDsth(n_vec[k], theta_SOTA, xx))
-  
-  # add the line to plot
-  par(new=TRUE)   
-  if (bias){ 
-    plot(m_x, Esota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], ylim=ylm_bias,
-       xlab = "", ylab ="", axes=F)
-  } else { 
-    plot(m_x, SDsota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], ylim=ylm_sd,
-         xlab = "", ylab ="", axes=F)
-  }
-}
-
-# two blue lines
-#################### param = theta
-param = 3
-for (k in 2:3){
-  Esota_theta_vec = sapply(m_x, \(xx) Esth(n, theta_vec[k], xx))
-  SDsota_theta_vec = sapply(m_x, \(xx) SDsth(n, theta_vec[k], xx))
-    
-  # add line to plot 
-  par(new=TRUE) 
-  if (bias){ 
-    plot(m_x, Esota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], ylim=ylm_bias, 
-       xlab = "", ylab ="", axes=F)
-  } else { 
-    plot(m_x, SDsota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], ylim=ylm_sd,
-         xlab = "", ylab ="", axes=F)
-  }
-}
-
-# title and legends
-lgnds_bias = c(TeX(r'($n=1000$)'),TeX(r'(${theta}=0.85$)'), TeX(r'($n = 3000, {theta}=0.90$)'), 
-          TeX(r'(${theta}=0.95$)'), TeX(r'($n=10000$)'))
-cls_bias = c("red","blue","black","blue", "red")
+# bias subfigure
+bsm_curve(bias=T)
 
 axis(1, cex.axis=1.2, las = 1, at=c(1, 1000, 2000, 3000, 4000, 5000), # ticks
      labels=c('1','1000','2000', '3000', '4000', '5000'))
 axis(2, cex.axis=1.2, las = 1)
 
-if (bias) {
-  title(main = "", xlab = "m", ylab = ylab_bias, line = 2, cex.lab=1.2)
-  legend(2900, 0.035, legend=lgnds_bias, col=cls_bias, lty=c(3,3,1,5,5), cex=0.8)
-} else {
-  lgnds_sd = lgnds_bias
-  cls_sd = cls_bias
+title(main = "", xlab = "m", ylab = ylab_bias, line = 2, cex.lab=1.2)
+legend(2900, 0.035, legend=lgnds, col=cls, lty=c(3,3,1,5,5), cex=0.8)
 
-  title(main = "", xlab = "m", ylab = ylab_sd, line = 2, cex.lab=1.2)
-  legend(2900, 0.005, legend=lgnds_sd, col=cls_sd, lty=c(3,3,1,5,5), cex=0.8)
-}
+# sd subfigure
+bsm_curve(bias=F)
+
+axis(1, cex.axis=1.2, las = 1, at=c(1, 1000, 2000, 3000, 4000, 5000), # ticks
+     labels=c('1','1000','2000', '3000', '4000', '5000'))
+axis(2, cex.axis=1.2, las = 1)
+
+title(main = "", xlab = "m", ylab = ylab_sd, line = 2, cex.lab=1.2)
+legend(2900, 0.005, legend=lgnds_sd, col=cls_sd, lty=c(3,3,1,5,5), cex=0.8)
+
 
 ##################### Figure bias_n and sd_n ###################################################
 
