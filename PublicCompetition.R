@@ -163,7 +163,7 @@ sprintf("The probability of achieving an accuracy better than E(SOTA)=%.4f, for 
 ######################### Expected values and standard deviations for hat theta_max (X) ####################################
 
 # varying m, n, p
-
+# these params also used in plots below
 n_vec = c(3000,1000,10000)
 m_vec = c(1000,100,5000)
 theta_vec = c(0.9,0.85,0.95)
@@ -361,6 +361,17 @@ whylim = c(0,0.03)
 col_vec = c("green","red","blue") # param = m,n,theta 
 line_vec = c("solid","dotted","longdash") #subparam
 
+# these computations done v. often
+Esth <- function(n,theta,m) {
+  Esota =  expect(n, theta, m)
+  (1-Esota/n) - theta
+}
+
+SDsth <- function(n,theta,m) {
+  Vsota = variance(n, theta, m)
+  SDsota_theta_vec[i] = sqrt(Vsota)/n
+}
+
 # I coudn't figure out how to switch between graphics and save them at the end,
 # so I'll just manually do bias and sd for now
 
@@ -370,69 +381,62 @@ m_x = seq(1, 5000, by=10) # m is on the x-axis
 
 Esota_theta_vec = numeric(length(m_x)) # pre-allocate for bias 
 SDsota_theta_vec = numeric(length(m_x)) # for standard deviation
-for (i in 1:length(m_x)){
-  Esota =  expect(n, theta_SOTA, m_x[i])
-  Esota_theta_vec[i] = (1-Esota/n) - theta_SOTA
-  
-  Vsota = variance(n, theta_SOTA, m_x[i])
-  SDsota_theta_vec[i] = sqrt(Vsota)/n
-}
-w = 2
-h = w*(9/16)
-bias = 1
-if (bias){ #x11()
-  # Error in plot.new() : figure margins too large
-  # png("bias_m0.png", width=w, height = h, units="in", res=300)
 
+for (i in 1:length(m_x)){
+  Esota_theta_vec[i] = Esth(n, theta_SOTA, m_x[i])
+  SDsota_theta_vec[i] = SDsth(n, theta_SOTA, m_x[i])
+}
+
+bias = 1
+
+# middle black line
+if (bias){ 
   plot(m_x, Esota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm_bias,
        xlab = "", ylab ="", axes=F)
   abline(v=m, col="gray") # intersection corresponding to upper row in table
-} else { #x11()
-  #png("sd_m0.png", width=w, height = w*(9/16), units="in", res=300)
-
+} else { 
   plot(m_x, SDsota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm_sd,
        xlab = "", ylab ="", axes=F)
   abline(v=m, col="gray") # intersection corresponding to upper row in table
 }
-#################### param = n
-param = 2
 
+# two red lines
+#################### param = n -- means that n is changed from the black line
+param = 2
 for (k in 2:3){
+  # makes the line for a given set of parameters
   for (i in 1:length(m_x)){
-  Esota =  expect(n_vec[k], theta_SOTA, m_x[i])
-  Esota_theta_vec[i] = (1-Esota/n_vec[k]) - theta_SOTA
-  
-  Vsota =  variance(n_vec[k], theta_SOTA, m_x[i])
-  SDsota_theta_vec[i] = sqrt(Vsota)/n_vec[k]
+    Esota_theta_vec[i] = Esth(n_vec[k], theta_SOTA, m_x[i])
+    SDsota_theta_vec[i] =  SDsth(n_vec[k], theta_SOTA, m_x[i])
   }
   
+  # add the line to plot
   par(new=TRUE)   
-  if (bias){ #dev.set(dev.prev())
+  if (bias){ 
     plot(m_x, Esota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], ylim=ylm_bias,
        xlab = "", ylab ="", axes=F)
-  } else { # dev.set(dev.next())
+  } else { 
     plot(m_x, SDsota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], ylim=ylm_sd,
          xlab = "", ylab ="", axes=F)
   }
 }
 
+# two blue lines
 #################### param = theta
 param = 3
-
 for (k in 2:3){
+  # makes the line for a given set of parameters
   for (i in 1:length(m_x)){
-    Esota =  expect(n, theta_vec[k], m_x[i])
-    Esota_theta_vec[i] = (1-Esota/n) - theta_vec[k]
-  
-    Vsota =  variance(n, theta_vec[k], m_x[i])
-    SDsota_theta_vec[i] = sqrt(Vsota)/n
-    }
+    Esota_theta_vec[i] = Esth(n, theta_vec[k], m_x[i])
+    SDsota_theta_vec[i] = SDsth(n, theta_vec[k], m_x[i])
+  }
     
+  # add line to plot 
   par(new=TRUE) 
-  if (bias){ #dev.set(dev.prev())
+  if (bias){ 
     plot(m_x, Esota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], ylim=ylm_bias, 
        xlab = "", ylab ="", axes=F)
-  } else { #dev.set(dev.next())
+  } else { 
     plot(m_x, SDsota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], ylim=ylm_sd,
          xlab = "", ylab ="", axes=F)
   }
@@ -447,17 +451,15 @@ axis(1, cex.axis=1.2, las = 1, at=c(1, 1000, 2000, 3000, 4000, 5000), # ticks
      labels=c('1','1000','2000', '3000', '4000', '5000'))
 axis(2, cex.axis=1.2, las = 1)
 
-if (bias) { #dev.set(dev.prev())
+if (bias) {
   title(main = "", xlab = "m", ylab = ylab_bias, line = 2, cex.lab=1.2)
   legend(2900, 0.035, legend=lgnds_bias, col=cls_bias, lty=c(3,3,1,5,5), cex=0.8)
 } else {
   lgnds_sd = lgnds_bias
   cls_sd = cls_bias
 
-  # dev.set(dev.next())
   title(main = "", xlab = "m", ylab = ylab_sd, line = 2, cex.lab=1.2)
   legend(2900, 0.005, legend=lgnds_sd, col=cls_sd, lty=c(3,3,1,5,5), cex=0.8)
-  # dev.off()
 }
 
 ##################### Figure bias_n and sd_n ###################################################
@@ -475,20 +477,22 @@ for (i in 1:length(n_x)){
 }
 
 bias = 1
+
+# black line
 if (bias){
-# x11()
-plot(n_x, Esota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm_bias,
-     xlab = "", ylab ="")
-abline(v=n, col="gray") # intersection corresponding to upper row in table
+  plot(n_x, Esota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm_bias,
+       xlab = "", ylab ="")
+  abline(v=n, col="gray") # intersection corresponding to upper row in table
 } else {
 # x11()
 plot(n_x, SDsota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm_sd,
      xlab = "", ylab ="")
 abline(v=n, col="gray") # intersection corresponding to upper row in table
 }
+
+# two green lines
 #################### param = m
 param = 1
-
 for (k in 2:3){
   for (i in 1:length(n_x)){
     Esota =  expect(n_x[i], theta_SOTA, m_vec[k])
@@ -535,7 +539,7 @@ for (k in 2:3){
 }
 
 # title and legends
-lgnds_bias = c(TeX(r'(${theta}=0.85$)'),TeX(r'($m = 5000$)'), TeX(r'($n = 1000, {theta}=0.90$)'), 
+lgnds_bias = c(TeX(r'(${theta}=0.85$)'),TeX(r'($m = 5000$)'), TeX(r'($m = 1000, {theta}=0.90$)'), 
                TeX(r'($m = 100$)'), TeX(r'(${theta}=0.95$)'))
 cls_bias = c("blue","green","black","green","blue")
 
