@@ -418,24 +418,36 @@ cls = c("red","blue","black","blue", "red")
 m_x = seq(1, 5000, by=10) # m is on the x-axis
 
 # bias subfigure
-bsm_curve(bias=T)
+{
+  new_png("bias_m.png", n_figures=2)
+  bsm_curve(bias=T)  # draws all the lines
 
-axis(1, cex.axis=1.2, las = 1, at=c(1, 1000, 2000, 3000, 4000, 5000), # ticks
-     labels=c('1','1000','2000', '3000', '4000', '5000'))
-axis(2, cex.axis=1.2, las = 1)
+  axis(1, las = 1, at=c(1, 1000, 2000, 3000, 4000, 5000), # ticks
+       labels=c('1','1000','2000', '3000', '4000', '5000'))
+  axis(2, las = 0)
 
-title(main = "", xlab = "m", ylab = ylab_bias, line = 2, cex.lab=1.2)
-legend(2900, 0.035, legend=lgnds, col=cls, lty=c(3,3,1,5,5), cex=0.8)
+  title(main = "", xlab = "m", ylab = ylab_bias)
+  legend(1100,  -0.002, yjust=0, legend=lgnds[c(1,5)], col=cls[c(1,5)], lty=c(3,5), cex=0.65, bty="n")
+  legend(3150, -0.002, yjust=0, legend=lgnds[c(2,4)], col=cls[c(2,4)], lty=c(3,5), cex=0.65, bty="n")
+  dev.off()
+}
 
 # sd subfigure
-bsm_curve(bias=F)
+{
+  new_png("sd_m.png", n_figures=2)
+  bsm_curve(bias=F)
 
-axis(1, cex.axis=1.2, las = 1, at=c(1, 1000, 2000, 3000, 4000, 5000), # ticks
-     labels=c('1','1000','2000', '3000', '4000', '5000'))
-axis(2, cex.axis=1.2, las = 1)
+  axis(1, las = 1, at=c(1, 1000, 2000, 3000, 4000, 5000), # ticks
+       labels=c('1','1000','2000', '3000', '4000', '5000'))
+  axis(2, las = 0)
 
-title(main = "", xlab = "m", ylab = ylab_sd, line = 2, cex.lab=1.2)
-legend(2900, 0.005, legend=lgnds_sd, col=cls_sd, lty=c(3,3,1,5,5), cex=0.8)
+  title(main = "", xlab = "m", ylab = ylab_sd)
+  # legend(2300, 0.00553, legend=lgnds, col=cls, lty=c(3,3,1,5,5), cex=0.65, bty="n")
+  legend(1100,  0.0039, yjust=0, legend=lgnds[c(1,5)], col=cls[c(1,5)], lty=c(3,5), cex=0.65, bty="n")
+  legend(3150,  0.0039, yjust=0, legend=lgnds[c(2,4)], col=cls[c(2,4)], lty=c(3,5), cex=0.65, bty="n")
+
+  dev.off()
+}
 
 
 ##################### Figure bias_n and sd_n ###################################################
