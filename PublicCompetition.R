@@ -388,6 +388,8 @@ bsm_curve <- function(bias) {
   }
 
   # middle black line
+  # TODO (maybe): m_x, n, etc. should perhaps be taken in as parameters in a
+  # perfect world 
   stat_curve = sapply(m_x, \(xx) stat_fn(n, theta_SOTA, xx))
 
   plot(m_x, stat_curve, "l", lty = "solid", col = "black", ylim=ylm,
@@ -452,98 +454,86 @@ m_x = seq(1, 5000, by=10) # m is on the x-axis
 
 ##################### Figure bias_n and sd_n ###################################################
 
+bsm_curve <- function(bias) {
+  if (bias) {
+    stat_fn = Esth
+    ylm = ylm_bias
+  } else {
+    stat_fn = SDsth
+    ylm = ylm_sd
+  }
+
+  # middle black line
+  # TODO (maybe): m_x, n, etc. should perhaps be taken in as parameters in a
+  # perfect world 
+  stat_curve = sapply(n_x, \(xx) stat_fn(xx, theta_SOTA, m))
+
+  plot(n_x, stat_curve, "l", lty = "solid", col = "black", ylim=ylm,
+       xlab = "", ylab ="", axes=F)
+  abline(v=n, col="gray") # intersection corresponding to upper row in table
+
+  # two green lines
+  #################### param = n -- means that n is changed from the black line
+  param = 1
+  for (k in 2:3){
+    stat_curve = sapply(n_x, \(xx) stat_fn(xx, theta_SOTA, m_vec[k]))
+    lines(n_x, stat_curve, lty = line_vec[k], col = col_vec[param])
+  }
+
+  # two blue lines
+  #################### param = theta
+  param = 3
+  for (k in 2:3){
+    stat_curve = sapply(n_x, \(xx) stat_fn(xx, theta_vec[k], m))
+    lines(n_x, stat_curve, lty = line_vec[k], col = col_vec[param])
+  }
+}
+
+lgnds = c(TeX(r'(${theta}=0.85$)'),TeX(r'($m = 5000$)'), TeX(r'($m = 1000, {theta}=0.90$)'), 
+               TeX(r'($m = 100$)'), TeX(r'(${theta}=0.95$)'))
+cls = c("blue","green","black","green","blue")
 n_x = seq(1000, 10000, by=10) # n is on the x-axis
 
-Esota_theta_vec = numeric(length(n_x)) # pre-allocate for bias
-SDsota_theta_vec = numeric(length(n_x)) # for standard deviation
-for (i in 1:length(n_x)){
-  Esota =  expect(n_x[i], theta_SOTA, m)
-  Esota_theta_vec[i] = (1-Esota/n_x[i]) - theta_SOTA
-  
-  Vsota = variance(n_x[i], theta_SOTA, m)
-  SDsota_theta_vec[i] = sqrt(Vsota)/n_x[i]
+# bias subfigure
+{
+  new_png("bias_n.png", n_figures=2)
+  bsm_curve(bias=T)  # draws all the lines
+
+  title(main = "", xlab = "n", ylab = ylab_bias)
+
+  axis(1)
+  axis(2)
+
+  base_x <- 3000
+  offset_x <- 3500
+  base_y <- 0.027
+  legend(base_x,  base_y, yjust=0, legend=lgnds[c(1,5)], col=cls[c(1,5)],
+         lty=c(3,5), cex=0.65, bty="n")
+  legend(base_x + offset_x, base_y, yjust=0, legend=lgnds[c(2,4)],
+         col=cls[c(2,4)], lty=c(3,5), cex=0.65, bty="n")
+  dev.off()
 }
 
-bias = 1
+# sd subfigure
+{
+  new_png("sd_n.png", n_figures=2)
+  bsm_curve(bias=F)  # draws all the lines
 
-# black line
-if (bias){
-  plot(n_x, Esota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm_bias,
-       xlab = "", ylab ="")
-  abline(v=n, col="gray") # intersection corresponding to upper row in table
-} else {
-# x11()
-plot(n_x, SDsota_theta_vec,"l", lty = "solid", col = "black", ylim=ylm_sd,
-     xlab = "", ylab ="")
-abline(v=n, col="gray") # intersection corresponding to upper row in table
+  title(main = "", xlab = "n", ylab = ylab_sd)
+
+  axis(1)
+  axis(2)
+
+  base_x <- 3000
+  offset_x <- 3500
+  base_y <- 0.0038
+  legend(base_x,  base_y, yjust=0, legend=lgnds[c(1,5)], col=cls[c(1,5)],
+         lty=c(3,5), cex=0.65, bty="n")
+  legend(base_x + offset_x, base_y, yjust=0, legend=lgnds[c(2,4)],
+         col=cls[c(2,4)], lty=c(3,5), cex=0.65, bty="n")
+  dev.off()
 }
 
-# two green lines
-#################### param = m
-param = 1
-for (k in 2:3){
-  for (i in 1:length(n_x)){
-    Esota =  expect(n_x[i], theta_SOTA, m_vec[k])
-    Esota_theta_vec[i] = (1-Esota/n_x[i]) - theta_SOTA
-    
-    Vsota =  variance(n_x[i], theta_SOTA, m_vec[k])
-    SDsota_theta_vec[i] = sqrt(Vsota)/n_x[i]
-  }
-  if (bias){
-  # dev.set(dev.prev())
-  par(new=TRUE)   
-  plot(n_x, Esota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], ylim=ylm_bias,
-       xlab = "", ylab ="")
-  } else {
-  #dev.set(dev.next())
-  par(new=TRUE)   
-  plot(n_x, SDsota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], ylim=ylm_sd,
-       xlab = "", ylab ="")
-  }
-}
-
-#################### param = theta
-param = 3
-
-for (k in 2:3){
-  for (i in 1:length(n_x)){
-    Esota =  expect(n_x[i], theta_vec[k], m)
-    Esota_theta_vec[i] = (1-Esota/n_x[i]) - theta_vec[k]
-    
-    Vsota =  variance(n_x[i], theta_vec[k], m)
-    SDsota_theta_vec[i] = sqrt(Vsota)/n_x[i]
-  }
-  if (bias){
-  # dev.set(dev.prev())
-  par(new=TRUE)
-  plot(n_x, Esota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], 
-       ylim=ylm_bias, xlab = "", ylab ="")
-  } else {
-  # dev.set(dev.next())
-  par(new=TRUE)
-  plot(n_x, SDsota_theta_vec,"l", lty = line_vec[k], col = col_vec[param], ylim=ylm_sd,
-       xlab = "", ylab ="")
-  }
-}
-
-# title and legends
-lgnds_bias = c(TeX(r'(${theta}=0.85$)'),TeX(r'($m = 5000$)'), TeX(r'($m = 1000, {theta}=0.90$)'), 
-               TeX(r'($m = 100$)'), TeX(r'(${theta}=0.95$)'))
-cls_bias = c("blue","green","black","green","blue")
-
-if (bias){
-#dev.set(dev.prev())
-title(main = "", xlab = "n", ylab = ylab_bias, line = 2, cex.lab=1.2)
-legend(6000, 0.035, legend=lgnds_bias, col=cls_bias, lty=c(3,5,1,3,5), cex=0.8)
-
-lgnds_sd = c(TeX(r'($m = 100$)'),TeX(r'(${theta}=0.85$)'),TeX(r'($n = 1000, {theta}=0.90$)'), 
-             TeX(r'($m = 5000$)'), TeX(r'(${theta}=0.95$)'))
-cls_sd = c("green","blue","black","green","blue")
-} else {
-# dev.set(dev.next())
-title(main = "", xlab = "n", ylab = ylab_sd, line = 2, cex.lab=1.2)
-legend(6000, 0.005, legend=lgnds_sd, col=cls_sd, lty=c(3,3,1,5,5), cex=0.8)
-}
 
 ################################ Figure bias_theta and sd_theta ###################################################
 
