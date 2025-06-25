@@ -293,11 +293,6 @@ whylim = c(0,0.03)
 
   Fz = cdf(n,theta_SOTA,m) # updating the value
 
-  # Plotting the cfd
-  #  plot(0:n,Fz, type = 'l', xlab = 'number of failures', 
-  #       ylab = 'probability of at least one team')
-  # the whole range, not very much information
-
   # zooming in
   z = z_range # parameter
   plot(z,Fz[z+1], type = 's', xlab ='', 
@@ -473,7 +468,7 @@ bsm_curve <- function(bias) {
   abline(v=n, col="gray") # intersection corresponding to upper row in table
 
   # two green lines
-  #################### param = n -- means that n is changed from the black line
+  #################### param = n
   param = 1
   for (k in 2:3){
     stat_curve = sapply(n_x, \(xx) stat_fn(xx, theta_SOTA, m_vec[k]))
