@@ -206,23 +206,31 @@ Fz = colMeans(Fzb)
 # naming convention: fig name_vector_name
 saveRDS(Fz, file = "noniid_cdf_Fz.rds")
 
-# the whole range, not very much information
-plot(0:n,Fz, type = 'l', xlab = 'number of failures', 
-     ylab = 'probability of at least one team')
+{
+  new_png("noniid_cdf.png", n_figures=2)
 
-# zooming in, and it gets more interesting, discreet curve 
-z = z_range
-plot(z,Fz[z+1], type = 's', xlab = '', ylab = '', axes = F)
+  mars <- par()$mar
+  mars[3] = mars[3] + 1.75
+  par(mar=mars)
 
-# axis, ticks and labels
-xax = seq(z[1],tail(z,1), 20)
-klab = xax 
-plab = round(1000*(n-xax)/n)/1000
-axis(1, cex.axis=1, las = 2, at=xax, labels = as.character(plab))
-axis(2, cex.axis=1, las = 2)
-axis(3, cex.axis=1, las = 2, at=xax, labels = as.character(klab))
-title(main = list(TeX(r'($z$)'), cex = 1.2,
-                  col = "black"), sub = list(TeX(r'($\hat{\theta}_{max}$)'),cex = 1.2))
+  # zooming in
+  z = z_range # parameter
+  plot(z,Fz[z+1], type = 's', xlab ='', 
+       ylab = '', axes = F)
+
+  # axis, ticks and labels
+  xax = seq(z[1],tail(z,1), 20)
+  klab = xax 
+  plab = round(1000*(n-xax)/n)/1000
+  axis(1, cex.axis=1, las = 1, at=xax, labels = as.character(plab))
+  axis(2, cex.axis=1, las = 2)
+  axis(3, cex.axis=1, las = 1, at=xax, labels = as.character(klab))
+
+  mtext(TeX(r'($z$)'), side=3, line=1.5) 
+  mtext(TeX(r'($\hat{\theta}_{max}$)'), side=1, line=2)
+
+  dev.off()
+}
 # # # # # # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 # Does this align with the simulations?
@@ -255,20 +263,33 @@ fz = colMeans(fzb)
 # naming convention: fig name_vector_name
 saveRDS(fz, file = "noniid_pmf_fz.rds")
 
-plot(0:n,fz, type = 's')
+{
+  new_png("noniid_pmf.png", n_figures=2)
 
-# need to zoom in
-z = z_range
-plot(z,fz[z], type = 'h', xlab = '', ylab = '', axes = F)
+  mars <- par()$mar
+  mars[3] = mars[3] + 1.75
+  par(mar=mars)
 
-# axis, ticks and labels, same values as for the cdf
-# plab = round(1000*(n-xax)/n)/1000
-axis(1, las = 2, at=xax, labels = as.character(plab))
-yax = seq(0,max(fz)+0.01,0.02)
-axis(2, las = 1, at=yax, labels = as.character(yax))
-axis(3, las = 2, at=xax, labels = as.character(klab))
-title(main = list(TeX(r'($z$)'), cex = 1.2,
-                  col = "black"), sub = list(TeX(r'($\hat{\theta}_{max}$)'),cex = 1.2))
+  # Plotting the pmf
+  plot(0:n,fz, type = 's')
+
+  # zooming in, same values z as for the cdf
+  z = z_range # parameter
+  plot(z,fz[z], type = 'h', xlab ='', ylab = '', axes = F)
+
+  xax = seq(z[1],tail(z,1), 20)
+  klab = xax 
+  plab = round(1000*(n-xax)/n)/1000
+
+  # axis, ticks and labels, same values as for the cdf
+  axis(1, cex.axis=1, las = 1, at=xax, labels = as.character(plab))
+  axis(2, cex.axis=1, las = 2)
+  axis(3, cex.axis=1, las = 1, at=xax, labels = as.character(klab))
+
+  mtext(TeX(r'($z$)'), side=3, line=1.5) 
+  mtext(TeX(r'($\hat{\theta}_{max}$)'), side=1, line=2)
+  dev.off()
+}
 # # # # # # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # #
 
 
