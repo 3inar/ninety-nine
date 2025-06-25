@@ -504,7 +504,7 @@ n_x = seq(1000, 10000, by=10) # n is on the x-axis
   base_y <- 0.027
   legend(base_x,  base_y, yjust=0, legend=lgnds[c(1,5)], col=cls[c(1,5)],
          lty=c(3,5), cex=0.65, bty="n")
-  legend(base_x + offset_x, base_y, yjust=0, legend=lgnds[c(2,4)],
+  legend(base_x + offset_x, base_y, yjust=0, legend=lgnds[c(4,2)],
          col=cls[c(2,4)], lty=c(3,5), cex=0.65, bty="n")
   dev.off()
 }
