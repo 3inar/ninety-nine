@@ -238,6 +238,37 @@ saveRDS(Fz, file = "noniid_cdf_Fz.rds")
 print(c(Fz[min_nonid_alpha2], Fz[min_nonid_alpha2+1])) # ok 
 print(c(which(Fz>alpha/2)[1]-1,min_nonid_alpha2)) # ok
 
+# # # # # # # # # # # # # # # # # Figure noniid_cdf_success # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+Fz <- readRDS("noniid_cdf_Fz.rds") # generated earlier
+
+{
+  new_png("noniid_cdf_success.png", n_figures=2)
+
+  mars <- par()$mar
+  mars[3] = mars[3] + 1.75
+  par(mar=mars)
+
+  # zooming in
+  z = z_range # parameter
+  x <- rev(n - z)
+
+  plot(x ,1 - Fz[rev(z)], type = 's', xlab ='', 
+       ylab = '', axes = F)
+
+  # axis, ticks and labels
+  xax = seq(min(x),max(x), 20)
+  klab = xax 
+  plab = round(1000*(xax)/n)/1000
+  axis(1, cex.axis=1, las = 1, at=xax, labels = as.character(plab))
+  axis(2, cex.axis=1, las = 2)
+  axis(3, cex.axis=1, las = 1, at=xax, labels = as.character(klab))
+
+  mtext(TeX(r'($x$)'), side=3, line=1.5) 
+  mtext(TeX(r'($\hat{\theta}_{max}$)'), side=1, line=2)
+
+  dev.off()
+}
+# # # # # # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 ################# probability mass function ##########################
 
@@ -292,6 +323,37 @@ saveRDS(fz, file = "noniid_pmf_fz.rds")
 }
 # # # # # # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # #
 
+############################ noniid_pmf_fz_success #################################
+
+fz <- readRDS("noniid_pmf_fz.rds") # generated earlier
+
+{
+  new_png("noniid_pmf_success.png", n_figures=2)
+
+  mars <- par()$mar
+  mars[3] = mars[3] + 1.75
+  par(mar=mars)
+
+  # zooming in, same values z as for the cdf
+  z = z_range # parameter
+  x <- rev(n - z)
+
+  plot(x,rev(fz[z]), type = 'h', xlab ='', ylab = '', axes = F)
+
+  xax = seq(min(x),max(x), 20)
+  klab = xax 
+  plab = round(1000*(xax)/n)/1000
+
+  # axis, ticks and labels, same values as for the cdf
+  axis(1, cex.axis=1, las = 1, at=xax, labels = as.character(plab))
+  axis(2, cex.axis=1, las = 2)
+  axis(3, cex.axis=1, las = 1, at=xax, labels = as.character(klab))
+
+  mtext(TeX(r'($x$)'), side=3, line=1.5) 
+  mtext(TeX(r'($\hat{\theta}_{max}$)'), side=1, line=2)
+  dev.off()
+}
+# # # # # # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # #
 
 ############################ bias_sd_d #################################
 
