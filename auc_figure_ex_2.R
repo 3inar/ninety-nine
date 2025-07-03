@@ -43,11 +43,15 @@ yl=c(-1,31)
 # 
 #yl=c(-0.25, 8.75)
 
+# matches the other histograms
+transgrey <- rgb(.6,.6,.6,.4)
+darkgrey <- "gray20"
+
 new_png("auc_shrink_boot.png", n_figures=2)
 hist(melanoma_scores, nclass=200, prob=T, xlab="AUC",
-     xlim=xl, ylim=yl, col="lightgrey", border="lightgrey", main=NULL)
+     xlim=xl, ylim=yl, col=transgrey, border=transgrey, main=NULL)
 hist(truncated, nclass=200, prob=T, xlab="AUC",
-     xlim=xl, ylim=yl, col="black", border="black", main=NULL, add=T)
+     xlim=xl, ylim=yl, col=darkgrey, border=darkgrey, main=NULL, add=T)
 #abline(v=threshold, col="green", lty="dashed")
 lines(ci_single, rep(yl[1], 2), col="red", lwd=2)
 abline(v=max(melanoma_scores), col="red", lty="dashed")
@@ -59,9 +63,11 @@ sum(melanoma_scores > max(truncated))
 # [1] 2013
 
 new_png("auc_truncated_simulation.png", n_figures=2)
-hist(realization, nclass=200, prob=T, 
+hist(melanoma_scores, nclass=200, prob=T, 
      xlab=latex2exp::TeX(r'(\widehat{AUC})'), xlim=xl, ylim=yl,
-     col="black", border="black", main=NULL)
+     col=transgrey, border=transgrey, main=NULL)
+hist(realization, nclass=200, prob=T, 
+     col=darkgrey, border=darkgrey, add=T)
 lines(ci_max, rep(yl[1], 2), col="red", lwd=2)
 abline(v=mean(mxx), col="red", lty="dashed")
 dev.off()
