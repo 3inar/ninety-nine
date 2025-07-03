@@ -318,7 +318,7 @@ whylim = c(0,0.03)
   new_png("cumul_success.png", n_figures=2)
 
   mars <- par()$mar
-  mars[3] = mars[3] + 1.75
+  mars[3] = mars[3] + 2.25 
   par(mar=mars)
 
   Fz = cdf(n,theta_SOTA,m) # updating the value
@@ -326,7 +326,7 @@ whylim = c(0,0.03)
   z = z_range # parameter
   x <- rev(n - z)
 
-  plot(x ,1 - Fz[rev(z)], type = 's', xlab ='', 
+  plot(x ,1 - Fz[rev(z)], type = 's', xlab ='x', 
        ylab = '', axes = F)
 
   # axis, ticks and labels
@@ -334,12 +334,12 @@ whylim = c(0,0.03)
   xax = seq(min(x),max(x), 20)
   klab = xax 
   plab = round(1000*(xax)/n)/1000
-  axis(1, las = 1, at=xax, labels = as.character(plab))
-  axis(2, las = 2)
-  axis(3, las = 1, at=xax, labels = as.character(klab))
 
-  mtext(TeX(r'($x$)'), side=3, line=1.5) 
-  mtext(TeX(r'($\hat{\theta}_{max}$)'), side=1, line=2)
+  axis(3, las = 1, at=xax, labels = as.character(plab))
+  axis(2, las = 2)
+  axis(1, las = 1, at=xax, labels = as.character(klab))
+
+  mtext(TeX(r'($\hat{\theta}_{max}$)'), side=3, line=1.5)
 
   dev.off()
 }
@@ -382,7 +382,7 @@ whylim = c(0,0.03)
   new_png("pmf_success.png", n_figures=2)
 
   mars <- par()$mar
-  mars[3] = mars[3] + 1.75
+  mars[3] = mars[3] + 2.25 
   par(mar=mars)
 
   fz = pmf(n,theta_SOTA,m,f0 = T) # updating the value
@@ -391,19 +391,18 @@ whylim = c(0,0.03)
   z = z_range # parameter
   x <- rev(n - z)
 
-  plot(x,rev(fz[z]), type = 'h', xlab ='', ylab = '', axes = F)
+  plot(x,rev(fz[z]), ylim=c(0,0.08), type = 'h', xlab ='x', ylab = '', axes = F)
 
   xax = seq(min(x),max(x), 20)
   klab = xax 
   plab = round(1000*(xax)/n)/1000
 
   # axis, ticks and labels, same values as for the cdf
-  axis(1, cex.axis=1, las = 1, at=xax, labels = as.character(plab))
-  axis(2, cex.axis=1, las = 2)
-  axis(3, cex.axis=1, las = 1, at=xax, labels = as.character(klab))
+  axis(3,las = 1, at=xax, labels = as.character(plab))
+  axis(2,las = 2)
+  axis(1,las = 1, at=xax, labels = as.character(klab))
 
-  mtext(TeX(r'($x$)'), side=3, line=1.5) 
-  mtext(TeX(r'($\hat{\theta}_{max}$)'), side=1, line=2)
+  mtext(TeX(r'($\hat{\theta}_{max}$)'), side=3, line=1.5)
   dev.off()
 }
 # # # # # # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
