@@ -45,7 +45,7 @@ source("dep_nonid_pmf_fun.R") # for the function 'dep_nonid_pmf' - simulated pmf
 kslim = c(0.88, 0.92)
 whylim = c(0,120)
 kslab = TeX(r'($\theta$)')
-whylab = '          m'
+whylab = "m"
 
 n_breks = 175         # adjust for pleasant graphics
 step = (kslim[2]-kslim[1])/n_breks
@@ -292,42 +292,45 @@ if (shrink){
 ####################### Figures ################################################
 ################################################################################
 
+source("plotting_params.R")
 
 
 if (shrink == F){
   
   ##################### obesity_kaggle / casava_kaggle ##################################
   
+  if (casava) 
+    new_png("casava_kaggle.png", n_figures=2)
+  else
+    new_png("obesity_kaggle.png", n_figures=2)
+  mars <- par()$mar
+  mars[1] <- mars[1] + .5
+  par(mar=mars)
   hist(theta_obs[theta_obs>kslim[1]], breaks=breks, freq = T,
        main = '', xlab = '',  ylab = '', xlim = kslim, ylim = whylim, 
        col = "lightgray", border = "lightgray",axes=F)
   
   clr = 'magenta'
   par(new = T) # plot the confidence interval
-  plot(c(ci_binom["lower"][1,1], ci_binom["upper"][1,1]), c( -1,-1), "l", lwd = 2, 
+  plot(c(ci_binom["lower"][1,1], ci_binom["upper"][1,1]), c( -1,-1), "l", lwd=2,
        col = clr, xlim = kslim, ylim = whylim, ylab = '', xlab = '', axes=F)
-  par(new=TRUE) 
-  plot(c(ci_binom[["lower"]], ci_binom[["lower"]]), c(-4,2),"l", lwd = 2, 
-       col=clr, xlab = '', ylab = '', xlim = kslim, ylim = whylim, axes=F)
-  par(new=TRUE) 
-  plot(c(ci_binom[["upper"]], ci_binom[["upper"]]), c(-4,2),"l", lwd = 2,
-       col=clr, xlab = '', ylab = '', xlim = kslim, ylim = whylim, axes=F)
   
   par(new=TRUE) # dottet vertical line for max_theta_hat
   plot(c(max_theta_hat, max_theta_hat), c(0,max(whylim)),"l", lty = 5, col='magenta', xlab = '', ylab = '', 
        xlim = kslim, ylim = whylim, axes=F)
   
   # axis, ticks and labels
-  axis(1 , cex.axis=1.2, las = 2, at=c(kslim[1],max_theta_hat,kslim[2]), 
+  axis(1, las = 2, at=c(kslim[1],max_theta_hat,kslim[2]), 
        labels=c(kslim[1], TeX(r'($\hat{\theta}_{max}$)'), kslim[2]))
-  axis(2 , cex.axis=1.2, las = 2)
+  axis(2, las = 2)
   
-  title(main = "", xlab = kslab, ylab = whylab, line = 2, cex.lab=1.2)
-  legend(0.88, 100, legend=c(TeX(r'($\hat{\Theta}$)')), col=c("lightgray"), pch=c(15), cex=0.8, bty="n")
+  title(main = "", xlab = kslab, ylab = whylab, line = 2)
+  dev.off()
   
   ####################### end figure ##########################################
   
   ############ obesity_direct_sampling / casava_direct_sampling ###############
+
   
   # Sampling from the rho-truncated data, once to show a histogram
   trunc_dat = theta_obs[theta_obs>trunc_min]
@@ -340,23 +343,28 @@ if (shrink == F){
   toc() # 110 sec for rep = 100,000
   
   theta_real = (n-X$x_fail)/n
+
+  if (casava) 
+    new_png("casava_direct_sampling.png", n_figures=2)
+  else
+    new_png("obesity_direct_sampling.png", n_figures=2)
+
+  mars <- par()$mar
+  mars[1] <- mars[1] + .5
+  par(mar=mars)
+
   hist(theta_real[theta_real>kslim[1]], breaks=breks, xlim = kslim, ylim = whylim, freq = T,
        main = '', xlab = '', ylab = '', col="gray20", border = "gray20",axes=F)
   
   par(new = T) #
+  transgrey <- rgb(.6,.6,.6,.4)
   hist(theta_obs[theta_obs>kslim[1]], breaks=breks, freq = T,
-       main = '', xlab = '',  ylab = '', xlim = kslim, ylim = whylim, 
-       col = NULL, border = "lightgray",axes=F)
+ main = '', xlab = '',  ylab = '', xlim = kslim, ylim = whylim, 
+col = transgrey, border = transgrey, axes=F)
   
   par(new = T) # plot the confidence interval
   plot(c((n-mean_lowerCI)/n, (n-mean_upperCI)/n), c( -1,-1), "l", lwd = 2, 
        col = "blue", xlim = kslim, ylim = whylim, ylab = '', xlab = '', axes=F)
-  par(new=TRUE) 
-  plot(c((n-mean_lowerCI)/n, (n-mean_lowerCI)/n), c(-4,2),"l", lwd = 2, 
-       col="blue", xlab = '', ylab = '', xlim = kslim, ylim = whylim, axes=F)
-  par(new=TRUE) 
-  plot(c((n-mean_upperCI)/n, (n-mean_upperCI)/n), c(-4,2),"l", lwd = 2,
-       col="blue", xlab = '', ylab = '', xlim = kslim, ylim = whylim, axes=F)
   
   par(new=TRUE) # dottet vertical line for expected value
   plot(c((n-mean(E_SOTA))/n, (n-mean(E_SOTA))/n), c(0,max(whylim)),"l", lty = 5, col="blue", xlab = '', ylab = '', 
@@ -367,21 +375,28 @@ if (shrink == F){
        xlim = kslim, ylim = whylim, axes=F)
   
   # axis, ticks and labels
-  axis(1 , cex.axis=1.2, las = 2, at=c(kslim[1],(n-mean(E_SOTA))/n,kslim[2]), 
+  axis(1, las = 2, at=c(kslim[1],(n-mean(E_SOTA))/n,kslim[2]), 
        labels=c(kslim[1], TeX(r'($E \max \hat{\Theta}'$)'), kslim[2]))
-  axis(2 , cex.axis=1.2, las = 2)
+  axis(2, las = 2)
   
-  title(main = "", xlab = kslab, ylab = whylab, line = 2, cex.lab=1.2)
-  legend(0.88, 100, legend=c(TeX(r'($\hat{\Theta}$)'), TeX(r'($\hat{\theta}|{\Theta}' = \hat{\Theta}$)')), col=c("lightgray", "gray20"), pch=c(0,15), cex=0.8, bty="n")
+  title(main = "", xlab = kslab, ylab = whylab, line = 2)
+  dev.off()
   # # # # # # # # # # # # end figure # # # # # # # # # # # # # # # # # # # # # # #
 }
 
 if (shrink==T){
   
   ##################### obesity_shrunk_for_expect ##################################
+  new_png("obesity_shrunk_for_expect.png", n_figures=2)
+
+  mars <- par()$mar
+  mars[1] <- mars[1] + .5
+  par(mar=mars)
+  transgrey <- rgb(.6,.6,.6,.4)
+
   hist(theta_obs[theta_obs>kslim[1]], breaks=breks, freq = T,
        main = '', xlab = '',  ylab = '', xlim = kslim, ylim = whylim, 
-       col = NULL, border = "lightgray", axes=F)
+       col = transgrey, border = transgrey, axes=F)
   
   
   #hist(theta_obs[(theta_obs>kslim[1])&(theta_obs<=theta_SOTA)], breaks=breks[breks<=theta_SOTA], freq = T,
@@ -400,21 +415,18 @@ if (shrink==T){
        xlim = kslim, ylim = whylim, axes=F)
   
   # axis, ticks and labels
-  axis(1 , cex.axis=1.2, las = 2, at=c(kslim[1],theta_SOTA, max_theta_hat,kslim[2]), 
+  axis(1 , las = 2, at=c(kslim[1],theta_SOTA, max_theta_hat,kslim[2]), 
        labels=c(kslim[1], TeX(r'(${\theta_{SOTA}}$)'), TeX(r'($\hat{\theta}_{max}$)'), kslim[2]))
-  axis(2 , cex.axis=1.2, las = 2)
+  axis(2 , las = 2)
   
-  title(main = "", xlab = kslab, ylab = whylab, line = 2, cex.lab=1.2)
-  legend(0.88, 100, legend=c(TeX(r'($\hat{\Theta}$)'), TeX(r'(${\Theta}'$)')), col=c("lightgray", "gray20"), pch=c(0,15), cex=0.8, bty="n")
+  title(main = "", xlab = kslab, ylab = whylab, line = 2)
+  dev.off()
   
   ##################### end figure ########################################
   
   
   ######################## obesity_shrunk_for_expect_realisation #######################
   
-  hist(theta_obs[theta_obs>kslim[1]], breaks=breks, freq = T,
-       main = '', xlab = '',  ylab = '', xlim = kslim, ylim = whylim, 
-       col = NULL, border = "lightgray", axes=F)
   
   # Sampling from the shrunk data, once to show a histogram
   
@@ -426,6 +438,17 @@ if (shrink==T){
   X = dep_nonid_pmf(n, m, rho, rep, theta_vec, theta_0 = theta_0) 
   toc()
   
+  new_png("obesity_shrunk_for_expect_realisation.png", n_figures=2)
+
+  mars <- par()$mar
+  mars[1] <- mars[1] + .5
+  par(mar=mars)
+  transgrey <- rgb(.6,.6,.6,.4)
+
+  hist(theta_obs[theta_obs>kslim[1]], breaks=breks, freq = T,
+       main = '', xlab = '',  ylab = '', xlim = kslim, ylim = whylim, 
+       col = transgrey, border = transgrey, axes=F)
+
   # one realisation 
   par(new = T)
   theta_real = (n-X$x_fail)/n
@@ -435,12 +458,12 @@ if (shrink==T){
   par(new = T) # plot the confidence interval
   plot(c((n-mean_lowerCI)/n, (n-mean_upperCI)/n), c( -1,-1), "l", lwd = 2, 
        col = "red", xlim = kslim, ylim = whylim, ylab = '', xlab = '', axes=F)
-  par(new=TRUE) 
-  plot(c((n-mean_lowerCI)/n, (n-mean_lowerCI)/n), c(-4,2),"l", lwd = 2, 
-       col="red", xlab = '', ylab = '', xlim = kslim, ylim = whylim, axes=F)
-  par(new=TRUE) 
-  plot(c((n-mean_upperCI)/n, (n-mean_upperCI)/n), c(-4,2),"l", lwd = 2,
-       col="red", xlab = '', ylab = '', xlim = kslim, ylim = whylim, axes=F)
+#   par(new=TRUE) 
+#   plot(c((n-mean_lowerCI)/n, (n-mean_lowerCI)/n), c(-4,2),"l", lwd = 2, 
+#        col="red", xlab = '', ylab = '', xlim = kslim, ylim = whylim, axes=F)
+#   par(new=TRUE) 
+#   plot(c((n-mean_upperCI)/n, (n-mean_upperCI)/n), c(-4,2),"l", lwd = 2,
+#        col="red", xlab = '', ylab = '', xlim = kslim, ylim = whylim, axes=F)
   
   par(new=TRUE) # dottet vertical line for expected value
   plot(c((n-mean(E_SOTA))/n,(n-mean(E_SOTA))/n), c(0,max(whylim)),"l", lty = 5, col="red", xlab = '', ylab = '', 
@@ -455,12 +478,13 @@ if (shrink==T){
        xlim = kslim, ylim = whylim, axes=F)
   
   # axis, ticks and labels
-  axis(1 , cex.axis=1.2, las = 2, at=c(kslim[1],theta_SOTA, max_theta_hat,kslim[2]), 
+  axis(1 , las = 2, at=c(kslim[1],theta_SOTA, max_theta_hat,kslim[2]), 
        labels=c(kslim[1], TeX(r'(${\theta_{SOTA}}$)'), TeX(r'($E \max \hat{\Theta}'$)'), kslim[2]))
-  axis(2 , cex.axis=1.2, las = 2)
+  axis(2 , las = 2)
   
-  title(main = "", xlab = kslab, ylab = whylab, line = 2, cex.lab=1.2)
-  legend(0.88, 100, legend=c(TeX(r'($\hat{\Theta}$)'), TeX(r'($\hat{\theta}|\Theta'$)')), col=c("lightgray", "gray20"), pch=c(0,15), cex=0.8, bty="n")
+  title(main = "", xlab = kslab, ylab = whylab, line = 2)
+  # legend(0.88, 100, legend=c(TeX(r'($\hat{\Theta}$)'), TeX(r'($\hat{\theta}|\Theta'$)')), col=c("lightgray", "gray20"), pch=c(0,15), cex=0.8, bty="n")
+  dev.off()
   
 }
 
