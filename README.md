@@ -10,11 +10,11 @@ Figures are found locally.
 
 ## Estimating state-of-the-art performance
 
-Bla-bla-bla
+No related scripts or figures
 
 ## *Related work*
 
-Cited bla-bla-bla
+No related scripts or figures
 
 ## *Multiple classifiers and biased state-of-the-art estimation*
 
@@ -149,11 +149,7 @@ subfigure for `bias_sd_thetamin_rho`\
 
 ## Real world examples
 
-bla-bla-bla
-
 ### Estimating $\theta_{SOTA}$
-
-blah
 
 #### Multi-Class Prediction of Obesity Risk
 
@@ -181,17 +177,17 @@ with subfigures. Exact numbers in Table `obesity`
 
 #### Melanoma Classification
 
+`auc_figure_ex_2.R` makes the figures that show a true AUC distribution based on
+truncated kaggle scores and a simulation based on these
+
 #### Simulation of AUC
 
 #### Simulation results for uncorrelated classifiers
 
-#### Correlation between classifiers in the AUC simulations
 
 ## Discussion
 
-
-
-auc_functions.R contains functions for working with and simulating AUCs:
+`auc_functions.R` contains functions for working with and simulating AUCs:
 
 - `make_classifier` makes an object of class `classifier` with true aus as specified
 - `predict.classifier` makes predictions from a `classifier` object
@@ -202,18 +198,17 @@ auc_functions.R contains functions for working with and simulating AUCs:
 - `empirical_auc` fast calculation of AUC from a `list(predicted=..., truth=...)`
 - `sim_competition` simulates an uncorrelated competition with given true AUCs
 
-auc_simulations.R generates data for the figures and numbers in this section
 
-auc_figure_ex_1.R makes the figure that shows the distribution of maximum AUC among 3000 classifiers all with true AUC 0.9
-
-auc_figure_ex_2.R makes the figures that show a true AUC distribution based on
-truncated kaggle scores and a simulation based on these
-
-auc_figure_roc_curves.R makes the figure that shows example ROC curves for a classifier with true AUC of .9
 
 ## Section 'Discussion':
 
-melanoma.R: investigates the Melanoma 2020 kaggle competition
+`melanoma.R`: investigates the Melanoma 2020 kaggle competition
+
+## Appendix: 'Simulation results for uncorrelated classifiers'
+`auc_simulations.R` generates data for the figures and numbers in this section
+
+`auc_figure_roc_curves.R` makes the figure that shows example ROC curves for a classifier with true AUC of .9
+`auc_figure_ex_1.R` makes the figure that shows the distribution of maximum AUC among 3000 classifiers all with true AUC 0.9
 
 ## Additional files:
 
@@ -234,30 +229,30 @@ early exploration of different options, treating AUC as accuracy:\
 
 ## List of files and the section where they are described:
 
-"99Club_multiplicity.R"  			    - Outdated files\
- "auc_figure_ex_1.R" 		    	        - Einar      \        
-"auc_figure_ex_2.R" 			            - Einar   \
- "auc_figure_roc_curves.R"        		- Einar    \           
-"auc_functions.R"                		- Einar   \
-"auc_generator.R"               		- Einar   \
- "AUC_misc.R"                     		- Einar  \ 
-"auc_simulations.R"             		- Einar   \
-"AUROC.R" 					- Outdated files           \          
-"closed_form.R" 				- Additional files      \          
-"CoinFlip.R" 					- A coin-flip example      \              
-"dep_nonid_pmf_fun.R" 		    	- Non-identical, dependent classifiers          \
-"dependence.R" 				            - Identical, dependent classifiers             \     
-"dependent_nonidentical_hierarchical.R" 		    - Non-identical, dependent classifiers       \
-"indep_nonid_pmf_fun.R" 			    - Non-identical, independent classifiers      \  
-"melanoma.R" 				              - Einar   \
-"nonidentical_hierarchical.R" 				          - Non-identical, independent classifiers\
-"Parameters_PublicCompetition.R" 	- ninety-nine\
-"plotting_params.R" 			- Einar   \
-"ProbDistr_thetaSOTA.R" 			- The probability distribution of $\hat{\theta}_{max}(X)$         \
-"PublicCompetition.R" 			- A simulated public competition example           \
-"SOTA_bootstrap_accuracy.R"      	- Kajsa\
-"SOTA_bootstrap.R" 			- Outdated        \      
-"SOTA_estimate.R"               		- Additional files\
-"var_auc.R"                  			- Additional files\
+`99Club_multiplicity.R`  			    - Outdated files\
+ `auc_figure_ex_1.R` 		    	        - Einar\        
+`auc_figure_ex_2.R` 			            - Einar\
+ `auc_figure_roc_curves.R`        		- Einar\           
+`auc_functions.R`                		- Einar\
+`auc_generator.R`               		- Einar\
+ `AUC_misc.R`                     		- Einar\ 
+`auc_simulations.R`             		- Einar\
+`AUROC.R` 					- Outdated files\          
+`closed_form.R` 				- Additional files\          
+`CoinFlip.R` 					- A coin-flip example\              
+`dep_nonid_pmf_fun.R` 		    	- Non-identical, dependent classifiers\
+`dependence.R` 				            - Identical, dependent classifiers\     
+`dependent_nonidentical_hierarchical.R` 		    - Non-identical, dependent classifiers\
+`indep_nonid_pmf_fun.R` 			    - Non-identical, independent classifiers\  
+`melanoma.R` 				              - Einar\
+`nonidentical_hierarchical.R` 				          - Non-identical, independent classifiers\
+`Parameters_PublicCompetition.R` 	- ninety-nine\
+`plotting_params.R` 			- Einar\
+`ProbDistr_thetaSOTA.R` 			- The probability distribution of $\hat{\theta}_{max}(X)$\
+`PublicCompetition.R` 			- A simulated public competition example\
+`SOTA_bootstrap_accuracy.R`      	- Kajsa\
+`SOTA_bootstrap.R` 			- Outdated\      
+`SOTA_estimate.R`               		- Additional files\
+`var_auc.R`                  			- Additional files\
 
 
